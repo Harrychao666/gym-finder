@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>练哪儿｜广州健身房选馆助手</title>
+    <link rel="icon" href="./assets/gym-map.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="练哪儿首页">
+          <span class="brand-mark" aria-hidden="true">练</span>
+          <span>
+            <strong>练哪儿</strong>
+            <small>广州健身房选馆助手</small>
+          </span>
+        </a>
+        <div class="prototype-note">
+          <span class="status-dot" aria-hidden="true"></span>
+          访谈原型 · 数据为演示
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="preference-panel" aria-labelledby="preferenceTitle">
+          <div class="section-heading">
+            <span class="step-number">1</span>
+            <div>
+              <p class="eyebrow">告诉我你的需求</p>
+              <h1 id="preferenceTitle">你想找怎样的健身房？</h1>
+            </div>
+          </div>
+
+          <form id="preferenceForm">
+            <div class="form-group">
+              <label for="locationInput">你现在的位置</label>
+              <div class="location-control">
+                <input id="locationInput" name="location" type="text" value="珠江新城地铁站" placeholder="输入小区、写字楼或地铁站" autocomplete="street-address" />
+                <button class="location-button" id="locateButton" type="button" title="使用设备定位">
+                  <span aria-hidden="true">⌖</span>
+                  定位
+                </button>
+              </div>
+              <p class="field-help" id="locationStatus">用于估算你到各家场馆的通勤时间</p>
+            </div>
+
+            <fieldset class="form-group">
+              <legend>单程最多多久？</legend>
+              <div class="segmented-control" id="commuteControl">
+                <label><input type="radio" name="commute" value="15" /><span>15 分钟</span></label>
+                <label><input type="radio" name="commute" value="30" checked /><span>30 分钟</span></label>
+                <label><input type="radio" name="commute" value="45" /><span>45 分钟</span></label>
+              </div>
+            </fieldset>
+
+            <fieldset class="form-group">
+              <legend>每月预算</legend>
+              <div class="segmented-control">
+                <label><input type="radio" name="budget" value="300" /><span>¥300内</span></label>
+                <label><input type="radio" name="budget" value="500" checked /><span>¥500内</span></label>
+                <label><input type="radio" name="budget" value="800" /><span>¥800内</span></label>
+              </div>
+            </fieldset>
+
+            <div class="form-group">
+              <label for="trainingTime">通常什么时候练？</label>
+              <select id="trainingTime" name="trainingTime">
+                <option value="evening">工作日晚间</option>
+                <option value="morning">工作日早晨</option>
+                <option value="weekend">周末</option>
+                <option value="flexible">时间灵活</option>
+              </select>
+            </div>
+
+            <fieldset class="form-group">
+              <legend>你最在意什么？<small>可多选</small></legend>
+              <div class="choice-grid">
+                <label class="choice"><input type="checkbox" name="priority" value="beginner" checked /><span>新手有人指导</span></label>
+                <label class="choice"><input type="checkbox" name="priority" value="sales" checked /><span>不强推办卡</span></label>
+                <label class="choice"><input type="checkbox" name="priority" value="crowd" /><span>晚高峰不拥挤</span></label>
+                <label class="choice"><input type="checkbox" name="priority" value="equipment" /><span>力量器械充足</span></label>
+                <label class="choice"><input type="checkbox" name="priority" value="shower" /><span>淋浴更衣干净</span></label>
+                <label class="choice"><input type="checkbox" name="priority" value="open24" /><span>24 小时开放</span></label>
+              </div>
+            </fieldset>
+
+            <button class="primary-button" type="submit">帮我筛出 3 家</button>
+          </form>
+        </aside>
+
+        <section class="recommendation-panel" id="recommendationPanel" aria-labelledby="resultTitle" hidden>
+          <div class="result-heading">
+            <div class="section-heading">
+              <span class="step-number">2</span>
+              <div>
+                <p class="eyebrow">根据你的条件</p>
+                <h2 id="resultTitle">先看这 3 家</h2>
+              </div>
+            </div>
+            <p id="resultSummary" class="result-summary">珠江新城 · 30分钟内 · 每月¥500内</p>
+          </div>
+
+          <div id="venueList" class="venue-list" aria-live="polite"></div>
+
+          <section class="decision-tip">
+            <strong>第一次选馆，不建议当场办年卡</strong>
+            <p>先在你常去的训练时段试练一次，再确认月卡、暂停和退款规则。</p>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div class="compare-bar" id="compareBar" hidden>
+      <div>
+        <strong>已选 <span id="compareCount">0</span> 家</strong>
+        <span id="compareNames">选择 2 家即可比较</span>
+      </div>
+      <button class="primary-button compact" id="openCompare" type="button" disabled>开始比较</button>
+    </div>
+
+    <dialog id="detailDialog" class="app-dialog">
+      <article id="detailContent"></article>
+    </dialog>
+
+    <dialog id="compareDialog" class="app-dialog compare-dialog">
+      <article>
+        <header class="dialog-header">
+          <div>
+            <p class="eyebrow">放在一起看</p>
+            <h2>场馆对比</h2>
+          </div>
+          <button class="icon-button dialog-close" data-close="compareDialog" type="button" aria-label="关闭">×</button>
+        </header>
+        <div id="compareContent" class="compare-content"></div>
+      </article>
+    </dialog>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
