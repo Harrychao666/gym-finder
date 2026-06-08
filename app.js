@@ -337,7 +337,7 @@ const equipmentCatalog = {
   cable: {
     name: "龙门架",
     description: "可完成夹胸、下压等多种动作",
-    image: "https://commons.wikimedia.org/wiki/Special:FilePath/Chest_flies_with_cable_machine_-_cable_crossover_flies.jpg?width=900"
+    image: "https://commons.wikimedia.org/wiki/Special:FilePath/Sz%C3%A9kesfeh%C3%A9rv%C3%A1r%2C_Cutler_Gym%2C_Combined_cable_machine.jpg?width=900"
   },
   latPulldown: {
     name: "高位下拉机",
@@ -347,7 +347,7 @@ const equipmentCatalog = {
   seatedRow: {
     name: "坐姿划船机",
     description: "固定轨迹训练中背部",
-    image: "https://commons.wikimedia.org/wiki/Special:FilePath/Woman_using_a_seated_cable_row_machine_at_the_gym.jpg?width=900"
+    image: "https://commons.wikimedia.org/wiki/Special:FilePath/Multifunctional_cable_and_row_machines_in_a_gym.jpg?width=900"
   },
   assistedPullup: {
     name: "助力引体机",
