@@ -15,7 +15,22 @@ const venues = [
     shower: true,
     open24: true,
     womenFriendly: true,
+    rating: 8.8,
     image: "https://images.pexels.com/photos/29639963/pexels-photo-29639963.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    gallery: [
+      {
+        src: "https://images.pexels.com/photos/29639963/pexels-photo-29639963.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        caption: "力量训练区"
+      },
+      {
+        src: "https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        caption: "有氧训练区"
+      },
+      {
+        src: "https://images.pexels.com/photos/4162487/pexels-photo-4162487.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        caption: "自由训练空间"
+      }
+    ],
     fit: "适合想自由安排时间、又不希望被频繁推销的新手。",
     caution: "夜间工作人员较少，第一次建议白天到店熟悉器械和门禁。",
     evidence: ["公开价目表", "工作日晚间试练", "达人现场照片"],
@@ -37,7 +52,22 @@ const venues = [
     shower: true,
     open24: false,
     womenFriendly: true,
+    rating: 9.0,
     image: "https://images.pexels.com/photos/30021732/pexels-photo-30021732.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    gallery: [
+      {
+        src: "https://images.pexels.com/photos/30021732/pexels-photo-30021732.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        caption: "女性训练空间"
+      },
+      {
+        src: "https://images.pexels.com/photos/6456300/pexels-photo-6456300.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        caption: "器械训练区"
+      },
+      {
+        src: "https://images.pexels.com/photos/3768916/pexels-photo-3768916.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        caption: "基础指导区"
+      }
+    ],
     fit: "适合在意训练氛围、希望获得基础器械讲解的女性新手。",
     caution: "会推荐私教小课包，先确认自由训练会员是否包含入门指导。",
     evidence: ["门店报价截图", "周末下午试练", "更衣区现场记录"],
@@ -59,7 +89,22 @@ const venues = [
     shower: true,
     open24: false,
     womenFriendly: true,
+    rating: 8.6,
     image: "https://images.pexels.com/photos/17227606/pexels-photo-17227606.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    gallery: [
+      {
+        src: "https://images.pexels.com/photos/17227606/pexels-photo-17227606.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        caption: "综合器械区"
+      },
+      {
+        src: "https://images.pexels.com/photos/1552242/pexels-photo-1552242.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        caption: "自由重量区"
+      },
+      {
+        src: "https://images.pexels.com/photos/4162451/pexels-photo-4162451.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        caption: "有氧设备区"
+      }
+    ],
     fit: "适合重视器械种类、能避开工作日晚高峰的人。",
     caution: "体验课后会持续跟进私教，办卡前要确认退转卡条款。",
     evidence: ["门店合同样本", "工作日晚高峰试练", "器械数量记录"],
@@ -81,7 +126,22 @@ const venues = [
     shower: false,
     open24: false,
     womenFriendly: true,
+    rating: 8.3,
     image: "https://images.pexels.com/photos/4959807/pexels-photo-4959807.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    gallery: [
+      {
+        src: "https://images.pexels.com/photos/4959807/pexels-photo-4959807.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        caption: "基础训练区"
+      },
+      {
+        src: "https://images.pexels.com/photos/4162449/pexels-photo-4162449.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        caption: "力量器械区"
+      },
+      {
+        src: "https://images.pexels.com/photos/841130/pexels-photo-841130.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        caption: "自由训练区"
+      }
+    ],
     fit: "适合预算有限、以基础力量和有氧训练为主的新手。",
     caution: "没有独立淋浴区，重训器械数量也不算多。",
     evidence: ["前台公开报价", "工作日早晨试练", "达人现场记录"],
@@ -103,7 +163,22 @@ const venues = [
     shower: true,
     open24: false,
     womenFriendly: false,
+    rating: 8.7,
     image: "https://images.pexels.com/photos/29639963/pexels-photo-29639963.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    gallery: [
+      {
+        src: "https://images.pexels.com/photos/29639963/pexels-photo-29639963.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        caption: "固定器械区"
+      },
+      {
+        src: "https://images.pexels.com/photos/949126/pexels-photo-949126.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        caption: "自由重量区"
+      },
+      {
+        src: "https://images.pexels.com/photos/2261485/pexels-photo-2261485.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        caption: "重训空间"
+      }
+    ],
     fit: "适合已经掌握基础动作、重视自由重量设备的人。",
     caution: "训练氛围偏硬核，完全零基础建议有人陪同试练。",
     evidence: ["公开月卡价格", "周末试练", "自由重量区盘点"],
@@ -125,7 +200,22 @@ const venues = [
     shower: true,
     open24: true,
     womenFriendly: true,
+    rating: 8.2,
     image: "https://images.pexels.com/photos/4959807/pexels-photo-4959807.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    gallery: [
+      {
+        src: "https://images.pexels.com/photos/4959807/pexels-photo-4959807.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        caption: "24 小时训练区"
+      },
+      {
+        src: "https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        caption: "跑步机区域"
+      },
+      {
+        src: "https://images.pexels.com/photos/4162488/pexels-photo-4162488.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        caption: "基础力量区"
+      }
+    ],
     fit: "适合有基本训练计划、需要深夜或清晨训练的人。",
     caution: "自助运营为主，新手器械指导有限，晚高峰跑步机较紧张。",
     evidence: ["线上价目表", "晚间实地观察", "门禁流程记录"],
@@ -133,10 +223,183 @@ const venues = [
   }
 ];
 
+const pricingPlans = {
+  luma: { single: 39, weekly: 129, monthly: 399, annual: 3599 },
+  fither: { single: 59, weekly: 169, monthly: 499, annual: 4599 },
+  startfit: { single: 49, weekly: 159, monthly: 459, annual: 4199 },
+  lightgym: { single: 29, weekly: 99, monthly: 299, annual: 2699 },
+  powerbox: { single: 68, weekly: 188, monthly: 520, annual: 4888 },
+  airfit: { single: 35, weekly: 109, monthly: 329, annual: 2999 }
+};
+
+const crowdProfiles = {
+  luma: {
+    levels: [12, 9, 7, 6, 8, 14, 28, 42, 36, 24, 20, 25, 39, 35, 27, 25, 31, 52, 78, 92, 83, 61, 37, 21],
+    busiest: "18:00–21:00",
+    quietest: "02:00–06:00"
+  },
+  fither: {
+    levels: [0, 0, 0, 0, 0, 0, 0, 22, 34, 24, 18, 20, 31, 28, 22, 19, 27, 43, 66, 74, 61, 38, 18, 0],
+    busiest: "18:00–20:00",
+    quietest: "10:00–12:00"
+  },
+  startfit: {
+    levels: [0, 0, 0, 0, 0, 0, 18, 37, 45, 29, 24, 31, 52, 48, 36, 30, 39, 68, 91, 96, 86, 57, 31, 0],
+    busiest: "18:00–21:00",
+    quietest: "09:00–11:00"
+  },
+  lightgym: {
+    levels: [0, 0, 0, 0, 0, 0, 0, 19, 31, 25, 17, 20, 37, 33, 24, 21, 29, 48, 72, 79, 66, 42, 24, 0],
+    busiest: "18:00–20:00",
+    quietest: "10:00–12:00"
+  },
+  powerbox: {
+    levels: [0, 0, 0, 0, 0, 0, 0, 0, 16, 23, 19, 25, 38, 34, 26, 22, 31, 49, 67, 81, 88, 73, 46, 21],
+    busiest: "19:00–22:00",
+    quietest: "08:00–11:00"
+  },
+  airfit: {
+    levels: [18, 13, 10, 8, 9, 16, 31, 47, 39, 26, 22, 28, 43, 38, 29, 25, 34, 58, 84, 95, 90, 69, 44, 27],
+    busiest: "18:00–21:00",
+    quietest: "02:00–05:00"
+  }
+};
+
+const venueReviews = {
+  luma: [
+    { name: "阿琳", profile: "健身 4 个月", time: "工作日晚间", rating: 9.0, date: "2026-05-26", text: "门禁和器械都容易上手，晚上八点力量区会稍微等位，没人一直推销办课。" },
+    { name: "Mia", profile: "跑步为主", time: "工作日早晨", rating: 8.6, date: "2026-05-18", text: "早上人少，跑步机充足。夜间值班人员不多，第一次来建议白天熟悉环境。" }
+  ],
+  fither: [
+    { name: "小乔", profile: "健身新手", time: "周末下午", rating: 9.2, date: "2026-05-23", text: "女性训练氛围很放松，更衣区干净，工作人员会简单讲器械怎么调。" },
+    { name: "Yuki", profile: "力量训练 1 年", time: "工作日晚间", rating: 8.8, date: "2026-05-16", text: "自由重量不算特别多，但高峰期也不压迫。体验后会介绍小课包，可以直接拒绝。" }
+  ],
+  startfit: [
+    { name: "Ken", profile: "健身 2 年", time: "工作日晚间", rating: 8.4, date: "2026-05-28", text: "器械种类确实多，但七点后热门器械要排队，销售跟进比较积极。" },
+    { name: "夏夏", profile: "健身新手", time: "周末上午", rating: 8.7, date: "2026-05-21", text: "上午体验不错，淋浴和更衣空间够用，合同中的退转卡条件需要仔细问。" }
+  ],
+  lightgym: [
+    { name: "陈同学", profile: "预算型用户", time: "工作日早晨", rating: 8.5, date: "2026-05-19", text: "价格轻松，早晨基本不用等器械。没有独立淋浴，训练后直接回家更合适。" },
+    { name: "丸子", profile: "健身 6 个月", time: "工作日晚间", rating: 8.1, date: "2026-05-13", text: "基础训练够用，重训器械数量一般，工作人员不会频繁推销。" }
+  ],
+  powerbox: [
+    { name: "Leo", profile: "力量训练 3 年", time: "周末下午", rating: 9.0, date: "2026-05-17", text: "自由重量配置很好，周末深蹲架比较抢手，更适合已经会自己安排训练的人。" },
+    { name: "嘉欣", profile: "健身 8 个月", time: "工作日晚间", rating: 8.3, date: "2026-05-10", text: "氛围偏硬核但没有不友好，完全新手最好第一次找熟人陪同。" }
+  ],
+  airfit: [
+    { name: "Allen", profile: "夜间训练", time: "22:00 后", rating: 8.4, date: "2026-05-25", text: "深夜能练很方便，自助流程顺畅，不过这个时间基本没有动作指导。" },
+    { name: "晴天", profile: "有氧为主", time: "工作日晚间", rating: 8.0, date: "2026-05-20", text: "晚高峰跑步机偶尔要等，其他时段不错。月卡规则简单，适合有训练计划的人。" }
+  ]
+};
+
+const equipmentCatalog = {
+  treadmill: {
+    name: "跑步机",
+    description: "适合热身、快走和持续有氧",
+    image: "https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=700"
+  },
+  elliptical: {
+    name: "椭圆机",
+    description: "冲击较低，适合新手有氧",
+    image: "https://images.pexels.com/photos/4162451/pexels-photo-4162451.jpeg?auto=compress&cs=tinysrgb&w=700"
+  },
+  bike: {
+    name: "动感单车",
+    description: "适合间歇训练和下肢耐力",
+    image: "https://images.pexels.com/photos/4162487/pexels-photo-4162487.jpeg?auto=compress&cs=tinysrgb&w=700"
+  },
+  stairClimber: {
+    name: "登阶机",
+    description: "偏高强度的下肢有氧训练",
+    image: "https://images.pexels.com/photos/4162488/pexels-photo-4162488.jpeg?auto=compress&cs=tinysrgb&w=700"
+  },
+  chestPress: {
+    name: "坐姿推胸机",
+    description: "固定轨迹，对新手较友好",
+    image: "https://images.pexels.com/photos/1552242/pexels-photo-1552242.jpeg?auto=compress&cs=tinysrgb&w=700"
+  },
+  benchPress: {
+    name: "卧推架",
+    description: "适合杠铃卧推和进阶训练",
+    image: "https://images.pexels.com/photos/949126/pexels-photo-949126.jpeg?auto=compress&cs=tinysrgb&w=700"
+  },
+  pecDeck: {
+    name: "蝴蝶机",
+    description: "用于胸部夹胸和后束训练",
+    image: "https://images.pexels.com/photos/4162449/pexels-photo-4162449.jpeg?auto=compress&cs=tinysrgb&w=700"
+  },
+  cable: {
+    name: "龙门架",
+    description: "可完成夹胸、下压等多种动作",
+    image: "https://images.pexels.com/photos/17227606/pexels-photo-17227606.jpeg?auto=compress&cs=tinysrgb&w=700"
+  },
+  latPulldown: {
+    name: "高位下拉机",
+    description: "适合练习背阔肌发力",
+    image: "https://images.pexels.com/photos/2261485/pexels-photo-2261485.jpeg?auto=compress&cs=tinysrgb&w=700"
+  },
+  seatedRow: {
+    name: "坐姿划船机",
+    description: "固定轨迹训练中背部",
+    image: "https://images.pexels.com/photos/841130/pexels-photo-841130.jpeg?auto=compress&cs=tinysrgb&w=700"
+  },
+  assistedPullup: {
+    name: "助力引体机",
+    description: "降低引体向上的入门难度",
+    image: "https://images.pexels.com/photos/6456300/pexels-photo-6456300.jpeg?auto=compress&cs=tinysrgb&w=700"
+  },
+  backExtension: {
+    name: "罗马椅",
+    description: "用于下背和后链基础训练",
+    image: "https://images.pexels.com/photos/3768916/pexels-photo-3768916.jpeg?auto=compress&cs=tinysrgb&w=700"
+  }
+};
+
+const venueEquipment = {
+  luma: {
+    cardio: [["treadmill", "6 台"], ["elliptical", "3 台"], ["bike", "4 台"]],
+    chest: [["chestPress", "2 台"], ["benchPress", "2 组"], ["cable", "1 组"]],
+    back: [["latPulldown", "2 台"], ["seatedRow", "2 台"], ["assistedPullup", "1 台"]]
+  },
+  fither: {
+    cardio: [["treadmill", "4 台"], ["elliptical", "2 台"], ["bike", "4 台"]],
+    chest: [["chestPress", "2 台"], ["pecDeck", "1 台"], ["cable", "1 组"]],
+    back: [["latPulldown", "2 台"], ["seatedRow", "1 台"], ["assistedPullup", "1 台"]]
+  },
+  startfit: {
+    cardio: [["treadmill", "10 台"], ["elliptical", "6 台"], ["stairClimber", "2 台"]],
+    chest: [["chestPress", "3 台"], ["benchPress", "4 组"], ["pecDeck", "2 台"]],
+    back: [["latPulldown", "3 台"], ["seatedRow", "3 台"], ["assistedPullup", "2 台"]]
+  },
+  lightgym: {
+    cardio: [["treadmill", "4 台"], ["elliptical", "2 台"], ["bike", "2 台"]],
+    chest: [["chestPress", "1 台"], ["benchPress", "1 组"], ["pecDeck", "1 台"]],
+    back: [["latPulldown", "1 台"], ["seatedRow", "1 台"], ["backExtension", "1 台"]]
+  },
+  powerbox: {
+    cardio: [["treadmill", "3 台"], ["bike", "4 台"], ["stairClimber", "1 台"]],
+    chest: [["benchPress", "6 组"], ["chestPress", "2 台"], ["cable", "2 组"]],
+    back: [["latPulldown", "3 台"], ["seatedRow", "3 台"], ["backExtension", "2 台"]]
+  },
+  airfit: {
+    cardio: [["treadmill", "5 台"], ["elliptical", "2 台"], ["bike", "3 台"]],
+    chest: [["chestPress", "1 台"], ["benchPress", "2 组"], ["cable", "1 组"]],
+    back: [["latPulldown", "2 台"], ["seatedRow", "1 台"], ["assistedPullup", "1 台"]]
+  }
+};
+
+const equipmentSections = [
+  { key: "cardio", title: "有氧", description: "热身、心肺和耐力训练" },
+  { key: "chest", title: "胸部", description: "推举、夹胸和自由重量" },
+  { key: "back", title: "背部", description: "下拉、划船和后链训练" }
+];
+
 const state = {
   recommendations: [],
   compareIds: new Set(),
-  userCoordinates: null
+  userCoordinates: null,
+  galleryIndex: 0,
+  galleryVenue: null
 };
 
 const districtCenters = {
@@ -162,6 +425,15 @@ const els = {
   openCompare: document.querySelector("#openCompare"),
   detailDialog: document.querySelector("#detailDialog"),
   detailContent: document.querySelector("#detailContent"),
+  galleryDialog: document.querySelector("#galleryDialog"),
+  galleryTitle: document.querySelector("#galleryTitle"),
+  galleryCounter: document.querySelector("#galleryCounter"),
+  galleryTrack: document.querySelector("#galleryTrack"),
+  galleryPrevious: document.querySelector("#galleryPrevious"),
+  galleryNext: document.querySelector("#galleryNext"),
+  crowdDialog: document.querySelector("#crowdDialog"),
+  crowdTitle: document.querySelector("#crowdTitle"),
+  crowdContent: document.querySelector("#crowdContent"),
   compareDialog: document.querySelector("#compareDialog"),
   compareContent: document.querySelector("#compareContent")
 };
@@ -231,6 +503,8 @@ function scoreVenue(venue, preferences) {
   if (preferences.priorities.includes("equipment")) score += venue.equipment;
   if (preferences.priorities.includes("shower") && venue.shower) score += 8;
   if (preferences.priorities.includes("open24") && venue.open24) score += 12;
+  if (preferences.priorities.includes("women") && venue.womenFriendly) score += 14;
+  if (preferences.priorities.includes("women") && !venue.womenFriendly) score -= 10;
   return score;
 }
 
@@ -278,16 +552,18 @@ function renderRecommendations(preferences) {
     const article = document.createElement("article");
     article.className = "venue-card";
     article.innerHTML = `
-      <div class="venue-image">
+      <button class="venue-image" data-gallery="${venue.id}" type="button" aria-label="查看 ${venue.name} 的场馆照片">
         <img src="${venue.image}" alt="${venue.type}训练空间场景图" loading="lazy" referrerpolicy="no-referrer" />
         <span class="rank-label">${index === 0 ? "首选" : `候选 ${index + 1}`}</span>
-      </div>
+        <span class="photo-count"><span aria-hidden="true">▣</span> ${venue.gallery.length} 张</span>
+      </button>
       <div class="venue-card-body">
         <div class="venue-title-row">
           <div>
             <p class="match-reason">${getMatchReason(venue, preferences, index)}</p>
             <h3>${venue.name}</h3>
             <p class="venue-meta">${venue.district} · ${venue.type}</p>
+            ${venue.womenFriendly ? '<span class="venue-feature">女性友好</span>' : ""}
           </div>
           <label class="compare-toggle">
             <input type="checkbox" data-compare="${venue.id}" />
@@ -298,7 +574,11 @@ function renderRecommendations(preferences) {
         <div class="facts-row">
           <div><strong>¥${venue.monthlyPrice}</strong><span>参考月费</span></div>
           <div><strong>${venue.estimatedCommute} 分钟</strong><span>通勤估算</span></div>
-          <div><strong class="${crowdClass(venue.crowd[preferences.trainingTime])}">${venue.crowd[preferences.trainingTime]}</strong><span>常练时段</span></div>
+          <div><strong class="rating-value">${venue.rating}</strong><span>综合评分</span></div>
+          <button class="crowd-fact" data-crowd="${venue.id}" type="button">
+            <strong class="${crowdClass(venue.crowd[preferences.trainingTime])}">${venue.crowd[preferences.trainingTime]}</strong>
+            <span>拥挤程度</span>
+          </button>
         </div>
 
         <p class="fit-line"><strong>适合你：</strong>${venue.fit}</p>
@@ -318,6 +598,12 @@ function renderRecommendations(preferences) {
   });
   document.querySelectorAll("[data-detail]").forEach((button) => {
     button.addEventListener("click", () => showDetail(button.dataset.detail));
+  });
+  document.querySelectorAll("[data-gallery]").forEach((button) => {
+    button.addEventListener("click", () => showGallery(button.dataset.gallery));
+  });
+  document.querySelectorAll("[data-crowd]").forEach((button) => {
+    button.addEventListener("click", () => showCrowd(button.dataset.crowd));
   });
 }
 
@@ -347,6 +633,9 @@ function renderCompareBar() {
 
 function showDetail(id) {
   const venue = venues.find((item) => item.id === id);
+  const inventory = venueEquipment[venue.id];
+  const prices = pricingPlans[venue.id];
+  const reviews = venueReviews[venue.id];
   els.detailContent.innerHTML = `
     <div class="detail-hero" style="background-image: linear-gradient(rgba(16, 25, 29, 0.1), rgba(16, 25, 29, 0.78)), url('${venue.image}')">
       <button class="icon-button detail-close" type="button" aria-label="关闭">×</button>
@@ -360,11 +649,104 @@ function showDetail(id) {
         <p class="eyebrow">快速判断</p>
         <h3>${venue.fit}</h3>
         <div class="detail-facts">
-          <div><span>参考月费</span><strong>¥${venue.monthlyPrice}</strong></div>
-          <div><span>单次试练</span><strong>¥${venue.trialPrice}</strong></div>
           <div><span>营业时间</span><strong>${venue.hours}</strong></div>
-          <div><span>力量器械</span><strong>${venue.equipment}/10</strong></div>
+          <div><span>综合评分</span><strong>${venue.rating} / 10</strong></div>
+          <div><span>女性友好</span><strong>${venue.womenFriendly ? "是" : "待确认"}</strong></div>
+          <div><span>价格核验</span><strong>${venue.updated}</strong></div>
         </div>
+      </section>
+      <section class="pricing-section">
+        <div class="equipment-heading">
+          <div>
+            <p class="eyebrow">参考价格</p>
+            <h3>不同周期怎么收费？</h3>
+          </div>
+          <span>到店前再次确认</span>
+        </div>
+        <div class="pricing-grid">
+          <div><span>单次</span><strong>¥${prices.single}</strong></div>
+          <div><span>周卡</span><strong>¥${prices.weekly}</strong></div>
+          <div class="pricing-primary"><span>月卡</span><strong>¥${prices.monthly}</strong></div>
+          <div><span>年卡</span><strong>¥${prices.annual}</strong></div>
+        </div>
+        <p class="source-note">以上为访谈原型演示价格，正式上线前需向门店核验有效期、押金、暂停和退卡规则。</p>
+      </section>
+      <section class="detail-explore">
+        <div class="detail-choice-heading">
+          <p class="eyebrow">继续了解</p>
+          <h3>你想先看哪一项？</h3>
+        </div>
+        <div class="detail-tabs" role="tablist" aria-label="${venue.name}详情选项">
+          <button type="button" role="tab" aria-selected="false" data-detail-tab="equipment">器械清单</button>
+          <button type="button" role="tab" aria-selected="false" data-detail-tab="reviews">用户点评 <span>${reviews.length}</span></button>
+        </div>
+        <p class="detail-tab-prompt">选择上方一项查看具体信息</p>
+      </section>
+      <section class="equipment-section detail-tab-panel" data-detail-panel="equipment" hidden>
+        <div class="equipment-heading">
+          <div>
+            <p class="eyebrow">器材清单</p>
+            <h3>这里有什么器械？</h3>
+          </div>
+          <span>按训练部位查看</span>
+        </div>
+        <div class="equipment-groups">
+          ${equipmentSections.map((section) => `
+            <section class="equipment-group">
+              <header>
+                <div>
+                  <h4>${section.title}</h4>
+                  <p>${section.description}</p>
+                </div>
+                <span>${inventory[section.key].length} 类</span>
+              </header>
+              <div class="equipment-list">
+                ${inventory[section.key].map(([equipmentId, quantity]) => {
+                  const item = equipmentCatalog[equipmentId];
+                  return `
+                    <article class="equipment-item">
+                      <img src="${item.image}" alt="${item.name}" loading="lazy" referrerpolicy="no-referrer" />
+                      <div>
+                        <div class="equipment-name">
+                          <strong>${item.name}</strong>
+                          <span>${quantity}</span>
+                        </div>
+                        <p>${item.description}</p>
+                      </div>
+                    </article>
+                  `;
+                }).join("")}
+              </div>
+            </section>
+          `).join("")}
+        </div>
+        <p class="source-note">器材数量为访谈原型演示，正式数据需经门店或实地核验。</p>
+      </section>
+      <section class="reviews-section detail-tab-panel" data-detail-panel="reviews" hidden>
+        <div class="equipment-heading">
+          <div>
+            <p class="eyebrow">用户点评</p>
+            <h3>去过的人怎么说？</h3>
+          </div>
+          <span>${reviews.length} 条体验样本</span>
+        </div>
+        <div class="review-list">
+          ${reviews.map((review) => `
+            <article class="review-item">
+              <header>
+                <div class="review-avatar" aria-hidden="true">${review.name.slice(0, 1)}</div>
+                <div>
+                  <strong>${review.name}</strong>
+                  <p>${review.profile} · ${review.time}</p>
+                </div>
+                <span>${review.rating.toFixed(1)}</span>
+              </header>
+              <p>${review.text}</p>
+              <small>体验记录于 ${review.date}</small>
+            </article>
+          `).join("")}
+        </div>
+        <p class="source-note">当前点评为访谈原型演示内容；正式产品应标明体验凭证、审核状态和商户申诉入口。</p>
       </section>
       <section class="warning-panel">
         <p class="eyebrow">办卡前留意</p>
@@ -378,7 +760,70 @@ function showDetail(id) {
     </div>
   `;
   els.detailContent.querySelector(".detail-close").addEventListener("click", () => els.detailDialog.close());
+  els.detailContent.querySelectorAll("[data-detail-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const selected = button.dataset.detailTab;
+      els.detailContent.querySelectorAll("[data-detail-tab]").forEach((tab) => {
+        tab.setAttribute("aria-selected", String(tab === button));
+      });
+      els.detailContent.querySelectorAll("[data-detail-panel]").forEach((panel) => {
+        panel.hidden = panel.dataset.detailPanel !== selected;
+      });
+      els.detailContent.querySelector(".detail-tab-prompt").hidden = true;
+    });
+  });
   els.detailDialog.showModal();
+}
+
+function updateGalleryPosition(index, smooth = true) {
+  const photos = state.galleryVenue?.gallery || [];
+  if (!photos.length) return;
+  state.galleryIndex = Math.max(0, Math.min(index, photos.length - 1));
+  els.galleryTrack.scrollTo({
+    left: els.galleryTrack.clientWidth * state.galleryIndex,
+    behavior: smooth ? "smooth" : "auto"
+  });
+  els.galleryCounter.textContent = `${state.galleryIndex + 1} / ${photos.length}`;
+  els.galleryPrevious.disabled = state.galleryIndex === 0;
+  els.galleryNext.disabled = state.galleryIndex === photos.length - 1;
+}
+
+function showGallery(id) {
+  const venue = venues.find((item) => item.id === id);
+  state.galleryVenue = venue;
+  state.galleryIndex = 0;
+  els.galleryTitle.textContent = venue.name;
+  els.galleryTrack.innerHTML = venue.gallery.map((photo, index) => `
+    <figure class="gallery-slide">
+      <img src="${photo.src}" alt="${venue.name}：${photo.caption}" ${index === 0 ? "" : 'loading="lazy"'} referrerpolicy="no-referrer" />
+      <figcaption>${photo.caption}</figcaption>
+    </figure>
+  `).join("");
+  els.galleryDialog.showModal();
+  requestAnimationFrame(() => updateGalleryPosition(0, false));
+}
+
+function showCrowd(id) {
+  const venue = venues.find((item) => item.id === id);
+  const profile = crowdProfiles[id];
+  els.crowdTitle.textContent = venue.name;
+  els.crowdContent.innerHTML = `
+    <div class="crowd-summary">
+      <div><span>最拥挤</span><strong>${profile.busiest}</strong></div>
+      <div><span>最宽松</span><strong>${profile.quietest}</strong></div>
+    </div>
+    <div class="crowd-chart" aria-label="${venue.name} 0到24点客流图">
+      ${profile.levels.map((level, hour) => `
+        <div class="crowd-hour" title="${String(hour).padStart(2, "0")}:00 · 客流指数 ${level}">
+          <span style="height:${Math.max(4, level)}%"></span>
+          <small>${hour % 3 === 0 ? hour : ""}</small>
+        </div>
+      `).join("")}
+    </div>
+    <div class="crowd-axis"><span>0点</span><span>6点</span><span>12点</span><span>18点</span><span>24点</span></div>
+    <p class="source-note">客流为访谈原型演示值，用于判断相对高峰；正式数据需通过分时到店记录持续核验。</p>
+  `;
+  els.crowdDialog.showModal();
 }
 
 function renderComparison() {
@@ -390,6 +835,7 @@ function renderComparison() {
     ["常练时段", ...selected.map((venue) => venue.crowd[preferences.trainingTime])],
     ["营业时间", ...selected.map((venue) => venue.hours)],
     ["新手指导", ...selected.map((venue) => venue.beginner ? "有" : "较少")],
+    ["女性友好", ...selected.map((venue) => venue.womenFriendly ? "是" : "待确认")],
     ["推销压力", ...selected.map((venue) => venue.lowSales ? "较低" : "需留意")],
     ["淋浴", ...selected.map((venue) => venue.shower ? "有" : "无")],
     ["力量器械", ...selected.map((venue) => `${venue.equipment}/10`)]
@@ -454,12 +900,24 @@ els.locateButton.addEventListener("click", () => {
 });
 
 els.openCompare.addEventListener("click", renderComparison);
+els.galleryPrevious.addEventListener("click", () => updateGalleryPosition(state.galleryIndex - 1));
+els.galleryNext.addEventListener("click", () => updateGalleryPosition(state.galleryIndex + 1));
+
+let galleryScrollTimer;
+els.galleryTrack.addEventListener("scroll", () => {
+  window.clearTimeout(galleryScrollTimer);
+  galleryScrollTimer = window.setTimeout(() => {
+    if (!els.galleryTrack.clientWidth || !state.galleryVenue) return;
+    const index = Math.round(els.galleryTrack.scrollLeft / els.galleryTrack.clientWidth);
+    if (index !== state.galleryIndex) updateGalleryPosition(index, false);
+  }, 80);
+});
 
 document.querySelectorAll("[data-close]").forEach((button) => {
   button.addEventListener("click", () => document.querySelector(`#${button.dataset.close}`).close());
 });
 
-[els.detailDialog, els.compareDialog].forEach((dialog) => {
+[els.detailDialog, els.galleryDialog, els.crowdDialog, els.compareDialog].forEach((dialog) => {
   dialog.addEventListener("click", (event) => {
     if (event.target === dialog) dialog.close();
   });
