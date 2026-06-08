@@ -15,6 +15,7 @@ const venues = [
     shower: true,
     open24: true,
     womenFriendly: true,
+    highlights: ["24小时开放", "低推销", "月卡灵活"],
     rating: 8.8,
     image: "https://images.pexels.com/photos/29639963/pexels-photo-29639963.jpeg?auto=compress&cs=tinysrgb&w=1200",
     gallery: [
@@ -52,6 +53,7 @@ const venues = [
     shower: true,
     open24: false,
     womenFriendly: true,
+    highlights: ["女性专属", "新手指导", "晚高峰宽松"],
     rating: 9.0,
     image: "https://images.pexels.com/photos/30021732/pexels-photo-30021732.jpeg?auto=compress&cs=tinysrgb&w=1200",
     gallery: [
@@ -89,6 +91,7 @@ const venues = [
     shower: true,
     open24: false,
     womenFriendly: true,
+    highlights: ["器械丰富", "淋浴齐全", "场地宽敞"],
     rating: 8.6,
     image: "https://images.pexels.com/photos/17227606/pexels-photo-17227606.jpeg?auto=compress&cs=tinysrgb&w=1200",
     gallery: [
@@ -126,6 +129,7 @@ const venues = [
     shower: false,
     open24: false,
     womenFriendly: true,
+    highlights: ["月费较低", "低推销", "早间宽松"],
     rating: 8.3,
     image: "https://images.pexels.com/photos/4959807/pexels-photo-4959807.jpeg?auto=compress&cs=tinysrgb&w=1200",
     gallery: [
@@ -163,6 +167,7 @@ const venues = [
     shower: true,
     open24: false,
     womenFriendly: false,
+    highlights: ["力量器械全", "自由重量强", "低推销"],
     rating: 8.7,
     image: "https://images.pexels.com/photos/29639963/pexels-photo-29639963.jpeg?auto=compress&cs=tinysrgb&w=1200",
     gallery: [
@@ -200,6 +205,7 @@ const venues = [
     shower: true,
     open24: true,
     womenFriendly: true,
+    highlights: ["24小时开放", "月费较低", "自助门禁"],
     rating: 8.2,
     image: "https://images.pexels.com/photos/4959807/pexels-photo-4959807.jpeg?auto=compress&cs=tinysrgb&w=1200",
     gallery: [
@@ -296,62 +302,62 @@ const equipmentCatalog = {
   treadmill: {
     name: "跑步机",
     description: "适合热身、快走和持续有氧",
-    image: "https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg?auto=compress&cs=tinysrgb&w=700"
+    image: "https://commons.wikimedia.org/wiki/Special:FilePath/Treadmill-gym.jpg?width=900"
   },
   elliptical: {
     name: "椭圆机",
     description: "冲击较低，适合新手有氧",
-    image: "https://images.pexels.com/photos/4162451/pexels-photo-4162451.jpeg?auto=compress&cs=tinysrgb&w=700"
+    image: "https://commons.wikimedia.org/wiki/Special:FilePath/Elliptical_machine.jpg?width=900"
   },
   bike: {
     name: "动感单车",
     description: "适合间歇训练和下肢耐力",
-    image: "https://images.pexels.com/photos/4162487/pexels-photo-4162487.jpeg?auto=compress&cs=tinysrgb&w=700"
+    image: "https://commons.wikimedia.org/wiki/Special:FilePath/Stationary_bicycle.jpg?width=900"
   },
   stairClimber: {
     name: "登阶机",
     description: "偏高强度的下肢有氧训练",
-    image: "https://images.pexels.com/photos/4162488/pexels-photo-4162488.jpeg?auto=compress&cs=tinysrgb&w=700"
+    image: "https://commons.wikimedia.org/wiki/Special:FilePath/Man_on_stair_machine.jpg?width=900"
   },
   chestPress: {
     name: "坐姿推胸机",
     description: "固定轨迹，对新手较友好",
-    image: "https://images.pexels.com/photos/1552242/pexels-photo-1552242.jpeg?auto=compress&cs=tinysrgb&w=700"
+    image: "https://commons.wikimedia.org/wiki/Special:FilePath/Chest_Incline.jpg?width=900"
   },
   benchPress: {
     name: "卧推架",
     description: "适合杠铃卧推和进阶训练",
-    image: "https://images.pexels.com/photos/949126/pexels-photo-949126.jpeg?auto=compress&cs=tinysrgb&w=700"
+    image: "https://commons.wikimedia.org/wiki/Special:FilePath/Bench_press_Machine.jpg?width=900"
   },
   pecDeck: {
     name: "蝴蝶机",
     description: "用于胸部夹胸和后束训练",
-    image: "https://images.pexels.com/photos/4162449/pexels-photo-4162449.jpeg?auto=compress&cs=tinysrgb&w=700"
+    image: "https://commons.wikimedia.org/wiki/Special:FilePath/Pec_deck_Fly.jpg?width=900"
   },
   cable: {
     name: "龙门架",
     description: "可完成夹胸、下压等多种动作",
-    image: "https://images.pexels.com/photos/17227606/pexels-photo-17227606.jpeg?auto=compress&cs=tinysrgb&w=700"
+    image: "https://commons.wikimedia.org/wiki/Special:FilePath/Chest_flies_with_cable_machine_-_cable_crossover_flies.jpg?width=900"
   },
   latPulldown: {
     name: "高位下拉机",
     description: "适合练习背阔肌发力",
-    image: "https://images.pexels.com/photos/2261485/pexels-photo-2261485.jpeg?auto=compress&cs=tinysrgb&w=700"
+    image: "https://commons.wikimedia.org/wiki/Special:FilePath/Lat_pulldown_machine_20180112.jpg?width=900"
   },
   seatedRow: {
     name: "坐姿划船机",
     description: "固定轨迹训练中背部",
-    image: "https://images.pexels.com/photos/841130/pexels-photo-841130.jpeg?auto=compress&cs=tinysrgb&w=700"
+    image: "https://commons.wikimedia.org/wiki/Special:FilePath/Woman_using_a_seated_cable_row_machine_at_the_gym.jpg?width=900"
   },
   assistedPullup: {
     name: "助力引体机",
     description: "降低引体向上的入门难度",
-    image: "https://images.pexels.com/photos/6456300/pexels-photo-6456300.jpeg?auto=compress&cs=tinysrgb&w=700"
+    image: "https://commons.wikimedia.org/wiki/Special:FilePath/Dip_and_pull-up_machine.jpg?width=900"
   },
   backExtension: {
     name: "罗马椅",
     description: "用于下背和后链基础训练",
-    image: "https://images.pexels.com/photos/3768916/pexels-photo-3768916.jpeg?auto=compress&cs=tinysrgb&w=700"
+    image: "https://commons.wikimedia.org/wiki/Special:FilePath/RomanChairBackExtension.JPG?width=900"
   }
 };
 
@@ -563,7 +569,9 @@ function renderRecommendations(preferences) {
             <p class="match-reason">${getMatchReason(venue, preferences, index)}</p>
             <h3>${venue.name}</h3>
             <p class="venue-meta">${venue.district} · ${venue.type}</p>
-            ${venue.womenFriendly ? '<span class="venue-feature">女性友好</span>' : ""}
+            <div class="venue-features" aria-label="${venue.name}的突出特点">
+              ${venue.highlights.map((highlight) => `<span class="venue-feature">${highlight}</span>`).join("")}
+            </div>
           </div>
           <label class="compare-toggle">
             <input type="checkbox" data-compare="${venue.id}" />
@@ -720,7 +728,7 @@ function showDetail(id) {
             </section>
           `).join("")}
         </div>
-        <p class="source-note">器材数量为访谈原型演示，正式数据需经门店或实地核验。</p>
+        <p class="source-note">器材图片来自 Wikimedia Commons，仅用于准确识别器械；数量为访谈原型演示，正式数据需经门店或实地核验。</p>
       </section>
       <section class="reviews-section detail-tab-panel" data-detail-panel="reviews" hidden>
         <div class="equipment-heading">
