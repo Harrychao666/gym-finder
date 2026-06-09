@@ -617,6 +617,12 @@ select {
   cursor: pointer;
 }
 
+.price-fact {
+  cursor: pointer;
+}
+
+.price-fact:hover,
+.price-fact:focus-visible,
 .crowd-fact:hover,
 .crowd-fact:focus-visible {
   outline: 1px solid var(--muted);
@@ -1861,6 +1867,47 @@ dialog::backdrop {
 .pricing-primary span,
 .detail-tabs button[aria-selected="true"] span {
   color: #55555a;
+}
+
+.pricing-primary strong {
+  color: #000000 !important;
+}
+
+.pricing-dialog {
+  width: min(620px, calc(100vw - 24px));
+}
+
+.pricing-dialog-content {
+  padding: 22px;
+  display: grid;
+  gap: 18px;
+  color: #f5f5f7;
+  background: #0b0b0c;
+}
+
+.pricing-intro {
+  color: #a1a1a6;
+  font-size: 13px;
+}
+
+.pricing-reminder {
+  padding: 14px 16px;
+  display: grid;
+  gap: 5px;
+  border-left: 3px solid #ff9f0a;
+  border-radius: 0 6px 6px 0;
+  color: #f5e7d0;
+  background: rgba(255, 159, 10, 0.12);
+}
+
+.pricing-reminder strong {
+  color: #ffb340;
+  font-size: 13px;
+}
+
+.pricing-reminder p {
+  font-size: 12px;
+  line-height: 1.55;
 }
 
 .detail-tabs button {

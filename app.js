@@ -440,6 +440,9 @@ const els = {
   crowdDialog: document.querySelector("#crowdDialog"),
   crowdTitle: document.querySelector("#crowdTitle"),
   crowdContent: document.querySelector("#crowdContent"),
+  pricingDialog: document.querySelector("#pricingDialog"),
+  pricingTitle: document.querySelector("#pricingTitle"),
+  pricingContent: document.querySelector("#pricingContent"),
   compareDialog: document.querySelector("#compareDialog"),
   compareContent: document.querySelector("#compareContent")
 };
@@ -580,7 +583,9 @@ function renderRecommendations(preferences) {
         </div>
 
         <div class="facts-row">
-          <div><strong>¥${venue.monthlyPrice}</strong><span>参考月费</span></div>
+          <button class="price-fact" data-pricing="${venue.id}" type="button" aria-label="查看 ${venue.name} 的具体收费">
+            <strong>¥${venue.monthlyPrice}</strong><span>参考月费</span>
+          </button>
           <div><strong>${venue.estimatedCommute} 分钟</strong><span>通勤估算</span></div>
           <div><strong class="rating-value">${venue.rating}</strong><span>综合评分</span></div>
           <button class="crowd-fact" data-crowd="${venue.id}" type="button">
@@ -612,6 +617,9 @@ function renderRecommendations(preferences) {
   });
   document.querySelectorAll("[data-crowd]").forEach((button) => {
     button.addEventListener("click", () => showCrowd(button.dataset.crowd));
+  });
+  document.querySelectorAll("[data-pricing]").forEach((button) => {
+    button.addEventListener("click", () => showPricing(button.dataset.pricing));
   });
 }
 
@@ -834,6 +842,27 @@ function showCrowd(id) {
   els.crowdDialog.showModal();
 }
 
+function showPricing(id) {
+  const venue = venues.find((item) => item.id === id);
+  const prices = pricingPlans[id];
+  els.pricingTitle.textContent = venue.name;
+  els.pricingContent.innerHTML = `
+    <p class="pricing-intro">目前收集到的公开及访谈参考价格</p>
+    <div class="pricing-grid pricing-dialog-grid">
+      <div><span>单次</span><strong>¥${prices.single}</strong></div>
+      <div><span>周卡</span><strong>¥${prices.weekly}</strong></div>
+      <div class="pricing-primary"><span>月卡</span><strong>¥${prices.monthly}</strong></div>
+      <div><span>年卡</span><strong>¥${prices.annual}</strong></div>
+    </div>
+    <div class="pricing-reminder">
+      <strong>付款前再确认</strong>
+      <p>询问有效期、押金、自动续费、暂停、转卡和退款规则。</p>
+    </div>
+    <p class="source-note">当前为访谈原型演示价格，实际收费请以门店最新书面报价为准。</p>
+  `;
+  els.pricingDialog.showModal();
+}
+
 function renderComparison() {
   const selected = state.recommendations.filter((venue) => state.compareIds.has(venue.id));
   const preferences = getPreferences();
@@ -925,7 +954,7 @@ document.querySelectorAll("[data-close]").forEach((button) => {
   button.addEventListener("click", () => document.querySelector(`#${button.dataset.close}`).close());
 });
 
-[els.detailDialog, els.galleryDialog, els.crowdDialog, els.compareDialog].forEach((dialog) => {
+[els.detailDialog, els.galleryDialog, els.crowdDialog, els.pricingDialog, els.compareDialog].forEach((dialog) => {
   dialog.addEventListener("click", (event) => {
     if (event.target === dialog) dialog.close();
   });
