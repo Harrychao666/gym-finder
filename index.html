@@ -15,7 +15,7 @@
           <span class="brand-mark" aria-hidden="true">练</span>
           <span>
             <strong>练哪儿</strong>
-            <small>广州健身房选馆助手</small>
+            <small class="brand-slogan">只做真实的评分</small>
           </span>
         </a>
         <div class="prototype-note">
@@ -170,6 +170,32 @@
           <button class="icon-button" data-close="pricingDialog" type="button" aria-label="关闭收费详情">×</button>
         </header>
         <div id="pricingContent" class="pricing-dialog-content"></div>
+      </article>
+    </dialog>
+
+    <dialog id="ratingDialog" class="app-dialog rating-dialog" aria-labelledby="ratingTitle">
+      <article>
+        <header class="dialog-header">
+          <div>
+            <p class="eyebrow">平台实测评分</p>
+            <h2 id="ratingTitle"></h2>
+          </div>
+          <button class="icon-button" data-close="ratingDialog" type="button" aria-label="关闭评分详情">×</button>
+        </header>
+        <div id="ratingContent" class="rating-dialog-content"></div>
+      </article>
+    </dialog>
+
+    <dialog id="commuteDialog" class="app-dialog commute-dialog" aria-labelledby="commuteTitle">
+      <article>
+        <header class="dialog-header">
+          <div>
+            <p class="eyebrow">单程通勤估算</p>
+            <h2 id="commuteTitle"></h2>
+          </div>
+          <button class="icon-button" data-close="commuteDialog" type="button" aria-label="关闭通勤详情">×</button>
+        </header>
+        <div id="commuteContent" class="commute-dialog-content"></div>
       </article>
     </dialog>
 
