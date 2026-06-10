@@ -271,22 +271,67 @@ const crowdProfiles = {
   }
 };
 
-const venueReviews = {
+const ratingProfiles = {
   luma: [
-    { name: "阿琳", profile: "健身 4 个月", time: "工作日晚间", rating: 9.0, date: "2026-05-26", text: "门禁和器械都容易上手，晚上八点力量区会稍微等位，没人一直推销办课。" },
-    { name: "Mia", profile: "跑步为主", time: "工作日早晨", rating: 8.6, date: "2026-05-18", text: "早上人少，跑步机充足。夜间值班人员不多，第一次来建议白天熟悉环境。" }
+    { label: "价格透明", score: 9.0, weight: 20, note: "月卡和短周期价格较清楚" },
+    { label: "器械配置", score: 8.8, weight: 25, note: "基础力量与有氧器械较完整" },
+    { label: "拥挤体验", score: 8.2, weight: 20, note: "晚八点力量区偶尔需要等位" },
+    { label: "新手友好", score: 9.2, weight: 20, note: "门禁和器械容易上手，推销较少" },
+    { label: "卫生环境", score: 8.8, weight: 15, note: "训练区和淋浴维护稳定" }
   ],
   fither: [
-    { name: "小乔", profile: "健身新手", time: "周末下午", rating: 9.2, date: "2026-05-23", text: "女性训练氛围很放松，更衣区干净，工作人员会简单讲器械怎么调。" },
-    { name: "Yuki", profile: "力量训练 1 年", time: "工作日晚间", rating: 8.8, date: "2026-05-16", text: "自由重量不算特别多，但高峰期也不压迫。体验后会介绍小课包，可以直接拒绝。" }
+    { label: "价格透明", score: 8.5, weight: 20, note: "自由训练与小课包需分别确认" },
+    { label: "器械配置", score: 8.4, weight: 25, note: "器械够用，自由重量相对有限" },
+    { label: "拥挤体验", score: 9.2, weight: 20, note: "晚高峰训练空间仍较宽松" },
+    { label: "新手友好", score: 9.6, weight: 20, note: "女性氛围友好并提供基础讲解" },
+    { label: "卫生环境", score: 9.6, weight: 15, note: "更衣区和公共区域反馈较好" }
   ],
   startfit: [
-    { name: "Ken", profile: "健身 2 年", time: "工作日晚间", rating: 8.4, date: "2026-05-28", text: "器械种类确实多，但七点后热门器械要排队，销售跟进比较积极。" },
-    { name: "夏夏", profile: "健身新手", time: "周末上午", rating: 8.7, date: "2026-05-21", text: "上午体验不错，淋浴和更衣空间够用，合同中的退转卡条件需要仔细问。" }
+    { label: "价格透明", score: 8.2, weight: 20, note: "退转卡和私教条款需要细看" },
+    { label: "器械配置", score: 9.5, weight: 25, note: "器械种类多，力量区配置完整" },
+    { label: "拥挤体验", score: 7.4, weight: 20, note: "工作日晚高峰热门器械需排队" },
+    { label: "新手友好", score: 8.8, weight: 20, note: "有基础指导，但销售跟进较积极" },
+    { label: "卫生环境", score: 9.0, weight: 15, note: "淋浴与更衣空间整体够用" }
   ],
   lightgym: [
-    { name: "陈同学", profile: "预算型用户", time: "工作日早晨", rating: 8.5, date: "2026-05-19", text: "价格轻松，早晨基本不用等器械。没有独立淋浴，训练后直接回家更合适。" },
-    { name: "丸子", profile: "健身 6 个月", time: "工作日晚间", rating: 8.1, date: "2026-05-13", text: "基础训练够用，重训器械数量一般，工作人员不会频繁推销。" }
+    { label: "价格透明", score: 9.2, weight: 20, note: "短周期价格清楚，月费压力较低" },
+    { label: "器械配置", score: 7.4, weight: 25, note: "基础训练够用，重训器械较少" },
+    { label: "拥挤体验", score: 8.5, weight: 20, note: "早晨宽松，晚间偶尔需要等位" },
+    { label: "新手友好", score: 8.4, weight: 20, note: "工作人员较少推销，指导有限" },
+    { label: "卫生环境", score: 8.2, weight: 15, note: "训练区整洁，但没有独立淋浴" }
+  ],
+  powerbox: [
+    { label: "价格透明", score: 8.0, weight: 20, note: "月卡信息明确，试练规则需确认" },
+    { label: "器械配置", score: 9.8, weight: 25, note: "自由重量和重训器械非常完整" },
+    { label: "拥挤体验", score: 8.0, weight: 20, note: "周末深蹲架等热门器械较紧张" },
+    { label: "新手友好", score: 8.2, weight: 20, note: "氛围直接，完全新手建议有人陪同" },
+    { label: "卫生环境", score: 9.4, weight: 15, note: "训练区域维护和清洁反馈较好" }
+  ],
+  airfit: [
+    { label: "价格透明", score: 8.8, weight: 20, note: "月卡规则简单，线上价格较清楚" },
+    { label: "器械配置", score: 8.0, weight: 25, note: "基础器械完整，热门有氧数量一般" },
+    { label: "拥挤体验", score: 8.0, weight: 20, note: "晚高峰跑步机偶尔需要等待" },
+    { label: "新手友好", score: 8.0, weight: 20, note: "自助流程清楚，但现场指导较少" },
+    { label: "卫生环境", score: 8.3, weight: 15, note: "整体整洁，深夜维护频率较低" }
+  ]
+};
+
+const venueReviews = {
+  luma: [
+    { name: "阿琳", profile: "健身 4 个月", time: "工作日晚间", rating: 9.0, date: "2026-05-26", photos: 2, text: "门禁和器械都容易上手，晚上八点力量区会稍微等位，没人一直推销办课。" },
+    { name: "Mia", profile: "跑步为主", time: "工作日早晨", rating: 8.6, date: "2026-05-18", photos: 2, text: "早上人少，跑步机充足。夜间值班人员不多，第一次来建议白天熟悉环境。" }
+  ],
+  fither: [
+    { name: "小乔", profile: "健身新手", time: "周末下午", rating: 9.2, date: "2026-05-23", photos: 2, text: "女性训练氛围很放松，更衣区干净，工作人员会简单讲器械怎么调。" },
+    { name: "Yuki", profile: "力量训练 1 年", time: "工作日晚间", rating: 8.8, date: "2026-05-16", photos: 2, text: "自由重量不算特别多，但高峰期也不压迫。体验后会介绍小课包，可以直接拒绝。" }
+  ],
+  startfit: [
+    { name: "Ken", profile: "健身 2 年", time: "工作日晚间", rating: 8.4, date: "2026-05-28", photos: 2, text: "器械种类确实多，但七点后热门器械要排队，销售跟进比较积极。" },
+    { name: "夏夏", profile: "健身新手", time: "周末上午", rating: 8.7, date: "2026-05-21", photos: 2, text: "上午体验不错，淋浴和更衣空间够用，合同中的退转卡条件需要仔细问。" }
+  ],
+  lightgym: [
+    { name: "陈同学", profile: "预算型用户", time: "工作日早晨", rating: 8.5, date: "2026-05-19", photos: 2, text: "价格轻松，早晨基本不用等器械。没有独立淋浴，训练后直接回家更合适。" },
+    { name: "丸子", profile: "健身 6 个月", time: "工作日晚间", rating: 8.1, date: "2026-05-13", photos: 2, text: "基础训练够用，重训器械数量一般，工作人员不会频繁推销。" }
   ],
   powerbox: [
     { name: "Leo", profile: "力量训练 3 年", time: "周末下午", rating: 9.0, date: "2026-05-17", text: "自由重量配置很好，周末深蹲架比较抢手，更适合已经会自己安排训练的人。" },
@@ -443,6 +488,12 @@ const els = {
   pricingDialog: document.querySelector("#pricingDialog"),
   pricingTitle: document.querySelector("#pricingTitle"),
   pricingContent: document.querySelector("#pricingContent"),
+  ratingDialog: document.querySelector("#ratingDialog"),
+  ratingTitle: document.querySelector("#ratingTitle"),
+  ratingContent: document.querySelector("#ratingContent"),
+  commuteDialog: document.querySelector("#commuteDialog"),
+  commuteTitle: document.querySelector("#commuteTitle"),
+  commuteContent: document.querySelector("#commuteContent"),
   compareDialog: document.querySelector("#compareDialog"),
   compareContent: document.querySelector("#compareContent")
 };
@@ -558,6 +609,8 @@ function hideRecommendations() {
 function renderRecommendations(preferences) {
   els.venueList.innerHTML = "";
   state.recommendations.forEach((venue, index) => {
+    const evaluatorScore = ratingProfiles[venue.id]
+      .reduce((total, item) => total + item.score * item.weight / 100, 0) / 2;
     const article = document.createElement("article");
     article.className = "venue-card";
     article.innerHTML = `
@@ -586,15 +639,22 @@ function renderRecommendations(preferences) {
           <button class="price-fact" data-pricing="${venue.id}" type="button" aria-label="查看 ${venue.name} 的具体收费">
             <strong>¥${venue.monthlyPrice}</strong><span>参考月费</span>
           </button>
-          <div><strong>${venue.estimatedCommute} 分钟</strong><span>通勤估算</span></div>
-          <div><strong class="rating-value">${venue.rating}</strong><span>综合评分</span></div>
+          <button class="commute-fact" data-commute="${venue.id}" type="button" aria-label="查看从 ${preferences.location} 到 ${venue.name} 的通勤时间">
+            <strong>${venue.estimatedCommute} 分钟</strong><span>通勤估算</span>
+          </button>
+          <button class="rating-fact" data-rating="${venue.id}" type="button" aria-label="查看 ${venue.name} 的评分构成">
+            <span class="rating-score-line">
+              <strong class="rating-value">${evaluatorScore.toFixed(1)}</strong>
+              <small>/ 5</small>
+            </span>
+            <span class="rating-label">体验官实测</span>
+          </button>
           <button class="crowd-fact" data-crowd="${venue.id}" type="button">
             <strong class="${crowdClass(venue.crowd[preferences.trainingTime])}">${venue.crowd[preferences.trainingTime]}</strong>
             <span>拥挤程度</span>
           </button>
         </div>
 
-        <p class="fit-line"><strong>适合你：</strong>${venue.fit}</p>
         <div class="caution-line"><span>办卡前留意</span><p>${venue.caution}</p></div>
 
         <div class="card-footer">
@@ -620,6 +680,12 @@ function renderRecommendations(preferences) {
   });
   document.querySelectorAll("[data-pricing]").forEach((button) => {
     button.addEventListener("click", () => showPricing(button.dataset.pricing));
+  });
+  document.querySelectorAll("[data-rating]").forEach((button) => {
+    button.addEventListener("click", () => showRating(button.dataset.rating));
+  });
+  document.querySelectorAll("[data-commute]").forEach((button) => {
+    button.addEventListener("click", () => showCommute(button.dataset.commute));
   });
 }
 
@@ -666,7 +732,7 @@ function showDetail(id) {
         <h3>${venue.fit}</h3>
         <div class="detail-facts">
           <div><span>营业时间</span><strong>${venue.hours}</strong></div>
-          <div><span>综合评分</span><strong>${venue.rating} / 10</strong></div>
+            <div><span>体验官评分</span><strong>${venue.rating} / 10</strong></div>
           <div><span>女性友好</span><strong>${venue.womenFriendly ? "是" : "待确认"}</strong></div>
           <div><span>价格核验</span><strong>${venue.updated}</strong></div>
         </div>
@@ -758,6 +824,15 @@ function showDetail(id) {
                 <span>${review.rating.toFixed(1)}</span>
               </header>
               <p>${review.text}</p>
+              <div class="review-photos" aria-label="${review.name} 的体验照片演示位">
+                ${Array.from({ length: review.photos || 2 }, (_, index) => `
+                  <div class="review-photo-placeholder" role="img" aria-label="体验照片 ${index + 1} 占位">
+                    <span aria-hidden="true">▧</span>
+                    <strong>体验照片 ${index + 1}</strong>
+                    <small>正式版展示用户实拍</small>
+                  </div>
+                `).join("")}
+              </div>
               <small>体验记录于 ${review.date}</small>
             </article>
           `).join("")}
@@ -863,6 +938,110 @@ function showPricing(id) {
   els.pricingDialog.showModal();
 }
 
+function renderDumbbells(score) {
+  const activeCount = Math.round(score / 2);
+  return Array.from({ length: 5 }, (_, index) => `
+    <span class="dumbbell ${index < activeCount ? "is-active" : ""}" aria-hidden="true">
+      <i></i><b></b><i></i>
+    </span>
+  `).join("");
+}
+
+function showRating(id) {
+  const venue = venues.find((item) => item.id === id);
+  const dimensions = ratingProfiles[id];
+  const reviews = venueReviews[id];
+  const weightedScore = dimensions.reduce((total, item) => total + item.score * item.weight / 100, 0);
+  const consumerScore = reviews.reduce((total, review) => total + review.rating, 0) / reviews.length;
+  els.ratingTitle.textContent = venue.name;
+  els.ratingContent.innerHTML = `
+    <section class="rating-origin-note">
+      <span>我们的核心评分</span>
+      <strong>体验官费用由平台承担，并按统一标准到店实测。</strong>
+      <p>消费者评价用于补充不同时间段和使用场景，不计入体验官主评分。</p>
+    </section>
+    <section class="rating-sources" aria-label="两类评分来源">
+      <article class="rating-source rating-source-primary">
+        <span class="rating-source-tag">核心依据</span>
+        <h3>体验官评分</h3>
+        <div class="rating-source-score">
+          <strong>${(weightedScore / 2).toFixed(1)}</strong><small>/ 5</small>
+        </div>
+        <div class="dumbbell-row" aria-label="体验官评分 ${(weightedScore / 2).toFixed(1)} 分，满分 5 分">
+          ${renderDumbbells(weightedScore)}
+        </div>
+        <p>统一查看价格、器械、拥挤、新手体验和卫生环境。</p>
+      </article>
+      <article class="rating-source">
+        <span class="rating-source-tag">补充参考</span>
+        <h3>消费者评分</h3>
+        <div class="rating-source-score">
+          <strong>${(consumerScore / 2).toFixed(1)}</strong><small>/ 5</small>
+        </div>
+        <p>来自 ${reviews.length} 条体验样本，仅作为真实使用感受的补充，不参与主评分核算。</p>
+      </article>
+    </section>
+    <section class="rating-dimensions" aria-label="体验官评分维度">
+      <header class="rating-section-heading">
+        <div><span>体验官测评</span><h3>主评分怎么得出？</h3></div>
+        <small>满分 10 分</small>
+      </header>
+      ${dimensions.map((item) => `
+        <article class="rating-dimension">
+          <div class="rating-dimension-heading">
+            <div>
+              <strong>${item.label}</strong>
+              <span>权重 ${item.weight}%</span>
+            </div>
+            <b>${item.score.toFixed(1)}</b>
+          </div>
+          <div class="rating-bar" aria-label="${item.label} ${item.score.toFixed(1)} 分">
+            <span style="width:${item.score * 10}%"></span>
+          </div>
+          <p>${item.note}</p>
+        </article>
+      `).join("")}
+    </section>
+    <section class="rating-method">
+      <strong>怎么核算？</strong>
+      <p>只使用体验官的五项实测得分，按对应权重相加，再除以 2 转换为 5 分制。消费者评分不会混入这个结果。</p>
+      <code>${dimensions.map((item) => `${item.score.toFixed(1)}×${item.weight}%`).join(" + ")} = ${weightedScore.toFixed(1)}</code>
+    </section>
+    <p class="source-note">当前为访谈原型演示数据。正式上线后应展示体验官编号、到店日期、测评时段、消费凭证和最近核验日期。</p>
+  `;
+  els.ratingDialog.showModal();
+}
+
+function showCommute(id) {
+  const venue = state.recommendations.find((item) => item.id === id);
+  const preferences = getPreferences();
+  const distance = distanceInKm(preferences.coordinates, venue.coordinates);
+  els.commuteTitle.textContent = venue.name;
+  els.commuteContent.innerHTML = `
+    <section class="commute-route" aria-label="通勤路线">
+      <div class="commute-point">
+        <span aria-hidden="true">A</span>
+        <div><small>从这里出发</small><strong>${preferences.location}</strong></div>
+      </div>
+      <div class="commute-line"><span></span><b>${venue.estimatedCommute} 分钟</b></div>
+      <div class="commute-point">
+        <span aria-hidden="true">B</span>
+        <div><small>到达场馆</small><strong>${venue.name}</strong><p>${venue.district} · ${venue.type}</p></div>
+      </div>
+    </section>
+    <section class="commute-summary">
+      <div><span>预计单程</span><strong>${venue.estimatedCommute} 分钟</strong></div>
+      <div><span>直线距离</span><strong>${distance.toFixed(1)} 公里</strong></div>
+    </section>
+    <section class="commute-method">
+      <strong>目前怎么估算？</strong>
+      <p>根据你选择的位置与场馆坐标的直线距离，结合广州市内短途通勤速度和固定进出场时间估算。</p>
+    </section>
+    <p class="source-note">当前不是实时导航结果。正式上线后建议接入地图服务，分别显示步行、骑行、公交和驾车的实时预计时间。</p>
+  `;
+  els.commuteDialog.showModal();
+}
+
 function renderComparison() {
   const selected = state.recommendations.filter((venue) => state.compareIds.has(venue.id));
   const preferences = getPreferences();
@@ -954,7 +1133,7 @@ document.querySelectorAll("[data-close]").forEach((button) => {
   button.addEventListener("click", () => document.querySelector(`#${button.dataset.close}`).close());
 });
 
-[els.detailDialog, els.galleryDialog, els.crowdDialog, els.pricingDialog, els.compareDialog].forEach((dialog) => {
+[els.detailDialog, els.galleryDialog, els.crowdDialog, els.pricingDialog, els.ratingDialog, els.commuteDialog, els.compareDialog].forEach((dialog) => {
   dialog.addEventListener("click", (event) => {
     if (event.target === dialog) dialog.close();
   });
