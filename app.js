@@ -15,6 +15,7 @@ const venues = [
     shower: true,
     open24: true,
     womenFriendly: true,
+    nightSafety: false,
     highlights: ["24小时开放", "低推销", "月卡灵活"],
     rating: 8.8,
     image: "https://images.pexels.com/photos/29639963/pexels-photo-29639963.jpeg?auto=compress&cs=tinysrgb&w=1200",
@@ -35,6 +36,8 @@ const venues = [
     fit: "适合想自由安排时间、又不希望被频繁推销的新手。",
     caution: "夜间工作人员较少，第一次建议白天到店熟悉器械和门禁。",
     evidence: ["公开价目表", "工作日晚间试练", "达人现场照片"],
+    testerCount: 3,
+    testedAt: "2026-05-29",
     updated: "2026-05-28"
   },
   {
@@ -53,6 +56,7 @@ const venues = [
     shower: true,
     open24: false,
     womenFriendly: true,
+    nightSafety: true,
     highlights: ["女性专属", "新手指导", "晚高峰宽松"],
     rating: 9.0,
     image: "https://images.pexels.com/photos/30021732/pexels-photo-30021732.jpeg?auto=compress&cs=tinysrgb&w=1200",
@@ -73,6 +77,8 @@ const venues = [
     fit: "适合在意训练氛围、希望获得基础器械讲解的女性新手。",
     caution: "会推荐私教小课包，先确认自由训练会员是否包含入门指导。",
     evidence: ["门店报价截图", "周末下午试练", "更衣区现场记录"],
+    testerCount: 2,
+    testedAt: "2026-05-25",
     updated: "2026-05-24"
   },
   {
@@ -91,6 +97,7 @@ const venues = [
     shower: true,
     open24: false,
     womenFriendly: true,
+    nightSafety: true,
     highlights: ["器械丰富", "淋浴齐全", "场地宽敞"],
     rating: 8.6,
     image: "https://images.pexels.com/photos/17227606/pexels-photo-17227606.jpeg?auto=compress&cs=tinysrgb&w=1200",
@@ -111,6 +118,8 @@ const venues = [
     fit: "适合重视器械种类、能避开工作日晚高峰的人。",
     caution: "体验课后会持续跟进私教，办卡前要确认退转卡条款。",
     evidence: ["门店合同样本", "工作日晚高峰试练", "器械数量记录"],
+    testerCount: 4,
+    testedAt: "2026-05-31",
     updated: "2026-05-30"
   },
   {
@@ -129,6 +138,7 @@ const venues = [
     shower: false,
     open24: false,
     womenFriendly: true,
+    nightSafety: true,
     highlights: ["月费较低", "低推销", "早间宽松"],
     rating: 8.3,
     image: "https://images.pexels.com/photos/4959807/pexels-photo-4959807.jpeg?auto=compress&cs=tinysrgb&w=1200",
@@ -149,6 +159,8 @@ const venues = [
     fit: "适合预算有限、以基础力量和有氧训练为主的新手。",
     caution: "没有独立淋浴区，重训器械数量也不算多。",
     evidence: ["前台公开报价", "工作日早晨试练", "达人现场记录"],
+    testerCount: 2,
+    testedAt: "2026-05-21",
     updated: "2026-05-20"
   },
   {
@@ -167,6 +179,7 @@ const venues = [
     shower: true,
     open24: false,
     womenFriendly: false,
+    nightSafety: true,
     highlights: ["力量器械全", "自由重量强", "低推销"],
     rating: 8.7,
     image: "https://images.pexels.com/photos/29639963/pexels-photo-29639963.jpeg?auto=compress&cs=tinysrgb&w=1200",
@@ -187,6 +200,8 @@ const venues = [
     fit: "适合已经掌握基础动作、重视自由重量设备的人。",
     caution: "训练氛围偏硬核，完全零基础建议有人陪同试练。",
     evidence: ["公开月卡价格", "周末试练", "自由重量区盘点"],
+    testerCount: 3,
+    testedAt: "2026-05-19",
     updated: "2026-05-18"
   },
   {
@@ -205,6 +220,7 @@ const venues = [
     shower: true,
     open24: true,
     womenFriendly: true,
+    nightSafety: false,
     highlights: ["24小时开放", "月费较低", "自助门禁"],
     rating: 8.2,
     image: "https://images.pexels.com/photos/4959807/pexels-photo-4959807.jpeg?auto=compress&cs=tinysrgb&w=1200",
@@ -225,6 +241,8 @@ const venues = [
     fit: "适合有基本训练计划、需要深夜或清晨训练的人。",
     caution: "自助运营为主，新手器械指导有限，晚高峰跑步机较紧张。",
     evidence: ["线上价目表", "晚间实地观察", "门禁流程记录"],
+    testerCount: 2,
+    testedAt: "2026-05-27",
     updated: "2026-05-26"
   }
 ];
@@ -236,6 +254,45 @@ const pricingPlans = {
   lightgym: { single: 29, weekly: 99, monthly: 299, annual: 2699 },
   powerbox: { single: 68, weekly: 188, monthly: 520, annual: 4888 },
   airfit: { single: 35, weekly: 109, monthly: 329, annual: 2999 }
+};
+
+const venueContacts = {
+  luma: {
+    phone: "020-8000-1201",
+    address: "广州市天河区珠江新城花城大道演示点 A 座 3 层",
+    nearestStation: "珠江新城地铁站 A1 口步行约 10 分钟",
+    booking: "建议先预约 30 分钟试练，第一次白天到店熟悉门禁。"
+  },
+  fither: {
+    phone: "020-8000-1202",
+    address: "广州市天河区珠江新城兴民路演示点 2 层",
+    nearestStation: "珠江新城地铁站 B1 口步行约 8 分钟",
+    booking: "建议确认自由训练会员是否包含入门指导。"
+  },
+  startfit: {
+    phone: "020-8000-1203",
+    address: "广州市天河区体育西路演示商业中心 5 层",
+    nearestStation: "体育西路地铁站 C 口步行约 12 分钟",
+    booking: "建议避开工作日晚高峰试练，并提前问清退转卡规则。"
+  },
+  lightgym: {
+    phone: "020-8000-1204",
+    address: "广州市天河区体育东路社区演示点 负一层",
+    nearestStation: "天河体育中心地铁站 D 口步行约 18 分钟",
+    booking: "建议早晨试练一次，确认淋浴、更衣和器械数量是否够用。"
+  },
+  powerbox: {
+    phone: "020-8000-1205",
+    address: "广州市海珠区琶洲大道训练演示仓 1 层",
+    nearestStation: "万胜围地铁站步行约 16 分钟",
+    booking: "建议已有基础动作经验后再试练，或找熟人陪同。"
+  },
+  airfit: {
+    phone: "020-8000-1206",
+    address: "广州市越秀区北京路演示点 4 层",
+    nearestStation: "公园前地铁站步行约 14 分钟",
+    booking: "建议夜间到店前先确认值班人员和门禁流程。"
+  }
 };
 
 const crowdProfiles = {
@@ -461,6 +518,11 @@ const districtCenters = {
   "番禺万博": [113.3475, 23.0051]
 };
 
+const priorityFeatureLabels = {
+  women: { label: "女性友好", field: "womenFriendly" },
+  nightSafety: { label: "夜间安全", field: "nightSafety" }
+};
+
 const els = {
   form: document.querySelector("#preferenceForm"),
   locationInput: document.querySelector("#locationInput"),
@@ -495,7 +557,11 @@ const els = {
   commuteTitle: document.querySelector("#commuteTitle"),
   commuteContent: document.querySelector("#commuteContent"),
   compareDialog: document.querySelector("#compareDialog"),
-  compareContent: document.querySelector("#compareContent")
+  compareContent: document.querySelector("#compareContent"),
+  openTrust: document.querySelector("#openTrust"),
+  trustDialog: document.querySelector("#trustDialog"),
+  introScreen: document.querySelector("#introScreen"),
+  enterApp: document.querySelector("#enterApp")
 };
 
 function getPreferences() {
@@ -565,7 +631,23 @@ function scoreVenue(venue, preferences) {
   if (preferences.priorities.includes("open24") && venue.open24) score += 12;
   if (preferences.priorities.includes("women") && venue.womenFriendly) score += 14;
   if (preferences.priorities.includes("women") && !venue.womenFriendly) score -= 10;
+  if (preferences.priorities.includes("nightSafety") && venue.nightSafety) score += 14;
+  if (preferences.priorities.includes("nightSafety") && !venue.nightSafety) score -= 12;
   return score;
+}
+
+function getVenueFeatureTags(venue, preferences) {
+  const priorityTags = preferences.priorities
+    .filter((priority) => priorityFeatureLabels[priority] && venue[priorityFeatureLabels[priority].field])
+    .map((priority) => priorityFeatureLabels[priority].label);
+  return [...new Set([...priorityTags, ...venue.highlights])].slice(0, 3);
+}
+
+function getEvidenceClass(item) {
+  if (item.includes("报价") || item.includes("价格") || item.includes("价目") || item.includes("合同")) return "is-price";
+  if (item.includes("试练") || item.includes("试训") || item.includes("体验")) return "is-visit";
+  if (item.includes("现场") || item.includes("记录") || item.includes("照片") || item.includes("门禁")) return "is-proof";
+  return "is-note";
 }
 
 function getMatchReason(venue, preferences, index) {
@@ -580,6 +662,20 @@ function crowdClass(value) {
   if (value === "宽松") return "good";
   if (value === "拥挤") return "risk";
   return "neutral";
+}
+
+function crowdLevelClass(level) {
+  if (level >= 65) return "is-busy";
+  if (level >= 35) return "is-normal";
+  return "is-quiet";
+}
+
+function formatTestRecency(dateString) {
+  const testedDate = new Date(`${dateString}T00:00:00+08:00`);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const days = Math.max(0, Math.floor((today - testedDate) / 86400000));
+  return days === 0 ? "今天" : `${days} 天前`;
 }
 
 function generateRecommendations() {
@@ -623,11 +719,21 @@ function renderRecommendations(preferences) {
         <div class="venue-title-row">
           <div>
             <p class="match-reason">${getMatchReason(venue, preferences, index)}</p>
-            <h3>${venue.name}</h3>
+            <div class="venue-name-line">
+              <h3>${venue.name}</h3>
+              <button class="rating-link" data-rating="${venue.id}" type="button" aria-label="查看 ${venue.name} 的评分与评价">
+                <strong>${evaluatorScore.toFixed(1)} 分</strong>
+                <span>看实测评价</span>
+              </button>
+            </div>
             <p class="venue-meta">${venue.district} · ${venue.type}</p>
             <div class="venue-features" aria-label="${venue.name}的突出特点">
-              ${venue.highlights.map((highlight) => `<span class="venue-feature">${highlight}</span>`).join("")}
+              ${getVenueFeatureTags(venue, preferences).map((highlight) => `<span class="venue-feature">${highlight}</span>`).join("")}
             </div>
+            <p class="test-proof">
+              <span aria-hidden="true"></span>
+              实测：${venue.testerCount} 人 · ${formatTestRecency(venue.testedAt)}
+            </p>
           </div>
           <label class="compare-toggle">
             <input type="checkbox" data-compare="${venue.id}" />
@@ -642,13 +748,6 @@ function renderRecommendations(preferences) {
           <button class="commute-fact" data-commute="${venue.id}" type="button" aria-label="查看从 ${preferences.location} 到 ${venue.name} 的通勤时间">
             <strong>${venue.estimatedCommute} 分钟</strong><span>通勤估算</span>
           </button>
-          <button class="rating-fact" data-rating="${venue.id}" type="button" aria-label="查看 ${venue.name} 的评分构成">
-            <span class="rating-score-line">
-              <strong class="rating-value">${evaluatorScore.toFixed(1)}</strong>
-              <small>/ 5</small>
-            </span>
-            <span class="rating-label">体验官实测</span>
-          </button>
           <button class="crowd-fact" data-crowd="${venue.id}" type="button">
             <strong class="${crowdClass(venue.crowd[preferences.trainingTime])}">${venue.crowd[preferences.trainingTime]}</strong>
             <span>拥挤程度</span>
@@ -658,7 +757,6 @@ function renderRecommendations(preferences) {
         <div class="caution-line"><span>办卡前留意</span><p>${venue.caution}</p></div>
 
         <div class="card-footer">
-          <span>信息更新于 ${venue.updated}</span>
           <button class="text-button detail-button" data-detail="${venue.id}" type="button">查看详情</button>
         </div>
       </div>
@@ -718,6 +816,9 @@ function showDetail(id) {
   const inventory = venueEquipment[venue.id];
   const prices = pricingPlans[venue.id];
   const reviews = venueReviews[venue.id];
+  const evaluatorDimensions = ratingProfiles[venue.id];
+  const evaluatorScore = evaluatorDimensions
+    .reduce((total, item) => total + item.score * item.weight / 100, 0);
   els.detailContent.innerHTML = `
     <div class="detail-hero" style="background-image: linear-gradient(rgba(16, 25, 29, 0.1), rgba(16, 25, 29, 0.78)), url('${venue.image}')">
       <button class="icon-button detail-close" type="button" aria-label="关闭">×</button>
@@ -760,9 +861,8 @@ function showDetail(id) {
         </div>
         <div class="detail-tabs" role="tablist" aria-label="${venue.name}详情选项">
           <button type="button" role="tab" aria-selected="false" data-detail-tab="equipment">器械清单</button>
-          <button type="button" role="tab" aria-selected="false" data-detail-tab="reviews">用户点评 <span>${reviews.length}</span></button>
+          <button type="button" role="tab" aria-selected="false" data-detail-tab="reviews">点评</button>
         </div>
-        <p class="detail-tab-prompt">选择上方一项查看具体信息</p>
       </section>
       <section class="equipment-section detail-tab-panel" data-detail-panel="equipment" hidden>
         <div class="equipment-heading">
@@ -807,37 +907,66 @@ function showDetail(id) {
       <section class="reviews-section detail-tab-panel" data-detail-panel="reviews" hidden>
         <div class="equipment-heading">
           <div>
-            <p class="eyebrow">用户点评</p>
-            <h3>去过的人怎么说？</h3>
+            <p class="eyebrow">点评</p>
+            <h3>不同来源怎么评价？</h3>
           </div>
-          <span>${reviews.length} 条体验样本</span>
+          <span>实测与用户反馈分开呈现</span>
         </div>
-        <div class="review-list">
-          ${reviews.map((review) => `
-            <article class="review-item">
-              <header>
-                <div class="review-avatar" aria-hidden="true">${review.name.slice(0, 1)}</div>
-                <div>
-                  <strong>${review.name}</strong>
-                  <p>${review.profile} · ${review.time}</p>
-                </div>
-                <span>${review.rating.toFixed(1)}</span>
-              </header>
-              <p>${review.text}</p>
-              <div class="review-photos" aria-label="${review.name} 的体验照片演示位">
-                ${Array.from({ length: review.photos || 2 }, (_, index) => `
-                  <div class="review-photo-placeholder" role="img" aria-label="体验照片 ${index + 1} 占位">
-                    <span aria-hidden="true">▧</span>
-                    <strong>体验照片 ${index + 1}</strong>
-                    <small>正式版展示用户实拍</small>
-                  </div>
-                `).join("")}
+        <div class="review-source-tabs" role="tablist" aria-label="${venue.name}点评来源">
+          <button type="button" role="tab" aria-selected="true" data-review-source="evaluator">
+            体验官点评 <span>${venue.testerCount}</span>
+          </button>
+          <button type="button" role="tab" aria-selected="false" data-review-source="consumer">
+            用户点评 <span>${reviews.length}</span>
+          </button>
+        </div>
+        <div class="review-source-panel" data-review-panel="evaluator">
+          <article class="review-item evaluator-review-item">
+            <header>
+              <div class="review-avatar evaluator-avatar" aria-hidden="true">测</div>
+              <div>
+                <strong>体验官综合点评</strong>
+                <p>${venue.testerCount} 人实测 · ${venue.hours}</p>
               </div>
-              <small>体验记录于 ${review.date}</small>
-            </article>
-          `).join("")}
+              <span>${(evaluatorScore / 2).toFixed(1)}</span>
+            </header>
+            <p>${venue.caution} 综合来看，${evaluatorDimensions[1].note}，${evaluatorDimensions[3].note}。</p>
+            <div class="evaluator-review-meta">
+              <span>平台承担体验费用</span>
+              <span>按统一标准测评</span>
+              <span>不接受场馆改分</span>
+            </div>
+            <small>实测记录于 ${venue.testedAt}</small>
+          </article>
         </div>
-        <p class="source-note">当前点评为访谈原型演示内容；正式产品应标明体验凭证、审核状态和商户申诉入口。</p>
+        <div class="review-source-panel" data-review-panel="consumer" hidden>
+          <div class="review-list">
+            ${reviews.map((review) => `
+              <article class="review-item">
+                <header>
+                  <div class="review-avatar" aria-hidden="true">${review.name.slice(0, 1)}</div>
+                  <div>
+                    <strong>${review.name}</strong>
+                    <p>${review.profile} · ${review.time}</p>
+                  </div>
+                  <span>${review.rating.toFixed(1)}</span>
+                </header>
+                <p>${review.text}</p>
+                <div class="review-photos" aria-label="${review.name} 的体验照片演示位">
+                  ${Array.from({ length: review.photos || 2 }, (_, index) => `
+                    <div class="review-photo-placeholder" role="img" aria-label="体验照片 ${index + 1} 占位">
+                      <span aria-hidden="true">▧</span>
+                      <strong>体验照片 ${index + 1}</strong>
+                      <small>正式版展示用户实拍</small>
+                    </div>
+                  `).join("")}
+                </div>
+                <small>体验记录于 ${review.date}</small>
+              </article>
+            `).join("")}
+          </div>
+          <p class="source-note">用户点评用于补充不同时间段和使用场景，不参与体验官主评分核算。</p>
+        </div>
       </section>
       <section class="warning-panel">
         <p class="eyebrow">办卡前留意</p>
@@ -845,7 +974,7 @@ function showDetail(id) {
       </section>
       <section>
         <p class="eyebrow">信息依据</p>
-        <div class="evidence-list">${venue.evidence.map((item) => `<span>${item}</span>`).join("")}</div>
+        <div class="evidence-list">${venue.evidence.map((item) => `<span class="${getEvidenceClass(item)}">${item}</span>`).join("")}</div>
         <p class="source-note">最近核验：${venue.updated}。当前为访谈演示数据，不构成真实消费建议。</p>
       </section>
     </div>
@@ -860,7 +989,17 @@ function showDetail(id) {
       els.detailContent.querySelectorAll("[data-detail-panel]").forEach((panel) => {
         panel.hidden = panel.dataset.detailPanel !== selected;
       });
-      els.detailContent.querySelector(".detail-tab-prompt").hidden = true;
+    });
+  });
+  els.detailContent.querySelectorAll("[data-review-source]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const selected = button.dataset.reviewSource;
+      els.detailContent.querySelectorAll("[data-review-source]").forEach((tab) => {
+        tab.setAttribute("aria-selected", String(tab === button));
+      });
+      els.detailContent.querySelectorAll("[data-review-panel]").forEach((panel) => {
+        panel.hidden = panel.dataset.reviewPanel !== selected;
+      });
     });
   });
   els.detailDialog.showModal();
@@ -887,7 +1026,10 @@ function showGallery(id) {
   els.galleryTrack.innerHTML = venue.gallery.map((photo, index) => `
     <figure class="gallery-slide">
       <img src="${photo.src}" alt="${venue.name}：${photo.caption}" ${index === 0 ? "" : 'loading="lazy"'} referrerpolicy="no-referrer" />
-      <figcaption>${photo.caption}</figcaption>
+      <figcaption>
+        <span>${photo.caption}</span>
+        <small>拍摄核验于 ${photo.date || venue.testedAt}</small>
+      </figcaption>
     </figure>
   `).join("");
   els.galleryDialog.showModal();
@@ -900,18 +1042,28 @@ function showCrowd(id) {
   els.crowdTitle.textContent = venue.name;
   els.crowdContent.innerHTML = `
     <div class="crowd-summary">
-      <div><span>最拥挤</span><strong>${profile.busiest}</strong></div>
-      <div><span>最宽松</span><strong>${profile.quietest}</strong></div>
+      <div class="is-busy"><span>最拥挤</span><strong>${profile.busiest}</strong></div>
+      <div class="is-quiet"><span>最宽松</span><strong>${profile.quietest}</strong></div>
+    </div>
+    <div class="crowd-legend" aria-label="客流颜色说明">
+      <span><i class="is-quiet"></i>宽松</span>
+      <span><i class="is-normal"></i>一般</span>
+      <span><i class="is-busy"></i>拥挤</span>
     </div>
     <div class="crowd-chart" aria-label="${venue.name} 0到24点客流图">
       ${profile.levels.map((level, hour) => `
-        <div class="crowd-hour" title="${String(hour).padStart(2, "0")}:00 · 客流指数 ${level}">
+        <div class="crowd-hour ${crowdLevelClass(level)}" title="${String(hour).padStart(2, "0")}:00 · 客流指数 ${level}">
           <span style="height:${Math.max(4, level)}%"></span>
-          <small>${hour % 3 === 0 ? hour : ""}</small>
         </div>
       `).join("")}
     </div>
-    <div class="crowd-axis"><span>0点</span><span>6点</span><span>12点</span><span>18点</span><span>24点</span></div>
+    <div class="crowd-axis" aria-label="时间刻度">
+      <span><b>0点</b><small>深夜</small></span>
+      <span><b>6点</b><small>早晨</small></span>
+      <span><b>12点</b><small>中午</small></span>
+      <span><b>18点</b><small>晚高峰</small></span>
+      <span><b>24点</b><small>夜间</small></span>
+    </div>
     <p class="source-note">客流为访谈原型演示值，用于判断相对高峰；正式数据需通过分时到店记录持续核验。</p>
   `;
   els.crowdDialog.showModal();
@@ -947,43 +1099,29 @@ function renderDumbbells(score) {
   `).join("");
 }
 
-function showRating(id) {
-  const venue = venues.find((item) => item.id === id);
-  const dimensions = ratingProfiles[id];
-  const reviews = venueReviews[id];
-  const weightedScore = dimensions.reduce((total, item) => total + item.score * item.weight / 100, 0);
-  const consumerScore = reviews.reduce((total, review) => total + review.rating, 0) / reviews.length;
-  els.ratingTitle.textContent = venue.name;
-  els.ratingContent.innerHTML = `
-    <section class="rating-origin-note">
-      <span>我们的核心评分</span>
-      <strong>体验官费用由平台承担，并按统一标准到店实测。</strong>
-      <p>消费者评价用于补充不同时间段和使用场景，不计入体验官主评分。</p>
-    </section>
-    <section class="rating-sources" aria-label="两类评分来源">
-      <article class="rating-source rating-source-primary">
-        <span class="rating-source-tag">核心依据</span>
-        <h3>体验官评分</h3>
-        <div class="rating-source-score">
-          <strong>${(weightedScore / 2).toFixed(1)}</strong><small>/ 5</small>
-        </div>
-        <div class="dumbbell-row" aria-label="体验官评分 ${(weightedScore / 2).toFixed(1)} 分，满分 5 分">
-          ${renderDumbbells(weightedScore)}
-        </div>
-        <p>统一查看价格、器械、拥挤、新手体验和卫生环境。</p>
-      </article>
-      <article class="rating-source">
-        <span class="rating-source-tag">补充参考</span>
-        <h3>消费者评分</h3>
-        <div class="rating-source-score">
-          <strong>${(consumerScore / 2).toFixed(1)}</strong><small>/ 5</small>
-        </div>
-        <p>来自 ${reviews.length} 条体验样本，仅作为真实使用感受的补充，不参与主评分核算。</p>
-      </article>
-    </section>
-    <section class="rating-dimensions" aria-label="体验官评分维度">
+function getConsumerDimensions(dimensions, consumerScore) {
+  const adjustments = [-0.2, 0.1, -0.3, 0.2, 0.1];
+  const adjusted = dimensions.map((item, index) => ({
+    ...item,
+    weight: null,
+    score: Math.min(10, Math.max(0, item.score + adjustments[index]))
+  }));
+  const average = adjusted.reduce((total, item) => total + item.score, 0) / adjusted.length;
+  const correction = consumerScore - average;
+  return adjusted.map((item) => ({
+    ...item,
+    score: Math.min(10, Math.max(0, item.score + correction))
+  }));
+}
+
+function renderRatingDimensions(dimensions, source) {
+  return `
+    <section class="rating-dimensions" aria-label="${source === "evaluator" ? "体验官" : "消费者"}评分维度">
       <header class="rating-section-heading">
-        <div><span>体验官测评</span><h3>主评分怎么得出？</h3></div>
+        <div>
+          <span>${source === "evaluator" ? "体验官实测" : "消费者反馈"}</span>
+          <h3>不同维度的评分</h3>
+        </div>
         <small>满分 10 分</small>
       </header>
       ${dimensions.map((item) => `
@@ -991,7 +1129,7 @@ function showRating(id) {
           <div class="rating-dimension-heading">
             <div>
               <strong>${item.label}</strong>
-              <span>权重 ${item.weight}%</span>
+              ${item.weight ? `<span>权重 ${item.weight}%</span>` : ""}
             </div>
             <b>${item.score.toFixed(1)}</b>
           </div>
@@ -1002,13 +1140,154 @@ function showRating(id) {
         </article>
       `).join("")}
     </section>
-    <section class="rating-method">
-      <strong>怎么核算？</strong>
-      <p>只使用体验官的五项实测得分，按对应权重相加，再除以 2 转换为 5 分制。消费者评分不会混入这个结果。</p>
-      <code>${dimensions.map((item) => `${item.score.toFixed(1)}×${item.weight}%`).join(" + ")} = ${weightedScore.toFixed(1)}</code>
-    </section>
-    <p class="source-note">当前为访谈原型演示数据。正式上线后应展示体验官编号、到店日期、测评时段、消费凭证和最近核验日期。</p>
   `;
+}
+
+function renderEvaluatorFeedback(venue, dimensions) {
+  const strengths = [...dimensions]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 2)
+    .map((item) => item.note)
+    .join("；");
+  const watchouts = dimensions
+    .filter((item) => item.score < 8.4)
+    .map((item) => item.note)
+    .slice(0, 2)
+    .join("；");
+  return `
+    <article class="rating-feedback rating-feedback-evaluator">
+      <div>
+        <strong>体验官综合结论</strong>
+        <span>${venue.testedAt} · ${venue.hours}</span>
+      </div>
+      <div class="feedback-points">
+        <section class="feedback-point is-risk">
+          <span>重点留意</span>
+          <p>${venue.caution}</p>
+        </section>
+        <section class="feedback-point is-good">
+          <span>实测优势</span>
+          <p>${strengths}</p>
+        </section>
+        <section class="feedback-point is-note">
+          <span>综合判断</span>
+          <p>${watchouts ? `整体可选，但需要确认：${watchouts}。` : "整体体验稳定，适合作为优先试练候选。"}</p>
+        </section>
+      </div>
+    </article>
+  `;
+}
+
+function renderRatingOverview(id) {
+  const venue = venues.find((item) => item.id === id);
+  const dimensions = ratingProfiles[id];
+  const reviews = venueReviews[id];
+  const weightedScore = dimensions.reduce((total, item) => total + item.score * item.weight / 100, 0);
+  const consumerScore = reviews.reduce((total, review) => total + review.rating, 0) / reviews.length;
+  els.ratingContent.innerHTML = `
+    <section class="rating-origin-note">
+      <span>我们的核心评分</span>
+      <strong>体验官费用由平台承担，并按统一标准到店实测。</strong>
+      <p>消费者评价用于补充不同时间段和使用场景，不计入体验官主评分。</p>
+    </section>
+    <section class="rating-sources" aria-label="两类评分来源">
+      <button class="rating-source rating-source-primary" data-rating-source="evaluator" data-venue-id="${id}" type="button">
+        <span class="rating-source-tag">核心依据</span>
+        <h3>体验官评分</h3>
+        <div class="rating-source-score">
+          <strong>${(weightedScore / 2).toFixed(1)}</strong><small>/ 5</small>
+        </div>
+        <p>统一查看价格、器械、拥挤、新手体验和卫生环境。</p>
+        <span class="rating-source-update">信息更新于 ${venue.testedAt}</span>
+        <span class="rating-source-action">查看体验官打分与评价 <b aria-hidden="true">›</b></span>
+      </button>
+      <button class="rating-source" data-rating-source="consumer" data-venue-id="${id}" type="button">
+        <span class="rating-source-tag">补充参考</span>
+        <h3>消费者评分</h3>
+        <div class="rating-source-score">
+          <strong>${(consumerScore / 2).toFixed(1)}</strong><small>/ 5</small>
+        </div>
+        <p>来自 ${reviews.length} 条体验样本，仅作为真实使用感受的补充，不参与主评分核算。</p>
+        <span class="rating-source-update">信息更新于 ${reviews[0].date}</span>
+        <span class="rating-source-action">查看消费者打分与评价 <b aria-hidden="true">›</b></span>
+      </button>
+    </section>
+    <p class="rating-overview-help">选择一种评分来源，查看对应的分项打分与评价。</p>
+  `;
+}
+
+function renderRatingDetail(id, source) {
+  const venue = venues.find((item) => item.id === id);
+  const dimensions = ratingProfiles[id];
+  const reviews = venueReviews[id];
+  const weightedScore = dimensions.reduce((total, item) => total + item.score * item.weight / 100, 0);
+  const consumerScore = reviews.reduce((total, review) => total + review.rating, 0) / reviews.length;
+  const isEvaluator = source === "evaluator";
+  const detailDimensions = isEvaluator
+    ? dimensions
+    : getConsumerDimensions(dimensions, consumerScore);
+
+  els.ratingContent.innerHTML = `
+    <div class="rating-detail-toolbar">
+      <button class="rating-back-button" data-rating-back="${id}" type="button">
+        <span aria-hidden="true">‹</span> 返回评分来源
+      </button>
+      <span>信息更新于 ${isEvaluator ? venue.testedAt : reviews[0].date}</span>
+    </div>
+    <section class="rating-detail-summary ${isEvaluator ? "is-evaluator" : ""}">
+      <span>${isEvaluator ? "核心依据" : "补充参考"}</span>
+      <h3>${isEvaluator ? "体验官评分" : "消费者评分"}</h3>
+      <div>
+        <strong>${((isEvaluator ? weightedScore : consumerScore) / 2).toFixed(1)}</strong>
+        <small>/ 5</small>
+      </div>
+      <p>${isEvaluator
+        ? `由平台自费邀请 ${venue.testerCount} 名体验官，在真实训练时段按统一标准完成实测。`
+        : `来自 ${reviews.length} 条消费者体验样本，仅作为使用感受补充，不参与体验官主评分。`
+      }</p>
+    </section>
+    ${isEvaluator ? `
+      <section class="rating-feedback-section">
+        <header class="rating-section-heading">
+          <div><span>体验官评价</span><h3>实测后的判断</h3></div>
+          <small>${venue.testerCount} 人参与</small>
+        </header>
+        ${renderEvaluatorFeedback(venue, dimensions)}
+      </section>
+      ${renderRatingDimensions(detailDimensions, source)}
+      <section class="rating-method">
+        <strong>主评分怎么核算？</strong>
+        <p>五项体验官实测得分按权重相加，再除以 2 转换为 5 分制。消费者评分不会混入这个结果。</p>
+        <code>${dimensions.map((item) => `${item.score.toFixed(1)}×${item.weight}%`).join(" + ")} = ${weightedScore.toFixed(1)}</code>
+      </section>
+    ` : `
+      ${renderRatingDimensions(detailDimensions, source)}
+      <section class="rating-feedback-section">
+        <header class="rating-section-heading">
+          <div><span>消费者评价</span><h3>去过的人怎么说？</h3></div>
+          <small>${reviews.length} 条样本</small>
+        </header>
+        <div class="rating-review-list">
+          ${reviews.map((review) => `
+            <article class="rating-feedback">
+              <div>
+                <strong>${review.name} · ${review.rating.toFixed(1)} 分</strong>
+                <span>${review.profile} · ${review.time}</span>
+              </div>
+              <p>${review.text}</p>
+              <small>体验记录于 ${review.date}</small>
+            </article>
+          `).join("")}
+        </div>
+      </section>
+    `}
+  `;
+}
+
+function showRating(id) {
+  const venue = venues.find((item) => item.id === id);
+  els.ratingTitle.textContent = venue.name;
+  renderRatingOverview(id);
   els.ratingDialog.showModal();
 }
 
@@ -1042,6 +1321,30 @@ function showCommute(id) {
   els.commuteDialog.showModal();
 }
 
+function renderFinalChoiceCard(venue) {
+  const contact = venueContacts[venue.id];
+  return `
+    <section class="final-contact-card">
+      <div>
+        <p class="eyebrow">你选择的是</p>
+        <h3>${venue.name}</h3>
+        <span>${venue.district} · ${venue.type}</span>
+      </div>
+      <div class="contact-grid">
+        <div><span>联系电话</span><strong>${contact.phone}</strong></div>
+        <div><span>最近地铁</span><strong>${contact.nearestStation}</strong></div>
+        <div class="is-wide"><span>场馆位置</span><strong>${contact.address}</strong></div>
+      </div>
+      <div class="contact-note">
+        <strong>到店前建议</strong>
+        <p>${contact.booking}</p>
+      </div>
+      <button class="contact-copy-button" data-copy-contact="${venue.id}" type="button">复制联系信息</button>
+      <p class="source-note">以上为访谈原型演示联系方式，正式上线前需由场馆核验。</p>
+    </section>
+  `;
+}
+
 function renderComparison() {
   const selected = state.recommendations.filter((venue) => state.compareIds.has(venue.id));
   const preferences = getPreferences();
@@ -1064,9 +1367,58 @@ function renderComparison() {
       ${rows.map((row) => row.map((cell, index) => `<div class="compare-cell ${index === 0 ? "compare-label" : ""}">${cell}</div>`).join("")).join("")}
     </div>
     <p class="compare-advice">建议：先试练最符合你常用时段的一家，不要只按最低价格决定。</p>
+    <section class="final-choice-section">
+      <div class="equipment-heading">
+        <div>
+          <p class="eyebrow">最后一步</p>
+          <h3>你准备先看哪一家？</h3>
+        </div>
+        <span>选定后查看联系与位置</span>
+      </div>
+      <div class="final-choice-list">
+        ${selected.map((venue) => `
+          <button class="final-choice-button" data-final-choice="${venue.id}" type="button">
+            <strong>${venue.name}</strong>
+            <span>${venue.estimatedCommute} 分钟 · ¥${venue.monthlyPrice}/月</span>
+          </button>
+        `).join("")}
+      </div>
+      <div id="finalChoiceResult" class="final-choice-result" hidden></div>
+    </section>
   `;
+  els.compareContent.querySelectorAll("[data-final-choice]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const venue = selected.find((item) => item.id === button.dataset.finalChoice);
+      els.compareContent.querySelectorAll("[data-final-choice]").forEach((item) => {
+        item.setAttribute("aria-selected", String(item === button));
+      });
+      const result = els.compareContent.querySelector("#finalChoiceResult");
+      result.hidden = false;
+      result.innerHTML = renderFinalChoiceCard(venue);
+    });
+  });
+  els.compareContent.onclick = async (event) => {
+    const copyButton = event.target.closest("[data-copy-contact]");
+    if (!copyButton) return;
+    const venue = selected.find((item) => item.id === copyButton.dataset.copyContact);
+    const contact = venueContacts[venue.id];
+    const text = `${venue.name}\n电话：${contact.phone}\n地址：${contact.address}\n交通：${contact.nearestStation}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      copyButton.textContent = "已复制";
+    } catch {
+      copyButton.textContent = "复制失败，请手动复制";
+    }
+  };
   els.compareDialog.showModal();
 }
+
+els.enterApp?.addEventListener("click", () => {
+  document.body.classList.remove("is-intro-active");
+  requestAnimationFrame(() => {
+    document.querySelector(".preference-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+});
 
 els.form.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -1116,6 +1468,16 @@ els.locateButton.addEventListener("click", () => {
 });
 
 els.openCompare.addEventListener("click", renderComparison);
+els.openTrust.addEventListener("click", () => els.trustDialog.showModal());
+els.ratingContent.addEventListener("click", (event) => {
+  const sourceButton = event.target.closest("[data-rating-source]");
+  if (sourceButton) {
+    renderRatingDetail(sourceButton.dataset.venueId, sourceButton.dataset.ratingSource);
+    return;
+  }
+  const backButton = event.target.closest("[data-rating-back]");
+  if (backButton) renderRatingOverview(backButton.dataset.ratingBack);
+});
 els.galleryPrevious.addEventListener("click", () => updateGalleryPosition(state.galleryIndex - 1));
 els.galleryNext.addEventListener("click", () => updateGalleryPosition(state.galleryIndex + 1));
 
@@ -1133,7 +1495,7 @@ document.querySelectorAll("[data-close]").forEach((button) => {
   button.addEventListener("click", () => document.querySelector(`#${button.dataset.close}`).close());
 });
 
-[els.detailDialog, els.galleryDialog, els.crowdDialog, els.pricingDialog, els.ratingDialog, els.commuteDialog, els.compareDialog].forEach((dialog) => {
+[els.detailDialog, els.galleryDialog, els.crowdDialog, els.pricingDialog, els.ratingDialog, els.commuteDialog, els.compareDialog, els.trustDialog].forEach((dialog) => {
   dialog.addEventListener("click", (event) => {
     if (event.target === dialog) dialog.close();
   });

@@ -34,8 +34,18 @@ if (typeof showGallery !== "function" && window.gymEnhancements) {
           <div class="venue-title-row">
             <div>
               <p class="match-reason">${getMatchReason(venue, preferences, index)}</p>
-              <h3>${venue.name}</h3>
+              <div class="venue-name-line">
+                <h3>${venue.name}</h3>
+                <button class="rating-link" data-enhanced-rating="${venue.id}" type="button" aria-label="查看 ${venue.name} 的评分与评价">
+                  <strong>${(venue.rating / 2).toFixed(1)} 分</strong>
+                  <span>看实测评价</span>
+                </button>
+              </div>
               <p class="venue-meta">${venue.district} · ${venue.type}</p>
+              <p class="test-proof">
+                <span aria-hidden="true"></span>
+                实测：${venue.testerCount} 人 · ${formatTestRecency(venue.testedAt)}
+              </p>
             </div>
             <label class="compare-toggle">
               <input type="checkbox" data-compare="${venue.id}" />
@@ -45,11 +55,9 @@ if (typeof showGallery !== "function" && window.gymEnhancements) {
           <div class="facts-row">
             <div><strong>¥${venue.monthlyPrice}</strong><span>参考月费</span></div>
             <div><strong>${venue.estimatedCommute} 分钟</strong><span>通勤估算</span></div>
-            <div><strong class="rating-value">${venue.rating}</strong><span>体验官评分</span></div>
           </div>
           <div class="caution-line"><span>办卡前留意</span><p>${venue.caution}</p></div>
           <div class="card-footer">
-            <span>信息更新于 ${venue.updated}</span>
             <button class="text-button detail-button" data-detail="${venue.id}" type="button">查看详情</button>
           </div>
         </div>`;
@@ -220,6 +228,10 @@ if (typeof showGallery !== "function" && window.gymEnhancements) {
   }
 
   function showEnhancedRating(id) {
+    if (typeof showRating === "function") {
+      showRating(id);
+      return;
+    }
     ensureRatingDialog();
     const venue = venues.find((item) => item.id === id);
     const dimensions = ratingDetails[id];
