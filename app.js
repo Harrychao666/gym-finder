@@ -400,6 +400,31 @@ const venueReviews = {
   ]
 };
 
+const reviewTemplates = [
+  { name: "小周", profile: "健身新手", time: "工作日晚间", rating: 8.5, photos: 1, text: "第一次去主要看器械和人流，整体能练，但晚高峰热门器械还是要稍微等一下。" },
+  { name: "Nina", profile: "有氧为主", time: "工作日早晨", rating: 8.7, photos: 2, text: "早上人少很多，跑步机和椭圆机基本不用排队，适合上班前快速练。" },
+  { name: "阿泽", profile: "力量训练 1 年", time: "周末下午", rating: 8.2, photos: 1, text: "器械够基础训练使用，但热门区域人多的时候需要轮流，建议先试练再办卡。" },
+  { name: "林同学", profile: "刚办月卡", time: "工作日中午", rating: 8.9, photos: 2, text: "中午体验比晚上舒服，工作人员没有一直推销，问价格时能直接说清楚。" },
+  { name: "Echo", profile: "女性用户", time: "工作日晚间", rating: 8.6, photos: 2, text: "更衣和训练氛围还可以，晚间安全感主要看门禁和值班人员，建议到店确认。" },
+  { name: "Jason", profile: "器械训练", time: "工作日晚间", rating: 8.1, photos: 1, text: "力量区高峰期会拥挤，基础器械维护还行，办卡前要问清停卡和转卡费用。" },
+  { name: "可可", profile: "体验后观望", time: "周末上午", rating: 8.4, photos: 2, text: "周末上午人不算多，环境比预期好，主要担心后续续费和私教推荐频率。" },
+  { name: "Ben", profile: "短期训练", time: "工作日夜间", rating: 8.0, photos: 1, text: "夜间训练方便，但现场工作人员较少，新手第一次最好不要太晚去。" },
+  { name: "Sisi", profile: "办卡前试练", time: "工作日傍晚", rating: 8.3, photos: 2, text: "试练流程比较顺，器械讲解不算特别细，适合自己已经有一点训练计划的人。" },
+  { name: "老陈", profile: "恢复训练", time: "工作日午后", rating: 8.8, photos: 1, text: "午后很安静，适合慢慢练。价格透明度还可以，但附加费用一定要单独问。" }
+];
+
+Object.values(venueReviews).forEach((reviews) => {
+  const existingCount = reviews.length;
+  reviewTemplates.forEach((template, index) => {
+    reviews.push({
+      ...template,
+      name: index % 3 === 0 ? `${template.name}${existingCount + index + 1}` : template.name,
+      rating: Math.max(7.8, Math.min(9.4, template.rating + ((index % 4) - 1) * 0.1)),
+      date: `2026-05-${String(12 + index).padStart(2, "0")}`
+    });
+  });
+});
+
 const equipmentCatalog = {
   treadmill: {
     name: "跑步机",
@@ -561,7 +586,10 @@ const els = {
   openTrust: document.querySelector("#openTrust"),
   trustDialog: document.querySelector("#trustDialog"),
   introScreen: document.querySelector("#introScreen"),
-  enterApp: document.querySelector("#enterApp")
+  introHero: document.querySelector("#introHero"),
+  introNotice: document.querySelector("#introNotice"),
+  enterApp: document.querySelector("#enterApp"),
+  confirmIntro: document.querySelector("#confirmIntro")
 };
 
 function getPreferences() {
@@ -713,7 +741,7 @@ function renderRecommendations(preferences) {
       <button class="venue-image" data-gallery="${venue.id}" type="button" aria-label="查看 ${venue.name} 的场馆照片">
         <img src="${venue.image}" alt="${venue.type}训练空间场景图" loading="lazy" referrerpolicy="no-referrer" />
         <span class="rank-label">${index === 0 ? "首选" : `候选 ${index + 1}`}</span>
-        <span class="photo-count"><span aria-hidden="true">▣</span> ${venue.gallery.length} 张</span>
+        <span class="photo-count"><span aria-hidden="true">▣</span> 查看照片 · ${venue.gallery.length} 张</span>
       </button>
       <div class="venue-card-body">
         <div class="venue-title-row">
@@ -723,7 +751,7 @@ function renderRecommendations(preferences) {
               <h3>${venue.name}</h3>
               <button class="rating-link" data-rating="${venue.id}" type="button" aria-label="查看 ${venue.name} 的评分与评价">
                 <strong>${evaluatorScore.toFixed(1)} 分</strong>
-                <span>看实测评价</span>
+                <span>查看实测依据</span>
               </button>
             </div>
             <p class="venue-meta">${venue.district} · ${venue.type}</p>
@@ -743,21 +771,21 @@ function renderRecommendations(preferences) {
 
         <div class="facts-row">
           <button class="price-fact" data-pricing="${venue.id}" type="button" aria-label="查看 ${venue.name} 的具体收费">
-            <strong>¥${venue.monthlyPrice}</strong><span>参考月费</span>
+            <strong>¥${venue.monthlyPrice}</strong><span>看价格明细</span><em aria-hidden="true">›</em>
           </button>
           <button class="commute-fact" data-commute="${venue.id}" type="button" aria-label="查看从 ${preferences.location} 到 ${venue.name} 的通勤时间">
-            <strong>${venue.estimatedCommute} 分钟</strong><span>通勤估算</span>
+            <strong>${venue.estimatedCommute} 分钟</strong><span>看通勤说明</span><em aria-hidden="true">›</em>
           </button>
           <button class="crowd-fact" data-crowd="${venue.id}" type="button">
             <strong class="${crowdClass(venue.crowd[preferences.trainingTime])}">${venue.crowd[preferences.trainingTime]}</strong>
-            <span>拥挤程度</span>
+            <span>看高峰时段</span><em aria-hidden="true">›</em>
           </button>
         </div>
 
         <div class="caution-line"><span>办卡前留意</span><p>${venue.caution}</p></div>
 
         <div class="card-footer">
-          <button class="text-button detail-button" data-detail="${venue.id}" type="button">查看详情</button>
+          <button class="text-button detail-button" data-detail="${venue.id}" type="button">查看器械和点评</button>
         </div>
       </div>
     `;
@@ -941,8 +969,8 @@ function showDetail(id) {
         </div>
         <div class="review-source-panel" data-review-panel="consumer" hidden>
           <div class="review-list">
-            ${reviews.map((review) => `
-              <article class="review-item">
+            ${reviews.map((review, reviewIndex) => `
+              <article class="review-item ${reviewIndex >= 2 ? "is-extra-review" : ""}" ${reviewIndex >= 2 ? "hidden" : ""}>
                 <header>
                   <div class="review-avatar" aria-hidden="true">${review.name.slice(0, 1)}</div>
                   <div>
@@ -965,6 +993,7 @@ function showDetail(id) {
               </article>
             `).join("")}
           </div>
+          ${reviews.length > 2 ? `<button class="load-more-reviews" data-load-more-reviews type="button">查看更多 ${reviews.length - 2} 条用户点评</button>` : ""}
           <p class="source-note">用户点评用于补充不同时间段和使用场景，不参与体验官主评分核算。</p>
         </div>
       </section>
@@ -1001,6 +1030,12 @@ function showDetail(id) {
         panel.hidden = panel.dataset.reviewPanel !== selected;
       });
     });
+  });
+  els.detailContent.querySelector("[data-load-more-reviews]")?.addEventListener("click", (event) => {
+    els.detailContent.querySelectorAll(".is-extra-review").forEach((review) => {
+      review.hidden = false;
+    });
+    event.currentTarget.remove();
   });
   els.detailDialog.showModal();
 }
@@ -1082,8 +1117,8 @@ function showPricing(id) {
       <div><span>年卡</span><strong>¥${prices.annual}</strong></div>
     </div>
     <div class="pricing-reminder">
-      <strong>付款前再确认</strong>
-      <p>询问有效期、押金、自动续费、暂停、转卡和退款规则。</p>
+      <strong>可能的隐形消费</strong>
+      <p>重点确认停卡费、转卡费、押金、储物柜、淋浴、更换门禁卡和自动续费规则。</p>
     </div>
     <p class="source-note">当前为访谈原型演示价格，实际收费请以门店最新书面报价为准。</p>
   `;
@@ -1413,11 +1448,21 @@ function renderComparison() {
   els.compareDialog.showModal();
 }
 
-els.enterApp?.addEventListener("click", () => {
+function enterSelectionFlow() {
   document.body.classList.remove("is-intro-active");
   requestAnimationFrame(() => {
     document.querySelector(".preference-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
+}
+
+els.enterApp?.addEventListener("click", () => {
+  els.introHero.hidden = true;
+  els.introNotice.hidden = false;
+  els.introNotice.focus?.();
+});
+
+els.confirmIntro?.addEventListener("click", () => {
+  enterSelectionFlow();
 });
 
 els.form.addEventListener("submit", (event) => {

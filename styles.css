@@ -206,14 +206,114 @@ body.is-intro-active .compare-bar {
   line-height: 1.32;
 }
 
+.intro-notice-panel {
+  width: min(680px, 100%);
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  padding: clamp(26px, 5vw, 46px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 34px;
+  text-align: center;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035)),
+    rgba(18, 20, 24, 0.82);
+  box-shadow:
+    0 32px 90px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(24px);
+}
+
+.intro-notice-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 7px 14px 7px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.intro-notice-brand .intro-logo {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  font-size: 30px;
+}
+
+.intro-notice-eyebrow {
+  margin-top: 10px;
+  color: #dcae61;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.intro-notice-panel h2 {
+  max-width: 560px;
+  color: #f5f5f7;
+  font-size: clamp(30px, 5vw, 54px);
+  line-height: 1.08;
+}
+
+.intro-notice-copy {
+  max-width: 560px;
+  color: #d9e7f7;
+  font-size: clamp(16px, 2.5vw, 22px);
+  font-weight: 760;
+  line-height: 1.55;
+}
+
+.intro-notice-list {
+  width: min(520px, 100%);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.intro-notice-list span {
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.intro-start-button {
+  width: min(440px, 100%);
+  min-height: 60px;
+  margin-top: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 999px;
+  color: #050506;
+  background: #f5f5f7;
+  font-size: 17px;
+  font-weight: 850;
+  box-shadow: 0 22px 70px rgba(255, 255, 255, 0.12);
+}
+
+.intro-start-button:hover,
+.intro-start-button:focus-visible {
+  transform: translateY(-2px);
+  background: #ffffff;
+  box-shadow: 0 26px 90px rgba(220, 174, 97, 0.18);
+}
+
 .app-shell {
   min-height: 100vh;
+  padding-top: 72px;
 }
 
 .topbar {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 10;
+  left: 0;
+  right: 0;
+  z-index: 1000;
   min-height: 72px;
   display: flex;
   align-items: center;
@@ -654,17 +754,24 @@ select {
   right: 10px;
   bottom: 10px;
   min-height: 28px;
-  padding: 0 9px;
+  padding: 0 10px;
   display: flex;
   align-items: center;
   gap: 5px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.48);
   border-radius: 5px;
   color: #ffffff;
-  background: rgba(0, 0, 0, 0.62);
+  background: rgba(0, 0, 0, 0.76);
   backdrop-filter: blur(8px);
   font-size: 11px;
   font-weight: 750;
+}
+
+.venue-image:hover .photo-count,
+.venue-image:focus-visible .photo-count {
+  border-color: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.9);
+  color: #000000;
 }
 
 .venue-image:focus-visible {
@@ -706,9 +813,8 @@ select {
 }
 
 .venue-name-line {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
+  display: grid;
+  justify-items: start;
   gap: 8px;
 }
 
@@ -830,9 +936,10 @@ select {
 
 .facts-row div,
 .facts-row button {
+  position: relative;
   min-width: 0;
-  padding: 8px 7px;
-  border: 0;
+  padding: 10px 26px 10px 9px;
+  border: 1px solid transparent;
   border-radius: 6px;
   background: #f5f6f4;
   text-align: left;
@@ -853,6 +960,36 @@ select {
   margin-top: 2px;
   color: var(--muted);
   font-size: 10px;
+}
+
+.facts-row button em {
+  position: absolute;
+  right: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: currentColor;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1;
+  opacity: 0.72;
+}
+
+.facts-row button::after {
+  content: "点击查看";
+  position: absolute;
+  right: 8px;
+  bottom: 7px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  color: #111111;
+  background: rgba(255, 255, 255, 0.82);
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1;
+  opacity: 0;
+  transform: translateY(3px);
+  transition: opacity 0.16s ease, transform 0.16s ease;
 }
 
 .crowd-fact {
@@ -879,8 +1016,19 @@ select {
 .commute-fact:focus-visible,
 .crowd-fact:hover,
 .crowd-fact:focus-visible {
-  outline: 1px solid var(--muted);
-  outline-offset: 0;
+  border-color: rgba(255, 159, 10, 0.72);
+  outline: 0;
+  transform: translateY(-1px);
+}
+
+.price-fact:hover::after,
+.price-fact:focus-visible::after,
+.commute-fact:hover::after,
+.commute-fact:focus-visible::after,
+.crowd-fact:hover::after,
+.crowd-fact:focus-visible::after {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .good {
@@ -1066,6 +1214,7 @@ select {
 
 dialog {
   max-height: calc(100vh - 28px);
+  margin: 86px auto 18px;
   padding: 0;
   overflow: auto;
   border: 0;
@@ -1075,7 +1224,13 @@ dialog {
 }
 
 dialog::backdrop {
-  background: rgba(14, 25, 29, 0.52);
+  background: linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 72px,
+    rgba(14, 25, 29, 0.52) 72px,
+    rgba(14, 25, 29, 0.52) 100%
+  );
   backdrop-filter: blur(3px);
 }
 
@@ -1636,6 +1791,22 @@ dialog::backdrop {
   font-size: 9px;
 }
 
+.load-more-reviews {
+  min-height: 44px;
+  border: 1px solid #48484a;
+  border-radius: 7px;
+  color: #f5f5f7;
+  background: #1c1c1e;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.load-more-reviews:hover,
+.load-more-reviews:focus-visible {
+  border-color: #f5f5f7;
+  background: #2c2c2e;
+}
+
 .crowd-content {
   padding: 18px;
   display: grid;
@@ -2056,7 +2227,10 @@ dialog::backdrop {
 
 @media (max-width: 860px) {
   .topbar {
-    position: static;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
   }
 
   .workspace,
@@ -2119,9 +2293,45 @@ dialog::backdrop {
     font-size: 17px;
   }
 
+  .intro-notice-panel {
+    gap: 14px;
+    padding: 24px 18px;
+    border-radius: 26px;
+  }
+
+  .intro-notice-brand {
+    gap: 11px;
+    padding: 7px 12px 7px 7px;
+    border-radius: 20px;
+  }
+
+  .intro-notice-brand .intro-logo {
+    width: 52px;
+    height: 52px;
+    font-size: 28px;
+  }
+
+  .intro-notice-copy {
+    font-size: 15px;
+  }
+
+  .intro-notice-list {
+    grid-template-columns: 1fr;
+    width: min(320px, 100%);
+  }
+
+  .intro-start-button {
+    min-height: 54px;
+    font-size: 15px;
+  }
+
   .topbar {
     min-height: 64px;
     padding: 10px 12px;
+  }
+
+  .app-shell {
+    padding-top: 64px;
   }
 
   .brand .brand-slogan {
@@ -2247,7 +2457,16 @@ body {
   letter-spacing: 0;
 }
 
+.app-shell {
+  padding-top: 52px;
+}
+
 .topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
   min-height: 52px;
   padding-top: 6px;
   padding-bottom: 6px;
@@ -2293,14 +2512,14 @@ body {
 
 .workspace {
   min-height: calc(100vh - 52px);
-  padding-top: 46px;
+  padding-top: 18px;
   padding-bottom: 60px;
   align-items: start;
   background: #000000;
 }
 
 .workspace.has-results {
-  padding-top: 24px;
+  padding-top: 18px;
 }
 
 .preference-panel,
@@ -2587,12 +2806,20 @@ select:focus,
 }
 
 dialog {
+  max-height: calc(100dvh - 78px);
+  margin: 62px auto 16px;
   color: #f5f5f7;
   background: #0b0b0c;
 }
 
 dialog::backdrop {
-  background: rgba(0, 0, 0, 0.78);
+  background: linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 52px,
+    rgba(0, 0, 0, 0.78) 52px,
+    rgba(0, 0, 0, 0.78) 100%
+  );
 }
 
 .detail-body,

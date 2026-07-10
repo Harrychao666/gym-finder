@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+<defs>
+<style>
+.text { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; letter-spacing:0; }
+</style>
+</defs>
+<rect width="1080" height="1920" fill="#050505"/>
+<linearGradient id="beam" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#111"/><stop offset=".55" stop-color="#030303"/><stop offset="1" stop-color="#151515"/></linearGradient><rect width="1080" height="1920" fill="url(#beam)"/>
+<g opacity=".13"><path d="M190 360H890M190 510H890M190 660H890M190 810H890M190 960H890" stroke="#fff"/><path d="M250 310V1010M420 310V1010M590 310V1010M760 310V1010" stroke="#fff"/></g>
+<circle cx="540" cy="650" r="420" fill="#fff" opacity=".035"/>
+
+<g class="text">
+  <g transform="translate(348 395)">
+    <rect x="0" y="0" width="384" height="132" rx="38" fill="rgba(255,255,255,.055)" stroke="rgba(255,255,255,.16)" stroke-width="2"/>
+    <rect x="20" y="20" width="92" height="92" rx="24" fill="#f5f5f7"/>
+    <text x="66" y="83" text-anchor="middle" font-size="54" font-weight="900" fill="#000">练</text>
+    <text x="140" y="57" font-size="34" font-weight="900" fill="#f5f5f7">练哪儿</text>
+    <text x="140" y="93" font-size="18" font-weight="700" fill="#a1a1a6">广州健身房真实评分系统</text>
+  </g>
+  <text x="540" y="770" text-anchor="middle" font-size="108" font-weight="900" fill="#dcecff"><tspan fill="#ffffff">真实</tspan>评分</text>
+  <text x="540" y="870" text-anchor="middle" font-size="36" font-weight="800" fill="#f5f5f7">价格、器械、拥挤和卫生环境，由体验官按统一标准核验</text>
+  <text x="540" y="920" text-anchor="middle" font-size="36" font-weight="800" fill="#f5f5f7">。</text>
+  <rect x="245" y="1130" width="590" height="58" rx="29" fill="rgba(255,255,255,.055)" stroke="rgba(255,255,255,.16)"/>
+<text x="540" y="1168" text-anchor="middle" font-size="26" font-weight="800" fill="#f5f5f7">体验官到店记录</text>
+<rect x="245" y="1216" width="590" height="58" rx="29" fill="rgba(255,255,255,.055)" stroke="rgba(255,255,255,.16)"/>
+<text x="540" y="1254" text-anchor="middle" font-size="26" font-weight="800" fill="#f5f5f7">评分标准统一</text>
+<rect x="245" y="1302" width="590" height="58" rx="29" fill="rgba(255,255,255,.055)" stroke="rgba(255,255,255,.16)"/>
+<text x="540" y="1340" text-anchor="middle" font-size="26" font-weight="800" fill="#f5f5f7">消费者评价仅补充</text>
+
+  <rect x="228" y="1500" width="624" height="92" rx="46" fill="#f5f5f7"/>
+  <text x="540" y="1559" text-anchor="middle" font-size="34" font-weight="900" fill="#000">查看真实评分</text>
+</g>
+</svg>
