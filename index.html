@@ -33,15 +33,30 @@
             <p class="intro-system">广州健身房真实评分系统</p>
           </div>
         </div>
-        <p class="intro-notice-eyebrow">使用前须知</p>
-        <h2>这里的核心评分来自平台体验官实测</h2>
-        <p class="intro-notice-copy">我们自费邀请体验官到店训练，按统一标准记录价格、器械、拥挤、卫生和新手体验。消费者点评只作为补充，不参与主评分。</p>
-        <div class="intro-notice-list" aria-label="真实评分说明">
-          <span>平台自费</span>
-          <span>到店实测</span>
-          <span>消费者仅补充</span>
+        <div class="intro-notice-heading">
+          <p class="intro-notice-eyebrow">使用前须知</p>
+          <h2>核心评分，来自<br /><span>平台体验官实测</span></h2>
+          <p class="intro-notice-copy">体验费用由平台承担。体验官在真实训练时段到店，按同一套标准完成记录与评分。</p>
         </div>
-        <button class="intro-start-button" id="confirmIntro" type="button">我知道了，开始选馆</button>
+        <div class="intro-notice-list" aria-label="真实评分说明">
+          <div>
+            <b>01</b>
+            <span><strong>平台自费</strong><small>不接受商家付费排名</small></span>
+          </div>
+          <div>
+            <b>02</b>
+            <span><strong>真实训练时段到店</strong><small>核验价格、器械、拥挤与卫生</small></span>
+          </div>
+          <div>
+            <b>03</b>
+            <span><strong>消费者评价仅作补充</strong><small>不参与体验官主评分核算</small></span>
+          </div>
+        </div>
+        <div class="intro-read-status" id="introReadStatus">
+          <span class="intro-read-progress" aria-hidden="true"><i id="introReadProgress"></i></span>
+          <p id="introCountdown" aria-live="polite">请完整阅读，5 秒后可继续</p>
+        </div>
+        <button class="intro-start-button" id="confirmIntro" type="button" disabled aria-describedby="introCountdown">请阅读，5 秒后继续</button>
       </div>
     </section>
 
@@ -56,7 +71,11 @@
         </a>
         <button class="trust-trigger" id="openTrust" type="button">
           <span class="status-dot" aria-hidden="true"></span>
-          我们如何保证真实
+          <span class="trust-trigger-copy">
+            <strong>我们如何保证真实</strong>
+            <small>点击查看实测依据</small>
+          </span>
+          <span class="trust-info-icon" aria-hidden="true">i</span>
         </button>
       </header>
 

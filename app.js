@@ -256,6 +256,33 @@ const pricingPlans = {
   airfit: { single: 35, weekly: 109, monthly: 329, annual: 2999 }
 };
 
+const additionalFeePlans = {
+  luma: [
+    ["停卡费", "¥30 / 次"], ["转卡费", "¥100 / 次"], ["门禁卡补办", "¥50 / 张"],
+    ["储物柜", "¥30 / 月"], ["淋浴", "免费"], ["入会押金", "¥100"]
+  ],
+  fither: [
+    ["停卡费", "¥50 / 次"], ["转卡费", "¥150 / 次"], ["门禁卡补办", "¥50 / 张"],
+    ["储物柜", "¥50 / 月"], ["淋浴", "免费"], ["体态评估", "¥99 / 次"]
+  ],
+  startfit: [
+    ["停卡费", "¥30 / 次"], ["转卡费", "¥100 / 次"], ["门禁卡补办", "¥30 / 张"],
+    ["储物柜", "¥40 / 月"], ["淋浴", "免费"], ["毛巾租用", "¥5 / 次"]
+  ],
+  lightgym: [
+    ["停卡费", "¥20 / 次"], ["转卡费", "¥80 / 次"], ["门禁卡补办", "¥30 / 张"],
+    ["储物柜", "¥20 / 月"], ["淋浴", "未提供"], ["入会押金", "¥50"]
+  ],
+  powerbox: [
+    ["停卡费", "¥50 / 次"], ["转卡费", "¥120 / 次"], ["门禁卡补办", "¥50 / 张"],
+    ["储物柜", "¥50 / 月"], ["淋浴", "免费"], ["毛巾租用", "¥8 / 次"]
+  ],
+  airfit: [
+    ["停卡费", "¥30 / 次"], ["转卡费", "¥100 / 次"], ["门禁卡补办", "¥40 / 张"],
+    ["储物柜", "¥30 / 月"], ["淋浴", "免费"], ["自动续费", "到期前关闭"]
+  ]
+};
+
 const venueContacts = {
   luma: {
     phone: "020-8000-1201",
@@ -589,7 +616,10 @@ const els = {
   introHero: document.querySelector("#introHero"),
   introNotice: document.querySelector("#introNotice"),
   enterApp: document.querySelector("#enterApp"),
-  confirmIntro: document.querySelector("#confirmIntro")
+  confirmIntro: document.querySelector("#confirmIntro"),
+  introReadStatus: document.querySelector("#introReadStatus"),
+  introCountdown: document.querySelector("#introCountdown"),
+  introReadProgress: document.querySelector("#introReadProgress")
 };
 
 function getPreferences() {
@@ -839,6 +869,42 @@ function renderCompareBar() {
   els.openCompare.disabled = selected.length < 2;
 }
 
+function renderAdditionalFeeDisclosure(id, context) {
+  const additionalFees = additionalFeePlans[id];
+  const panelId = `${context}AdditionalFees-${id}`;
+  return `
+    <button class="pricing-reminder" data-toggle-additional-fees type="button" aria-expanded="false" aria-controls="${panelId}">
+      <span class="pricing-reminder-icon" aria-hidden="true">!</span>
+      <span class="pricing-reminder-copy">
+        <strong>可能的额外费用</strong>
+        <small>已整理 ${additionalFees.length} 项，点击查看具体金额</small>
+      </span>
+      <span class="pricing-reminder-action"><span data-fee-action-label>查看明细</span><b aria-hidden="true">⌄</b></span>
+    </button>
+    <div class="additional-fee-list" id="${panelId}" hidden>
+      ${additionalFees.map(([label, amount]) => `
+        <div>
+          <span>${label}</span>
+          <strong>${amount}</strong>
+          <small>访谈参考 · 待门店核验</small>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function bindAdditionalFeeDisclosure(container) {
+  container.querySelectorAll("[data-toggle-additional-fees]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const feeList = container.querySelector(`#${button.getAttribute("aria-controls")}`);
+      const isExpanded = button.getAttribute("aria-expanded") === "true";
+      button.setAttribute("aria-expanded", String(!isExpanded));
+      feeList.hidden = isExpanded;
+      button.querySelector("[data-fee-action-label]").textContent = isExpanded ? "查看明细" : "收起明细";
+    });
+  });
+}
+
 function showDetail(id) {
   const venue = venues.find((item) => item.id === id);
   const inventory = venueEquipment[venue.id];
@@ -880,7 +946,8 @@ function showDetail(id) {
           <div class="pricing-primary"><span>月卡</span><strong>¥${prices.monthly}</strong></div>
           <div><span>年卡</span><strong>¥${prices.annual}</strong></div>
         </div>
-        <p class="source-note">以上为访谈原型演示价格，正式上线前需向门店核验有效期、押金、暂停和退卡规则。</p>
+        ${renderAdditionalFeeDisclosure(venue.id, "detail")}
+        <p class="source-note">以上均为访谈原型演示价格，实际收费请以门店最新书面报价和合同为准。</p>
       </section>
       <section class="detail-explore">
         <div class="detail-choice-heading">
@@ -968,7 +1035,7 @@ function showDetail(id) {
           </article>
         </div>
         <div class="review-source-panel" data-review-panel="consumer" hidden>
-          <div class="review-list">
+          <div class="review-list" id="consumerReviewList-${id}">
             ${reviews.map((review, reviewIndex) => `
               <article class="review-item ${reviewIndex >= 2 ? "is-extra-review" : ""}" ${reviewIndex >= 2 ? "hidden" : ""}>
                 <header>
@@ -993,7 +1060,7 @@ function showDetail(id) {
               </article>
             `).join("")}
           </div>
-          ${reviews.length > 2 ? `<button class="load-more-reviews" data-load-more-reviews type="button">查看更多 ${reviews.length - 2} 条用户点评</button>` : ""}
+          ${reviews.length > 2 ? `<button class="load-more-reviews" data-load-more-reviews type="button" aria-expanded="false" aria-controls="consumerReviewList-${id}" data-hidden-review-count="${reviews.length - 2}">查看更多 ${reviews.length - 2} 条用户点评</button>` : ""}
           <p class="source-note">用户点评用于补充不同时间段和使用场景，不参与体验官主评分核算。</p>
         </div>
       </section>
@@ -1008,6 +1075,7 @@ function showDetail(id) {
       </section>
     </div>
   `;
+  bindAdditionalFeeDisclosure(els.detailContent);
   els.detailContent.querySelector(".detail-close").addEventListener("click", () => els.detailDialog.close());
   els.detailContent.querySelectorAll("[data-detail-tab]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -1032,10 +1100,18 @@ function showDetail(id) {
     });
   });
   els.detailContent.querySelector("[data-load-more-reviews]")?.addEventListener("click", (event) => {
+    const button = event.currentTarget;
+    const isExpanded = button.getAttribute("aria-expanded") === "true";
     els.detailContent.querySelectorAll(".is-extra-review").forEach((review) => {
-      review.hidden = false;
+      review.hidden = isExpanded;
     });
-    event.currentTarget.remove();
+    button.setAttribute("aria-expanded", String(!isExpanded));
+    button.textContent = isExpanded
+      ? `查看更多 ${button.dataset.hiddenReviewCount} 条用户点评`
+      : "收起用户点评";
+    if (isExpanded) {
+      button.closest("[data-review-panel]")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   });
   els.detailDialog.showModal();
 }
@@ -1116,12 +1192,10 @@ function showPricing(id) {
       <div class="pricing-primary"><span>月卡</span><strong>¥${prices.monthly}</strong></div>
       <div><span>年卡</span><strong>¥${prices.annual}</strong></div>
     </div>
-    <div class="pricing-reminder">
-      <strong>可能的隐形消费</strong>
-      <p>重点确认停卡费、转卡费、押金、储物柜、淋浴、更换门禁卡和自动续费规则。</p>
-    </div>
-    <p class="source-note">当前为访谈原型演示价格，实际收费请以门店最新书面报价为准。</p>
+    ${renderAdditionalFeeDisclosure(id, "dialog")}
+    <p class="source-note">以上均为访谈原型演示价格，实际收费请以门店最新书面报价和合同为准。</p>
   `;
+  bindAdditionalFeeDisclosure(els.pricingContent);
   els.pricingDialog.showModal();
 }
 
@@ -1455,10 +1529,38 @@ function enterSelectionFlow() {
   });
 }
 
+let introCountdownTimer;
+
+function startIntroReadCountdown() {
+  let secondsRemaining = 5;
+  window.clearInterval(introCountdownTimer);
+  els.confirmIntro.disabled = true;
+  els.introReadStatus.classList.remove("is-ready");
+  els.introReadProgress.style.width = "0%";
+  els.introCountdown.textContent = `请完整阅读，${secondsRemaining} 秒后可继续`;
+  els.confirmIntro.textContent = `请阅读，${secondsRemaining} 秒后继续`;
+
+  introCountdownTimer = window.setInterval(() => {
+    secondsRemaining -= 1;
+    els.introReadProgress.style.width = `${((5 - secondsRemaining) / 5) * 100}%`;
+    if (secondsRemaining > 0) {
+      els.introCountdown.textContent = `请完整阅读，${secondsRemaining} 秒后可继续`;
+      els.confirmIntro.textContent = `请阅读，${secondsRemaining} 秒后继续`;
+      return;
+    }
+    window.clearInterval(introCountdownTimer);
+    els.confirmIntro.disabled = false;
+    els.confirmIntro.textContent = "了解，开始选馆";
+    els.introCountdown.textContent = "阅读完成，可以继续";
+    els.introReadStatus.classList.add("is-ready");
+  }, 1000);
+}
+
 els.enterApp?.addEventListener("click", () => {
   els.introHero.hidden = true;
   els.introNotice.hidden = false;
   els.introNotice.focus?.();
+  startIntroReadCountdown();
 });
 
 els.confirmIntro?.addEventListener("click", () => {
@@ -1513,7 +1615,11 @@ els.locateButton.addEventListener("click", () => {
 });
 
 els.openCompare.addEventListener("click", renderComparison);
-els.openTrust.addEventListener("click", () => els.trustDialog.showModal());
+els.openTrust.classList.remove("is-acknowledged");
+els.openTrust.addEventListener("click", () => {
+  els.openTrust.classList.add("is-acknowledged");
+  els.trustDialog.showModal();
+});
 els.ratingContent.addEventListener("click", (event) => {
   const sourceButton = event.target.closest("[data-rating-source]");
   if (sourceButton) {
