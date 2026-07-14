@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>练哪儿｜广州健身房选馆助手</title>
     <link rel="icon" href="./assets/gym-map.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=20260714-2" />
     <link rel="stylesheet" href="./enhancements.css" />
   </head>
   <body class="is-intro-active">
@@ -131,13 +131,22 @@
             </div>
 
             <fieldset class="form-group">
-              <legend>你最在意什么？<small>可多选</small></legend>
+              <legend>想去什么类型的健身房？</legend>
+              <div class="segmented-control gym-category-control">
+                <label><input type="radio" name="gymCategory" value="all" checked /><span>不限类型</span></label>
+                <label><input type="radio" name="gymCategory" value="商业健身房" /><span>商业健身房</span></label>
+                <label><input type="radio" name="gymCategory" value="铁馆" /><span>铁馆</span></label>
+              </div>
+            </fieldset>
+
+            <fieldset class="form-group">
+              <legend>你最在意什么？<small>可多选 · 点击顺序即优先级</small></legend>
               <div class="choice-grid">
-                <label class="choice"><input type="checkbox" name="priority" value="beginner" checked /><span>新手有人指导</span></label>
-                <label class="choice"><input type="checkbox" name="priority" value="sales" checked /><span>不强推办卡</span></label>
+                <label class="choice"><input type="checkbox" name="priority" value="beginner" /><span>新手入门支持</span></label>
+                <label class="choice"><input type="checkbox" name="priority" value="sales" /><span>不强推办卡</span></label>
                 <label class="choice"><input type="checkbox" name="priority" value="crowd" /><span>晚高峰不拥挤</span></label>
                 <label class="choice"><input type="checkbox" name="priority" value="equipment" /><span>力量器械充足</span></label>
-                <label class="choice"><input type="checkbox" name="priority" value="shower" /><span>淋浴更衣干净</span></label>
+                <label class="choice"><input type="checkbox" name="priority" value="cleanliness" /><span>整体环境干净</span></label>
                 <label class="choice"><input type="checkbox" name="priority" value="open24" /><span>24 小时开放</span></label>
                 <label class="choice"><input type="checkbox" name="priority" value="women" /><span>女性友好</span></label>
                 <label class="choice"><input type="checkbox" name="priority" value="nightSafety" /><span>夜间安全</span></label>
@@ -306,7 +315,7 @@
       </article>
     </dialog>
 
-    <script src="./app.js"></script>
+    <script src="./app.js?v=20260714-5"></script>
     <script src="./enhancements-data.js"></script>
     <script src="./enhancements-ui.js"></script>
   </body>

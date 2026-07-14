@@ -4,6 +4,7 @@ const venues = [
     name: "Luma 24H 珠江训练仓",
     district: "珠江新城",
     type: "24小时健身房",
+    category: "铁馆",
     monthlyPrice: 399,
     trialPrice: 39,
     coordinates: [113.3272, 23.1197],
@@ -13,6 +14,7 @@ const venues = [
     lowSales: true,
     equipment: 8,
     shower: true,
+    cleanEnvironment: true,
     open24: true,
     womenFriendly: true,
     nightSafety: false,
@@ -45,6 +47,7 @@ const venues = [
     name: "FitHer 珠江女子馆",
     district: "珠江新城",
     type: "女性训练空间",
+    category: "商业健身房",
     monthlyPrice: 499,
     trialPrice: 59,
     coordinates: [113.3228, 23.1173],
@@ -54,10 +57,11 @@ const venues = [
     lowSales: false,
     equipment: 6,
     shower: true,
+    cleanEnvironment: true,
     open24: false,
     womenFriendly: true,
     nightSafety: true,
-    highlights: ["女性专属", "新手指导", "晚高峰宽松"],
+    highlights: ["女性专属", "新手入门支持", "晚高峰宽松"],
     rating: 9.0,
     image: "https://images.pexels.com/photos/30021732/pexels-photo-30021732.jpeg?auto=compress&cs=tinysrgb&w=1200",
     gallery: [
@@ -86,6 +90,7 @@ const venues = [
     name: "StartFit 天体旗舰",
     district: "天河体育中心",
     type: "商业健身房",
+    category: "商业健身房",
     monthlyPrice: 459,
     trialPrice: 49,
     coordinates: [113.3214, 23.1364],
@@ -95,6 +100,7 @@ const venues = [
     lowSales: false,
     equipment: 9,
     shower: true,
+    cleanEnvironment: true,
     open24: false,
     womenFriendly: true,
     nightSafety: true,
@@ -127,6 +133,7 @@ const venues = [
     name: "Light Gym 天河",
     district: "天河体育中心",
     type: "社区健身房",
+    category: "商业健身房",
     monthlyPrice: 299,
     trialPrice: 29,
     coordinates: [113.3278, 23.1412],
@@ -136,6 +143,7 @@ const venues = [
     lowSales: true,
     equipment: 7,
     shower: false,
+    cleanEnvironment: false,
     open24: false,
     womenFriendly: true,
     nightSafety: true,
@@ -168,6 +176,7 @@ const venues = [
     name: "PowerBox 琶洲",
     district: "琶洲",
     type: "力量训练馆",
+    category: "铁馆",
     monthlyPrice: 520,
     trialPrice: 68,
     coordinates: [113.3697, 23.0988],
@@ -177,6 +186,7 @@ const venues = [
     lowSales: true,
     equipment: 10,
     shower: true,
+    cleanEnvironment: true,
     open24: false,
     womenFriendly: false,
     nightSafety: true,
@@ -209,6 +219,7 @@ const venues = [
     name: "AirFit 北京路 24",
     district: "北京路",
     type: "24小时健身房",
+    category: "铁馆",
     monthlyPrice: 329,
     trialPrice: 35,
     coordinates: [113.2708, 23.1251],
@@ -218,6 +229,7 @@ const venues = [
     lowSales: true,
     equipment: 7,
     shower: true,
+    cleanEnvironment: true,
     open24: true,
     womenFriendly: true,
     nightSafety: false,
@@ -559,7 +571,8 @@ const state = {
   compareIds: new Set(),
   userCoordinates: null,
   galleryIndex: 0,
-  galleryVenue: null
+  galleryVenue: null,
+  priorityOrder: []
 };
 
 const districtCenters = {
@@ -571,6 +584,7 @@ const districtCenters = {
 };
 
 const priorityFeatureLabels = {
+  cleanliness: { label: "环境干净", field: "cleanEnvironment" },
   women: { label: "女性友好", field: "womenFriendly" },
   nightSafety: { label: "夜间安全", field: "nightSafety" }
 };
@@ -582,6 +596,7 @@ const els = {
   locationStatus: document.querySelector("#locationStatus"),
   trainingTime: document.querySelector("#trainingTime"),
   recommendationPanel: document.querySelector("#recommendationPanel"),
+  resultTitle: document.querySelector("#resultTitle"),
   resultSummary: document.querySelector("#resultSummary"),
   venueList: document.querySelector("#venueList"),
   compareBar: document.querySelector("#compareBar"),
@@ -628,6 +643,12 @@ function getPreferences() {
   const district = state.userCoordinates
     ? findNearestDistrict(state.userCoordinates)
     : inferDistrict(location);
+  const selectedPriorities = formData.getAll("priority");
+  const orderedPriorities = state.priorityOrder
+    .filter((priority) => selectedPriorities.includes(priority));
+  selectedPriorities.forEach((priority) => {
+    if (!orderedPriorities.includes(priority)) orderedPriorities.push(priority);
+  });
   return {
     location: location || "当前位置",
     district,
@@ -635,8 +656,31 @@ function getPreferences() {
     commute: Number(formData.get("commute")),
     budget: Number(formData.get("budget")),
     trainingTime: formData.get("trainingTime"),
-    priorities: formData.getAll("priority")
+    gymCategory: formData.get("gymCategory") || "all",
+    priorities: orderedPriorities
   };
+}
+
+function renderPriorityRanks() {
+  els.form.querySelectorAll('input[name="priority"]').forEach((input) => {
+    const choice = input.closest(".choice");
+    const label = choice.querySelector("span").textContent.trim();
+    const rank = state.priorityOrder.indexOf(input.value);
+    choice.classList.toggle("is-ranked", rank >= 0);
+    if (rank >= 0) {
+      choice.dataset.rank = String(rank + 1).padStart(2, "0");
+      input.setAttribute("aria-label", `${label}，优先级 ${rank + 1}`);
+    } else {
+      delete choice.dataset.rank;
+      input.setAttribute("aria-label", label);
+    }
+  });
+}
+
+function updatePriorityOrder(input) {
+  state.priorityOrder = state.priorityOrder.filter((priority) => priority !== input.value);
+  if (input.checked) state.priorityOrder.push(input.value);
+  renderPriorityRanks();
 }
 
 function findNearestDistrict(coordinates) {
@@ -672,6 +716,17 @@ function estimateCommute(origin, destination) {
   return Math.max(8, Math.round((distance * 4.2 + 7) / 2) * 2);
 }
 
+function getPriorityWeight(preferences, priority) {
+  const rank = preferences.priorities.indexOf(priority);
+  if (rank < 0) return 0;
+  return Math.max(0.7, 1.6 - rank * 0.15);
+}
+
+function getRatingDimensionScore(venue, dimension) {
+  return ratingProfiles[venue.id]
+    ?.find((item) => item.label === dimension)?.score ?? 0;
+}
+
 function scoreVenue(venue, preferences) {
   let score = 0;
   if (venue.district === preferences.district) score += 35;
@@ -681,17 +736,78 @@ function scoreVenue(venue, preferences) {
   if (venue.estimatedCommute <= preferences.commute) score += 14;
   if (venue.crowd[preferences.trainingTime] === "宽松") score += 10;
   if (venue.crowd[preferences.trainingTime] === "拥挤") score -= 6;
-  if (preferences.priorities.includes("beginner") && venue.beginner) score += 12;
-  if (preferences.priorities.includes("sales") && venue.lowSales) score += 12;
-  if (preferences.priorities.includes("crowd") && venue.crowd[preferences.trainingTime] !== "拥挤") score += 10;
-  if (preferences.priorities.includes("equipment")) score += venue.equipment;
-  if (preferences.priorities.includes("shower") && venue.shower) score += 8;
-  if (preferences.priorities.includes("open24") && venue.open24) score += 12;
-  if (preferences.priorities.includes("women") && venue.womenFriendly) score += 14;
-  if (preferences.priorities.includes("women") && !venue.womenFriendly) score -= 10;
-  if (preferences.priorities.includes("nightSafety") && venue.nightSafety) score += 14;
-  if (preferences.priorities.includes("nightSafety") && !venue.nightSafety) score -= 12;
+  const beginnerWeight = getPriorityWeight(preferences, "beginner");
+  const salesWeight = getPriorityWeight(preferences, "sales");
+  const crowdWeight = getPriorityWeight(preferences, "crowd");
+  const equipmentWeight = getPriorityWeight(preferences, "equipment");
+  const cleanlinessWeight = getPriorityWeight(preferences, "cleanliness");
+  const open24Weight = getPriorityWeight(preferences, "open24");
+  const womenWeight = getPriorityWeight(preferences, "women");
+  const nightSafetyWeight = getPriorityWeight(preferences, "nightSafety");
+  if (beginnerWeight && venue.beginner) score += 12 * beginnerWeight;
+  if (salesWeight && venue.lowSales) score += 12 * salesWeight;
+  if (crowdWeight) {
+    score += venue.crowd[preferences.trainingTime] !== "拥挤"
+      ? 10 * crowdWeight
+      : -8 * crowdWeight;
+  }
+  if (equipmentWeight) score += venue.equipment * equipmentWeight;
+  if (cleanlinessWeight && venue.cleanEnvironment) score += 8 * cleanlinessWeight;
+  if (open24Weight && venue.open24) score += 12 * open24Weight;
+  if (womenWeight) score += venue.womenFriendly ? 14 * womenWeight : -10 * womenWeight;
+  if (nightSafetyWeight) score += venue.nightSafety ? 14 * nightSafetyWeight : -12 * nightSafetyWeight;
   return score;
+}
+
+function getPriorityMatch(venue, preferences, priority) {
+  const beginnerScore = getRatingDimensionScore(venue, "新手友好");
+  const equipmentScore = getRatingDimensionScore(venue, "器械配置");
+  const cleanlinessScore = getRatingDimensionScore(venue, "卫生环境");
+  const matches = {
+    beginner: { matched: beginnerScore >= 9, label: "新手入门支持" },
+    sales: { matched: venue.lowSales, label: "低推销" },
+    crowd: {
+      matched: venue.crowd[preferences.trainingTime] === "宽松",
+      label: "常练时段宽松"
+    },
+    equipment: { matched: equipmentScore >= 8.8, label: "力量器械充足" },
+    cleanliness: { matched: cleanlinessScore >= 8.8, label: "环境干净" },
+    open24: { matched: venue.open24, label: "24小时开放" },
+    women: { matched: venue.womenFriendly, label: "女性友好" },
+    nightSafety: { matched: venue.nightSafety, label: "夜间安全" }
+  };
+  return matches[priority] || { matched: false, label: priority };
+}
+
+function getMatchSummary(venue, preferences) {
+  const conditions = preferences.priorities.map((priority) => (
+    getPriorityMatch(venue, preferences, priority)
+  ));
+
+  conditions.push(
+    {
+      matched: venue.estimatedCommute <= preferences.commute,
+      label: `${venue.estimatedCommute}分钟通勤`
+    },
+    {
+      matched: venue.monthlyPrice <= preferences.budget,
+      label: "月费预算内"
+    }
+  );
+
+  if (preferences.gymCategory !== "all") {
+    conditions.push({
+      matched: venue.category === preferences.gymCategory,
+      label: preferences.gymCategory
+    });
+  }
+
+  const matchedConditions = conditions.filter((condition) => condition.matched);
+  return {
+    matched: matchedConditions.length,
+    total: conditions.length,
+    reasons: matchedConditions.slice(0, 3).map((condition) => condition.label)
+  };
 }
 
 function getVenueFeatureTags(venue, preferences) {
@@ -722,6 +838,12 @@ function crowdClass(value) {
   return "neutral";
 }
 
+function crowdSummaryLabel(value) {
+  if (value === "宽松") return "高峰拥挤度低";
+  if (value === "拥挤") return "高峰拥挤度高";
+  return "高峰拥挤度中等";
+}
+
 function crowdLevelClass(level) {
   if (level >= 65) return "is-busy";
   if (level >= 35) return "is-normal";
@@ -738,17 +860,26 @@ function formatTestRecency(dateString) {
 
 function generateRecommendations() {
   const preferences = getPreferences();
-  state.recommendations = [...venues]
+  const categoryVenues = preferences.gymCategory === "all"
+    ? venues
+    : venues.filter((venue) => venue.category === preferences.gymCategory);
+  state.recommendations = [...categoryVenues]
     .map((venue) => ({
       ...venue,
       estimatedCommute: estimateCommute(preferences.coordinates, venue.coordinates)
     }))
     .map((venue) => ({ ...venue, matchScore: scoreVenue(venue, preferences) }))
-    .sort((a, b) => b.matchScore - a.matchScore)
+    .sort((a, b) => (
+      b.matchScore - a.matchScore
+      || a.estimatedCommute - b.estimatedCommute
+      || a.monthlyPrice - b.monthlyPrice
+    ))
     .slice(0, 3);
 
   state.compareIds.clear();
-  els.resultSummary.textContent = `从${preferences.location}出发 · ${preferences.commute}分钟内 · 每月¥${preferences.budget}内`;
+  const categorySummary = preferences.gymCategory === "all" ? "不限类型" : preferences.gymCategory;
+  els.resultTitle.textContent = `按匹配度推荐 ${state.recommendations.length} 家`;
+  els.resultSummary.textContent = `从${preferences.location}出发 · ${preferences.commute}分钟内 · 每月¥${preferences.budget}内 · ${categorySummary}`;
   renderRecommendations(preferences);
   renderCompareBar();
 }
@@ -765,18 +896,24 @@ function renderRecommendations(preferences) {
   state.recommendations.forEach((venue, index) => {
     const evaluatorScore = ratingProfiles[venue.id]
       .reduce((total, item) => total + item.score * item.weight / 100, 0) / 2;
+    const crowdProfile = crowdProfiles[venue.id];
+    const matchSummary = getMatchSummary(venue, preferences);
     const article = document.createElement("article");
     article.className = "venue-card";
     article.innerHTML = `
       <button class="venue-image" data-gallery="${venue.id}" type="button" aria-label="查看 ${venue.name} 的场馆照片">
         <img src="${venue.image}" alt="${venue.type}训练空间场景图" loading="lazy" referrerpolicy="no-referrer" />
-        <span class="rank-label">${index === 0 ? "首选" : `候选 ${index + 1}`}</span>
+        <span class="rank-label">推荐第 ${index + 1} 名</span>
         <span class="photo-count"><span aria-hidden="true">▣</span> 查看照片 · ${venue.gallery.length} 张</span>
       </button>
       <div class="venue-card-body">
         <div class="venue-title-row">
-          <div>
-            <p class="match-reason">${getMatchReason(venue, preferences, index)}</p>
+          <div class="venue-heading-copy">
+            <div class="match-summary-line">
+              <p class="match-reason">${getMatchReason(venue, preferences, index)}</p>
+              <span class="match-count">匹配 ${matchSummary.matched}/${matchSummary.total} 项</span>
+            </div>
+            <p class="match-basis"><strong>推荐依据</strong>${matchSummary.reasons.join(" · ")}</p>
             <div class="venue-name-line">
               <h3>${venue.name}</h3>
               <button class="rating-link" data-rating="${venue.id}" type="button" aria-label="查看 ${venue.name} 的评分与评价">
@@ -784,19 +921,36 @@ function renderRecommendations(preferences) {
                 <span>查看实测依据</span>
               </button>
             </div>
-            <p class="venue-meta">${venue.district} · ${venue.type}</p>
-            <div class="venue-features" aria-label="${venue.name}的突出特点">
-              ${getVenueFeatureTags(venue, preferences).map((highlight) => `<span class="venue-feature">${highlight}</span>`).join("")}
+            <div class="venue-meta-row">
+              <p class="venue-meta">${venue.district} · ${venue.type}</p>
+              <span class="venue-category ${venue.category === "铁馆" ? "is-iron" : "is-commercial"}">${venue.category}</span>
             </div>
-            <p class="test-proof">
-              <span aria-hidden="true"></span>
-              实测：${venue.testerCount} 人 · ${formatTestRecency(venue.testedAt)}
-            </p>
           </div>
           <label class="compare-toggle">
             <input type="checkbox" data-compare="${venue.id}" />
-            <span>加入对比</span>
+            <span class="compare-action">
+              <span class="compare-action-icon" aria-hidden="true">
+                <b class="compare-icon-add">＋</b>
+                <b class="compare-icon-added">✓</b>
+              </span>
+              <span class="compare-action-copy">
+                <strong class="compare-copy-add">加入对比</strong>
+                <strong class="compare-copy-added">已加入</strong>
+                <small class="compare-hint-add">点击选择</small>
+                <small class="compare-hint-added">再次点击取消</small>
+              </span>
+            </span>
           </label>
+        </div>
+
+        <div class="venue-support-row">
+          <div class="venue-features" aria-label="${venue.name}的突出特点">
+            ${getVenueFeatureTags(venue, preferences).map((highlight) => `<span class="venue-feature">${highlight}</span>`).join("")}
+          </div>
+          <p class="test-proof">
+            <span aria-hidden="true"></span>
+            实测：${venue.testerCount} 人 · ${formatTestRecency(venue.testedAt)}
+          </p>
         </div>
 
         <div class="facts-row">
@@ -806,13 +960,11 @@ function renderRecommendations(preferences) {
           <button class="commute-fact" data-commute="${venue.id}" type="button" aria-label="查看从 ${preferences.location} 到 ${venue.name} 的通勤时间">
             <strong>${venue.estimatedCommute} 分钟</strong><span>看通勤说明</span><em aria-hidden="true">›</em>
           </button>
-          <button class="crowd-fact" data-crowd="${venue.id}" type="button">
-            <strong class="${crowdClass(venue.crowd[preferences.trainingTime])}">${venue.crowd[preferences.trainingTime]}</strong>
-            <span>看高峰时段</span><em aria-hidden="true">›</em>
+          <button class="crowd-fact" data-crowd="${venue.id}" type="button" aria-label="查看 ${venue.name} 全天客流；最拥挤时段 ${crowdProfile.busiest}">
+            <strong class="${crowdClass(venue.crowd[preferences.trainingTime])}">${crowdSummaryLabel(venue.crowd[preferences.trainingTime])}</strong>
+            <span>最拥挤 ${crowdProfile.busiest}</span><em aria-hidden="true">›</em>
           </button>
         </div>
-
-        <div class="caution-line"><span>办卡前留意</span><p>${venue.caution}</p></div>
 
         <div class="card-footer">
           <button class="text-button detail-button" data-detail="${venue.id}" type="button">查看器械和点评</button>
@@ -914,6 +1066,23 @@ function showDetail(id) {
   const evaluatorScore = evaluatorDimensions
     .reduce((total, item) => total + item.score * item.weight / 100, 0);
   els.detailContent.innerHTML = `
+    <header class="topbar detail-dialog-topbar" aria-label="详情页导航">
+      <button class="brand detail-dialog-home" type="button" aria-label="返回练哪儿选馆列表">
+        <span class="brand-mark" aria-hidden="true">练</span>
+        <span>
+          <strong>练哪儿</strong>
+          <small class="brand-slogan">只做真实的评分</small>
+        </span>
+      </button>
+      <button class="trust-trigger detail-dialog-trust" type="button">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span class="trust-trigger-copy">
+          <strong>我们如何保证真实</strong>
+          <small>点击查看实测依据</small>
+        </span>
+        <span class="trust-info-icon" aria-hidden="true">i</span>
+      </button>
+    </header>
     <div class="detail-hero" style="background-image: linear-gradient(rgba(16, 25, 29, 0.1), rgba(16, 25, 29, 0.78)), url('${venue.image}')">
       <button class="icon-button detail-close" type="button" aria-label="关闭">×</button>
       <div>
@@ -1077,6 +1246,11 @@ function showDetail(id) {
   `;
   bindAdditionalFeeDisclosure(els.detailContent);
   els.detailContent.querySelector(".detail-close").addEventListener("click", () => els.detailDialog.close());
+  els.detailContent.querySelector(".detail-dialog-home").addEventListener("click", () => els.detailDialog.close());
+  els.detailContent.querySelector(".detail-dialog-trust").addEventListener("click", () => {
+    els.detailDialog.close();
+    requestAnimationFrame(() => els.openTrust.click());
+  });
   els.detailContent.querySelectorAll("[data-detail-tab]").forEach((button) => {
     button.addEventListener("click", () => {
       const selected = button.dataset.detailTab;
@@ -1462,7 +1636,7 @@ function renderComparison() {
     ["通勤估算", ...selected.map((venue) => `${venue.estimatedCommute} 分钟`)],
     ["常练时段", ...selected.map((venue) => venue.crowd[preferences.trainingTime])],
     ["营业时间", ...selected.map((venue) => venue.hours)],
-    ["新手指导", ...selected.map((venue) => venue.beginner ? "有" : "较少")],
+    ["新手入门支持", ...selected.map((venue) => venue.beginner ? "有" : "较少")],
     ["女性友好", ...selected.map((venue) => venue.womenFriendly ? "是" : "待确认")],
     ["推销压力", ...selected.map((venue) => venue.lowSales ? "较低" : "需留意")],
     ["淋浴", ...selected.map((venue) => venue.shower ? "有" : "无")],
@@ -1524,8 +1698,9 @@ function renderComparison() {
 
 function enterSelectionFlow() {
   document.body.classList.remove("is-intro-active");
+  window.scrollTo(0, 0);
   requestAnimationFrame(() => {
-    document.querySelector(".preference-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.scrollTo(0, 0);
   });
 }
 
@@ -1584,7 +1759,18 @@ els.locationInput.addEventListener("input", () => {
   hideRecommendations();
 });
 
-els.form.addEventListener("change", hideRecommendations);
+state.priorityOrder = Array.from(
+  els.form.querySelectorAll('input[name="priority"]:checked'),
+  (input) => input.value
+);
+renderPriorityRanks();
+
+els.form.addEventListener("change", (event) => {
+  if (event.target.matches('input[name="priority"]')) {
+    updatePriorityOrder(event.target);
+  }
+  hideRecommendations();
+});
 
 els.locateButton.addEventListener("click", () => {
   if (!navigator.geolocation) {
