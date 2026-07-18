@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>练哪儿｜视频预览</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: #080808; color: #f5f5f5; }
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    main { width: min(100%, 430px); }
+    header { margin-bottom: 14px; }
+    h1 { margin: 0 0 5px; font-size: 20px; }
+    p { margin: 0; color: #9d9d9d; font-size: 14px; }
+    video {
+      display: block;
+      width: 100%;
+      max-height: calc(100vh - 120px);
+      background: #000;
+      border: 1px solid #292929;
+      border-radius: 8px;
+      box-shadow: 0 18px 60px rgba(0, 0, 0, .45);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>练哪儿｜核心卖点视频</h1>
+      <p>第四版·约 11 秒，可拖动进度或全屏播放</p>
+    </header>
+    <video controls playsinline preload="auto">
+      <source src="video/练哪儿_核心卖点视频_v3.mp4?v=5" type="video/mp4">
+      当前浏览器无法播放该视频。
+    </video>
+  </main>
+</body>
+</html>

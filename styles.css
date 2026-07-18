@@ -2790,6 +2790,183 @@ dialog::backdrop {
   }
 }
 
+/* Immersive video entry shown before the existing reading notice. */
+.intro-video-stage {
+  width: min(430px, calc((100vh - 132px) * 9 / 16), 100%);
+  display: grid;
+  gap: 14px;
+}
+
+.intro-video-stage[hidden] {
+  display: none;
+}
+
+.intro-video-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  background: #07192d;
+  box-shadow:
+    0 34px 100px rgba(0, 0, 0, 0.58),
+    0 0 0 1px rgba(220, 174, 97, 0.08);
+}
+
+.intro-video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.intro-video-play,
+.intro-video-end {
+  position: absolute;
+  inset: 0;
+}
+
+.intro-video-play {
+  margin: auto;
+  width: 142px;
+  height: 54px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 8px;
+  color: #101012;
+  background: rgba(245, 245, 247, 0.94);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(16px);
+}
+
+.intro-video-play:not([hidden]) {
+  display: flex;
+}
+
+.intro-video-end {
+  z-index: 2;
+  align-content: end;
+  justify-items: center;
+  padding: 22px;
+  background: linear-gradient(180deg, transparent 72%, rgba(3, 10, 18, 0.7) 100%);
+  pointer-events: none;
+}
+
+.intro-video-end:not([hidden]) {
+  display: grid;
+}
+
+.intro-video-continue {
+  width: min(100%, 300px);
+  min-height: 52px;
+  border: 0;
+  border-radius: 8px;
+  color: #111113;
+  background: #f5f5f7;
+  font-size: 16px;
+  font-weight: 850;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.32);
+  pointer-events: auto;
+}
+
+.intro-video-controls {
+  display: grid;
+  grid-template-columns: auto minmax(60px, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.intro-video-controls button {
+  min-height: 36px;
+  padding: 0 6px;
+  border: 0;
+  color: #d2d2d7;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.intro-video-controls button:hover,
+.intro-video-controls button:focus-visible {
+  color: #ffffff;
+}
+
+.intro-video-progress {
+  height: 3px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.intro-video-progress i {
+  width: 0;
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: #dcae61;
+  transition: width 0.12s linear;
+}
+
+.intro-video-fallback {
+  position: absolute;
+  inset: 0;
+  padding: 34px;
+  align-content: center;
+  justify-items: center;
+  gap: 16px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(220, 174, 97, 0.16), transparent 34%),
+    #07192d;
+}
+
+.intro-video-fallback:not([hidden]) {
+  display: grid;
+}
+
+.intro-video-fallback h1 {
+  color: #f5f5f7;
+  font-size: 38px;
+  line-height: 1.05;
+}
+
+.intro-video-fallback h1 span {
+  color: #dcae61;
+}
+
+.intro-video-fallback > p:last-child {
+  color: #c7d7e9;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+@media (max-width: 620px) {
+  .intro-screen:has(.intro-video-stage:not([hidden])) {
+    padding: 14px;
+  }
+
+  .intro-video-stage {
+    width: min(100%, calc((100svh - 92px) * 9 / 16));
+    gap: 8px;
+  }
+
+  .intro-video-frame {
+    border-radius: 8px;
+  }
+
+  .intro-video-end {
+    padding: 14px;
+  }
+
+  .intro-video-controls {
+    gap: 8px;
+  }
+}
+
 /* Monochrome visual system: color is reserved for venue photography. */
 :root {
   --ink: #f5f5f7;

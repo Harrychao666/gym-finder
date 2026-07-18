@@ -629,6 +629,14 @@ const els = {
   trustDialog: document.querySelector("#trustDialog"),
   introScreen: document.querySelector("#introScreen"),
   introHero: document.querySelector("#introHero"),
+  introVideo: document.querySelector("#introVideo"),
+  introVideoFrame: document.querySelector("#introVideoFrame"),
+  introVideoFallback: document.querySelector("#introVideoFallback"),
+  introPlayVideo: document.querySelector("#introPlayVideo"),
+  introVideoEnd: document.querySelector("#introVideoEnd"),
+  introVideoProgress: document.querySelector("#introVideoProgress"),
+  replayIntroVideo: document.querySelector("#replayIntroVideo"),
+  skipIntroVideo: document.querySelector("#skipIntroVideo"),
   introNotice: document.querySelector("#introNotice"),
   enterApp: document.querySelector("#enterApp"),
   confirmIntro: document.querySelector("#confirmIntro"),
@@ -1706,6 +1714,68 @@ function enterSelectionFlow() {
 
 let introCountdownTimer;
 
+function showIntroNotice() {
+  els.introVideo?.pause();
+  els.introHero.hidden = true;
+  els.introNotice.hidden = false;
+  els.introNotice.focus?.();
+  startIntroReadCountdown();
+}
+
+function revealIntroVideoEnd() {
+  els.introVideoFrame?.classList.add("is-complete");
+  els.introVideoEnd.hidden = false;
+  if (els.introVideoProgress) els.introVideoProgress.style.width = "100%";
+  els.enterApp?.focus({ preventScroll: true });
+}
+
+async function playIntroVideo({ restart = false } = {}) {
+  if (!els.introVideo) return;
+  if (restart) els.introVideo.currentTime = 0;
+  els.introVideo.muted = true;
+  els.introVideoFrame?.classList.remove("is-complete");
+  els.introVideoEnd.hidden = true;
+  els.introPlayVideo.hidden = true;
+  els.introVideoFallback.hidden = true;
+
+  try {
+    await els.introVideo.play();
+  } catch {
+    els.introPlayVideo.hidden = false;
+  }
+}
+
+function setupIntroVideo() {
+  if (!els.introVideo) return;
+
+  els.introVideo.addEventListener("timeupdate", () => {
+    if (!Number.isFinite(els.introVideo.duration) || !els.introVideo.duration) return;
+    const progress = Math.min(100, (els.introVideo.currentTime / els.introVideo.duration) * 100);
+    if (els.introVideoProgress) els.introVideoProgress.style.width = `${progress}%`;
+  });
+  els.introVideo.addEventListener("ended", revealIntroVideoEnd);
+  els.introVideo.addEventListener("error", () => {
+    els.introVideo.hidden = true;
+    els.introPlayVideo.hidden = true;
+    els.introVideoFallback.hidden = false;
+    revealIntroVideoEnd();
+  });
+  els.introVideo.addEventListener("click", () => {
+    if (els.introVideo.paused) {
+      playIntroVideo();
+    } else {
+      els.introVideo.pause();
+      els.introPlayVideo.hidden = false;
+    }
+  });
+
+  els.introPlayVideo?.addEventListener("click", () => playIntroVideo());
+  els.replayIntroVideo?.addEventListener("click", () => playIntroVideo({ restart: true }));
+  els.skipIntroVideo?.addEventListener("click", showIntroNotice);
+
+  requestAnimationFrame(() => playIntroVideo({ restart: true }));
+}
+
 function startIntroReadCountdown() {
   let secondsRemaining = 5;
   window.clearInterval(introCountdownTimer);
@@ -1732,15 +1802,14 @@ function startIntroReadCountdown() {
 }
 
 els.enterApp?.addEventListener("click", () => {
-  els.introHero.hidden = true;
-  els.introNotice.hidden = false;
-  els.introNotice.focus?.();
-  startIntroReadCountdown();
+  showIntroNotice();
 });
 
 els.confirmIntro?.addEventListener("click", () => {
   enterSelectionFlow();
 });
+
+setupIntroVideo();
 
 els.form.addEventListener("submit", (event) => {
   event.preventDefault();
