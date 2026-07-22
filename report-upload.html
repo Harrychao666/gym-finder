@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>练哪儿｜体验官报告上传</title>
+    <link rel="stylesheet" href="./report-upload.css" />
+  </head>
+  <body>
+    <main class="upload-shell">
+      <header>
+        <span class="brand">练</span>
+        <div><p>练哪儿体验官</p><h1>提交测评报告</h1></div>
+      </header>
+      <section class="upload-card">
+        <p class="notice">上传后系统会自动提取并生成待审核总结。只有管理员确认并发布后，内容才会出现在用户网站。</p>
+        <form id="reportForm">
+          <label>体验官姓名或编号<input id="evaluatorName" required autocomplete="name" placeholder="例如：TYG-001" /></label>
+          <label>体验场馆名称<input id="venueName" required placeholder="填写门店完整名称" /></label>
+          <label class="file-field">体验报告（DOCX 或 TXT）<input id="reportFile" type="file" accept=".docx,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" required /><span id="fileHint">选择已经填写完成的报告</span></label>
+          <button id="submitButton" type="submit">上传并开始分析</button>
+        </form>
+        <div id="result" class="result" hidden aria-live="polite"></div>
+      </section>
+    </main>
+    <script src="./report-upload.js" defer></script>
+  </body>
+</html>

@@ -1,4 +1,4 @@
-const venues = [
+const fallbackVenues = [
   {
     id: "luma",
     name: "Luma 24H 珠江训练仓",
@@ -258,6 +258,8 @@ const venues = [
     updated: "2026-05-26"
   }
 ];
+
+let venues = [...fallbackVenues];
 
 const pricingPlans = {
   luma: { single: 39, weekly: 129, monthly: 399, annual: 3599 },
@@ -1613,7 +1615,7 @@ function showCommute(id) {
 }
 
 function renderFinalChoiceCard(venue) {
-  const contact = venueContacts[venue.id];
+  const contact = venueContacts[venue.id] || venue.contact || { phone: "待核实", nearestStation: "待核实", address: "待核实", booking: "到店前请先联系场馆确认。" };
   return `
     <section class="final-contact-card">
       <div>
@@ -1692,7 +1694,7 @@ function renderComparison() {
     const copyButton = event.target.closest("[data-copy-contact]");
     if (!copyButton) return;
     const venue = selected.find((item) => item.id === copyButton.dataset.copyContact);
-    const contact = venueContacts[venue.id];
+    const contact = venueContacts[venue.id] || venue.contact || { phone: "待核实", nearestStation: "待核实", address: "待核实" };
     const text = `${venue.name}\n电话：${contact.phone}\n地址：${contact.address}\n交通：${contact.nearestStation}`;
     try {
       await navigator.clipboard.writeText(text);
@@ -1906,3 +1908,53 @@ document.querySelectorAll("[data-close]").forEach((button) => {
     if (event.target === dialog) dialog.close();
   });
 });
+
+async function loadPublishedVenues() {
+  const apiBase = (window.GYM_API_BASE || "").replace(/\/$/, "");
+  try {
+    const response = await fetch(`${apiBase}/api/venues`, { headers: { accept: "application/json" } });
+    if (!response.ok) return;
+    const body = await response.json();
+    if (!Array.isArray(body.venues) || !body.venues.length) return;
+    const published = body.venues.filter(venue => venue?.id && venue?.name).map(venue => ({
+      ...venue,
+      coordinates: Array.isArray(venue.coordinates) && venue.coordinates.length === 2 ? venue.coordinates.map(Number) : [113.2644, 23.1291],
+      gallery: Array.isArray(venue.gallery) && venue.gallery.length ? venue.gallery : [{ src: venue.image, caption: "体验官核验场馆图片", date: venue.testedAt }],
+      highlights: Array.isArray(venue.highlights) ? venue.highlights : [],
+      evidence: Array.isArray(venue.evidence) ? venue.evidence : [],
+      crowd: { evening: "一般", morning: "一般", weekend: "一般", flexible: "一般", ...(venue.crowd || {}) }
+    }));
+    const publishedIds = new Set(published.map(venue => venue.id));
+    for (const venue of published) registerPublishedVenueDetails(venue);
+    venues = [...fallbackVenues.filter(venue => !publishedIds.has(venue.id)), ...published];
+  } catch {
+    // Netlify 前端尚未连接后台或后台暂时离线时，继续使用演示数据。
+  }
+}
+
+function registerPublishedVenueDetails(venue) {
+  const score = Math.max(0, Math.min(10, Number(venue.rating) || 0));
+  pricingPlans[venue.id] = { single: Number(venue.trialPrice) || 0, weekly: 0, monthly: Number(venue.monthlyPrice) || 0, annual: 0 };
+  additionalFeePlans[venue.id] = [["收费说明", "以体验官报告和门店最新规则为准"]];
+  venueContacts[venue.id] = venue.contact || { phone: "待核实", address: "待核实", nearestStation: "待核实", booking: "到店前请先联系场馆确认。" };
+  crowdProfiles[venue.id] = {
+    levels: Array.from({ length: 24 }, (_, hour) => hour >= 18 && hour <= 21 ? (venue.crowd.evening === "拥挤" ? 88 : venue.crowd.evening === "宽松" ? 38 : 64) : 28),
+    busiest: "18:00–21:00",
+    quietest: "以报告实测记录为准"
+  };
+  ratingProfiles[venue.id] = [
+    { label: "价格透明", score, weight: 20, note: "按体验官报告与审核结果展示" },
+    { label: "器械配置", score, weight: 25, note: "按现场器械记录展示" },
+    { label: "拥挤体验", score, weight: 20, note: "按四次训练观察展示" },
+    { label: "新手友好", score, weight: 20, note: "按标准问题与现场事实展示" },
+    { label: "卫生环境", score, weight: 15, note: "按体验官现场核验展示" }
+  ];
+  venueReviews[venue.id] = [{ name: "平台体验官", profile: "7天实测", time: "含工作日晚高峰", rating: score, date: venue.testedAt, photos: venue.gallery.length, text: venue.fit }];
+  venueEquipment[venue.id] = {
+    cardio: [["treadmill", "见报告"]],
+    chest: [["chestPress", "见报告"]],
+    back: [["latPulldown", "见报告"]]
+  };
+}
+
+loadPublishedVenues();

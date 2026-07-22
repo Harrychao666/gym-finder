@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>练哪儿｜内容审核后台</title>
+    <link rel="stylesheet" href="./admin.css" />
+  </head>
+  <body>
+    <header class="topbar"><div class="brand">练</div><div><small>练哪儿管理后台</small><h1>体验报告审核与发布</h1></div><a href="./" target="_blank">查看用户网站 ↗</a></header>
+    <main class="admin-layout">
+      <aside>
+        <div class="aside-heading"><div><small>REPORTS</small><h2>待处理报告</h2></div><button id="refreshButton" type="button">刷新</button></div>
+        <div id="reportList" class="report-list"><p class="empty">正在读取…</p></div>
+      </aside>
+      <section id="reviewPanel" class="review-panel">
+        <div class="empty-state"><strong>选择一份报告</strong><p>查看AI总结、修改前端内容并批准发布。</p></div>
+      </section>
+    </main>
+    <template id="reviewTemplate">
+      <div class="review-heading"><div><span id="statusBadge" class="status"></span><h2 id="reportTitle"></h2><p id="reportMeta"></p></div><div class="heading-actions"><button id="reanalyzeButton" class="secondary" type="button">重新分析</button><button id="saveButton" class="secondary" type="button">保存草稿</button><button id="publishButton" type="button">批准并发布</button></div></div>
+      <div id="systemNotice" class="system-notice"></div>
+      <form id="venueForm">
+        <fieldset><legend>前端基本信息</legend><div class="field-grid">
+          <label>场馆名称<input name="name" required /></label><label>所在区域<input name="district" required /></label>
+          <label>场馆类型<input name="type" /></label><label>分类<select name="category"><option>商业健身房</option><option>铁馆</option></select></label>
+          <label>月卡价格<input name="monthlyPrice" type="number" min="0" /></label><label>体验价格<input name="trialPrice" type="number" min="0" /></label>
+          <label>营业时间<input name="hours" /></label><label>审核评分（0–10）<input name="rating" type="number" min="0" max="10" step="0.1" required /></label>
+          <label>器械丰富度（0–10）<input name="equipment" type="number" min="0" max="10" /></label><label>晚高峰<select name="crowd.evening"><option>宽松</option><option>一般</option><option>拥挤</option></select></label>
+          <label class="wide">主图网址<input name="image" type="url" /></label>
+        </div></fieldset>
+        <fieldset><legend>AI总结与展示文案</legend><div class="field-grid">
+          <label class="wide">三个亮点（每行一个）<textarea name="highlights" rows="3"></textarea></label>
+          <label class="wide">适合人群<textarea name="fit" rows="3"></textarea></label>
+          <label class="wide">注意事项<textarea name="caution" rows="3"></textarea></label>
+          <label class="wide">证据摘要（每行一个）<textarea name="evidence" rows="4"></textarea></label>
+        </div></fieldset>
+        <fieldset><legend>标签确认</legend><div class="check-grid">
+          <label><input type="checkbox" name="beginner" />新手友好</label><label><input type="checkbox" name="lowSales" />低推销</label><label><input type="checkbox" name="shower" />有淋浴</label>
+          <label><input type="checkbox" name="cleanEnvironment" />环境干净</label><label><input type="checkbox" name="open24" />24小时</label><label><input type="checkbox" name="womenFriendly" />女性友好</label><label><input type="checkbox" name="nightSafety" />夜间安全</label>
+        </div></fieldset>
+        <fieldset><legend>联系方式与位置</legend><div class="field-grid">
+          <label>电话<input name="contact.phone" /></label><label>最近地铁<input name="contact.nearestStation" /></label>
+          <label class="wide">地址<input name="contact.address" /></label><label class="wide">到店建议<textarea name="contact.booking" rows="2"></textarea></label>
+          <label>经度<input name="longitude" type="number" step="0.000001" /></label><label>纬度<input name="latitude" type="number" step="0.000001" /></label>
+        </div></fieldset>
+      </form>
+      <details><summary>查看AI识别详情与原始文字</summary><div class="detail-columns"><section><h3>缺失与风险</h3><div id="analysisDetails"></div></section><section><h3>报告提取文字</h3><pre id="sourceText"></pre></section></div></details>
+      <div id="toast" class="toast" hidden></div>
+    </template>
+    <script src="./admin.js" defer></script>
+  </body>
+</html>

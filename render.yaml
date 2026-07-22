@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: gym-finder-api
+    runtime: node
+    plan: starter
+    region: singapore
+    branch: main
+    autoDeploy: true
+    buildCommand: npm install --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/health
+    disk:
+      name: gym-finder-data
+      mountPath: /opt/render/project/src/storage
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: DATA_DIR
+        value: /opt/render/project/src/storage
+      - key: ALLOWED_ORIGINS
+        value: https://gym-finder.netlify.app
+      - key: OPENAI_MODEL
+        value: gpt-5.6-luna
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ADMIN_TOKEN
+        sync: false
+      - key: UPLOAD_TOKEN
+        sync: false
+
+previews:
+  generation: none

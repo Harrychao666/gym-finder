@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>练哪儿｜体验官试跑</title>
+    <link rel="icon" href="./assets/gym-map.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./pilot-form.css" />
+  </head>
+  <body>
+    <header class="pilot-topbar">
+      <a class="pilot-brand" href="./index.html"><span>练</span><strong>练哪儿</strong></a>
+      <div class="save-state" id="saveState" aria-live="polite">正在连接…</div>
+    </header>
+
+    <main class="pilot-shell">
+      <aside class="pilot-sidebar">
+        <p class="eyebrow">首轮内部测试</p>
+        <h1 id="taskTitle">体验官7天测评</h1>
+        <p class="task-meta" id="taskMeta"></p>
+        <div class="progress-card">
+          <strong><span id="progressValue">0</span>%</strong>
+          <span>当前填写进度</span>
+          <div><i id="progressBar"></i></div>
+        </div>
+        <nav id="sectionNav" aria-label="测评章节"></nav>
+        <p class="privacy-note">照片中如有他人面部、手机号或聊天昵称，请先打码再上传。</p>
+      </aside>
+
+      <section class="pilot-content">
+        <div class="pilot-notice" id="connectionError" hidden></div>
+        <form id="pilotForm" novalidate></form>
+        <section class="submit-panel" id="submitPanel" hidden>
+          <div>
+            <p class="eyebrow">第7天统一提交</p>
+            <h2>确认所有事实后再提交</h2>
+            <p>提交后将锁定本次答案。系统不会因为评价正面或负面改变完成状态。</p>
+          </div>
+          <button id="submitTask" type="button">检查并提交</button>
+        </section>
+        <div class="validation-panel" id="validationPanel" hidden></div>
+      </section>
+    </main>
+
+    <template id="loadingTemplate">
+      <section class="form-section"><p>正在读取体验官任务…</p></section>
+    </template>
+    <script type="module" src="./pilot-form.js"></script>
+  </body>
+</html>
