@@ -32,4 +32,4 @@ services:
         sync: false
 
 previews:
-  generation: none
+  generation: off
