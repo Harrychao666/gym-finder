@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>练哪儿｜内容管理后台</title>
-    <link rel="stylesheet" href="./admin.css?v=12" />
+    <link rel="stylesheet" href="./admin.css?v=13" />
   </head>
   <body>
     <header class="topbar">
@@ -14,8 +14,8 @@
       <a id="publicSiteLink" href="./" target="_blank">查看用户网站 ↗</a>
     </header>
     <nav id="workspaceTabs" class="workspace-tabs" hidden>
-      <button id="reviewTab" class="is-active" type="button"><strong>① 审核体验报告</strong><span>生成并核对场馆草稿</span></button>
-      <button id="venueTab" type="button"><strong>② 管理已建场馆</strong><span>上线、下架与分配审核员</span></button>
+      <button id="reviewTab" class="is-active" type="button"><strong>② 报告处理记录</strong><span>查看分析情况与处理结果</span></button>
+      <button id="venueTab" type="button"><strong>① 自动建档与分配审核员</strong><span>打开新档案并生成专属链接</span></button>
     </nav>
 
     <main id="reviewWorkspace" class="admin-layout">
@@ -39,12 +39,11 @@
     <main id="venueWorkspace" class="admin-layout" hidden>
       <aside>
         <div class="aside-heading venue-library-heading"><div><small id="venueAsideEyebrow">VENUES</small><h2 id="venueAsideTitle">场馆资料库</h2></div></div>
-        <button id="newVenueButton" class="new-venue-button" type="button">＋ 新建一家健身房</button>
-        <p id="venuePermissionSummary" class="permission-summary">平台管理员可建立基础资料、上传实拍图片，并控制场馆上线或下架。</p>
+        <p id="venuePermissionSummary" class="permission-summary">体验官上传报告后会自动建档。平台管理员在这里打开新档案并生成审核员专属链接。</p>
         <div id="venueList" class="report-list"><p class="empty">正在读取…</p></div>
       </aside>
       <section id="venuePanel" class="review-panel">
-        <div class="empty-state"><strong>选择或新增场馆</strong><p>录入图片、营业时间、地址等基础信息。</p></div>
+        <div class="empty-state"><strong>选择一份自动建立的档案</strong><p>先分配审核员，再由审核员核对资料并发布。</p></div>
       </section>
     </main>
 
@@ -114,8 +113,21 @@
     </template>
 
     <template id="venueTemplate">
-      <div class="review-heading"><div><span id="venueVisibility" class="status"></span><h2 id="venueTitle">新建一家健身房</h2><p id="venueIntro">这里建立的是前端基础资料卡；体验官评分会在报告审核通过后补充。</p></div><div class="heading-actions"><button id="venueDeleteButton" class="danger" type="button">删除</button><button id="venueUnpublishButton" class="secondary" type="button">下架</button><button id="venueSaveButton" class="secondary" type="button">保存草稿</button><button id="venuePublishButton" type="button">保存并上线</button></div></div>
+      <div class="review-heading"><div><span id="venueVisibility" class="status"></span><h2 id="venueTitle">场馆档案</h2><p id="venueIntro">这份档案由体验官报告自动建立。</p></div><div class="heading-actions"><button id="venueDeleteButton" class="danger" type="button">删除</button><button id="venueUnpublishButton" class="secondary" type="button">下架</button><button id="venueSaveButton" class="secondary" type="button">保存草稿</button><button id="venuePublishButton" type="button">保存并上线</button></div></div>
       <form id="platformVenueForm">
+        <section class="assignment-card platform-only">
+          <div class="assignment-card-heading">
+            <small>NEXT STEP</small>
+            <h3>分配单馆审核员</h3>
+            <p>档案已由体验官报告自动建立。生成链接后，该审核员只能查看、修改和发布这一家健身房；重新生成会立即使旧链接失效。</p>
+          </div>
+          <div class="field-grid">
+            <label class="wide">审核员姓名或编号<input id="reviewerNameInput" placeholder="例如：SHY-001" /></label>
+            <div class="wide reviewer-access-actions"><button id="generateReviewerLinkButton" type="button">生成/更新审核员链接</button><button id="revokeReviewerButton" class="danger" type="button">撤销权限</button></div>
+            <label class="wide">审核员专属链接<div class="reviewer-link-row"><input id="reviewerLinkOutput" readonly placeholder="生成后会保留在这里，请单独发送给审核员" /><button id="copyReviewerLinkButton" class="secondary" type="button" hidden>复制链接</button></div></label>
+            <p id="reviewerAssignmentStatus" class="wide permission-summary">暂未分配审核员。</p>
+          </div>
+        </section>
         <section id="platformCardPreview" class="platform-card-preview"></section>
         <fieldset><legend>1. 前端卡片基础信息</legend><p class="fieldset-help">以下内容会直接出现在用户的推荐卡片和场馆详情页。</p><div class="field-grid">
           <label>场馆名称<input name="name" required /></label><label>所在区域<input name="district" required /></label>
@@ -153,15 +165,9 @@
           <div id="platformGalleryEditor" class="gallery-editor wide"></div>
           <label class="wide">基础信息来源（每行一个）<textarea name="evidence" rows="3" placeholder="例如：门店公开价目表&#10;官方营业时间&#10;平台管理员现场拍摄"></textarea></label>
         </div></fieldset>
-        <fieldset class="platform-only"><legend>6. 分配单馆审核员</legend><p class="fieldset-help">生成链接后，该审核员只能查看和修改这一家健身房。重新生成会立即使旧链接失效。</p><div class="field-grid">
-          <label class="wide">审核员姓名或编号<input id="reviewerNameInput" placeholder="例如：SHY-001" /></label>
-          <div class="wide reviewer-access-actions"><button id="generateReviewerLinkButton" type="button">生成/更新审核员链接</button><button id="revokeReviewerButton" class="danger" type="button">撤销权限</button></div>
-          <label class="wide">审核员专属链接<div class="reviewer-link-row"><input id="reviewerLinkOutput" readonly placeholder="生成后会保留在这里，请单独发送给审核员" /><button id="copyReviewerLinkButton" class="secondary" type="button" hidden>复制链接</button></div></label>
-          <p id="reviewerAssignmentStatus" class="wide permission-summary">暂未分配审核员。</p>
-        </div></fieldset>
       </form>
       <div id="platformToast" class="toast" hidden></div>
     </template>
-    <script src="./admin.js?v=11" defer></script>
+    <script src="./admin.js?v=12" defer></script>
   </body>
 </html>

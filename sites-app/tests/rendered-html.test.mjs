@@ -14,11 +14,13 @@ test("ships the public, evaluator, scoped-reviewer, and platform-admin surfaces"
 
   assert.match(home, /练哪儿/);
   assert.match(upload, /体验官/);
-  assert.match(upload, /venueId/);
-  assert.match(uploadJs, /\/api\/upload\/venues/);
-  assert.match(admin, /报告审核/);
+  assert.match(upload, /venueName/);
+  assert.match(upload, /自动建立场馆草稿档案/);
+  assert.match(uploadJs, /venueDistrict/);
+  assert.match(uploadJs, /上传并自动建档/);
+  assert.match(admin, /报告处理记录/);
   assert.match(admin, /场馆资料库/);
-  assert.match(admin, /新建一家健身房/);
+  assert.doesNotMatch(admin, /手动补建档案/);
   assert.match(admin, /platformCardPreview/);
   assert.match(admin, /crowd\.morning/);
   assert.match(admin, /additionalFees/);
@@ -35,7 +37,7 @@ test("ships the public, evaluator, scoped-reviewer, and platform-admin surfaces"
   assert.match(admin, /生成测试审核草稿/);
   assert.match(adminJs, /test-analyze/);
   assert.match(adminJs, /测试发布完成：记录已隔离/);
-  assert.match(adminJs, /链接会一直保留/);
+  assert.match(adminJs, /本页刷新前会一直保留/);
   assert.match(adminJs, /严重差异|明显差异/);
   assert.match(adminCss, /\[hidden\]\s*\{\s*display:\s*none\s*!important;/);
 });
@@ -62,6 +64,9 @@ test("build output and server-side authorization routes exist", async () => {
   assert.match(api, /severeConflict/);
   assert.match(api, /test-analyze/);
   assert.match(api, /testMode \? 0 : 1/);
+  assert.match(api, /evaluator_upload/);
+  assert.match(api, /pending_analysis/);
+  assert.match(api, /INSERT INTO published_venues/);
   assert.match(worker, /handleApiRequest/);
   await access(new URL("../dist/server/index.js", import.meta.url));
 });

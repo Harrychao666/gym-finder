@@ -424,6 +424,15 @@ async function analyzeAndSave(env: Env, report: JsonObject) {
     report.status = "analysis_failed";
     report.analysisError = error instanceof Error ? error.message : "自动分析失败";
   }
+  if (report.status === "needs_review" && report.venueId && report.venueDraft) {
+    const archive = await env.DB.prepare("SELECT visible, report_id FROM published_venues WHERE id = ?")
+      .bind(report.venueId).first<{ visible: number; report_id: string }>();
+    if (archive && !Boolean(archive.visible) && archive.report_id === report.id) {
+      report.venueDraft.id = report.venueId;
+      await env.DB.prepare("UPDATE published_venues SET venue_json = ?, version = version + 1, published_at = ? WHERE id = ?")
+        .bind(JSON.stringify(report.venueDraft), new Date().toISOString(), report.venueId).run();
+    }
+  }
   await saveReport(env, report);
   return report;
 }
@@ -485,11 +494,17 @@ function mergeReportWithVenue(base: JsonObject, analyzed: JsonObject) {
 async function uploadReport(request: Request, env: Env) {
   if (!requireUploadSecret(request, env)) return json(request, env, 401, { error: "体验官上传口令无效" });
   const url = new URL(request.url);
-  const venueId = (url.searchParams.get("venueId") || "").trim();
-  if (!venueId) return json(request, env, 422, { error: "请选择已经建立档案的健身房" });
-  const venueRow = await env.DB.prepare("SELECT venue_json FROM published_venues WHERE id = ?").bind(venueId).first<{ venue_json: string }>();
-  if (!venueRow) return json(request, env, 422, { error: "所选健身房档案不存在，请联系平台管理员" });
-  const linkedVenue = parseJson(venueRow.venue_json) || {};
+  let venueId = (url.searchParams.get("venueId") || "").trim();
+  const submittedVenueName = (url.searchParams.get("venue") || "").trim();
+  const submittedDistrict = (url.searchParams.get("district") || "").trim();
+  let linkedVenue: JsonObject | null = null;
+  if (venueId) {
+    const venueRow = await env.DB.prepare("SELECT venue_json FROM published_venues WHERE id = ?").bind(venueId).first<{ venue_json: string }>();
+    if (!venueRow) return json(request, env, 422, { error: "所选健身房档案不存在，请联系平台管理员" });
+    linkedVenue = parseJson(venueRow.venue_json) || {};
+  } else if (!submittedVenueName) {
+    return json(request, env, 422, { error: "请填写体验场馆的完整名称" });
+  }
   const originalName = safeFileName(url.searchParams.get("name") || "report.docx");
   const ext = extension(originalName);
   if (![".docx", ".txt"].includes(ext)) return json(request, env, 415, { error: "第一版仅支持 DOCX 或 TXT 报告" });
@@ -519,10 +534,24 @@ async function uploadReport(request: Request, env: Env) {
   }
 
   const now = new Date().toISOString();
+  if (!linkedVenue) {
+    linkedVenue = manualVenueDraft({
+      name: submittedVenueName,
+      district: submittedDistrict,
+      source: "evaluator_upload",
+      verificationStatus: "pending_analysis",
+      fit: "等待审核员核对体验报告后确认。",
+      caution: "该档案尚未完成审核，暂不可公开。",
+      evidence: ["体验官上传报告后自动建档"]
+    });
+    venueId = linkedVenue.id;
+    await env.DB.prepare("INSERT INTO published_venues (id, venue_json, visible, version, report_id, published_at, hidden_at) VALUES (?, ?, 0, 1, ?, ?, ?)")
+      .bind(venueId, JSON.stringify(linkedVenue), reportId, now, now).run();
+  }
   const report: JsonObject = {
     id: reportId,
     venueId,
-    venueName: String(linkedVenue.name || url.searchParams.get("venue") || "").trim(),
+    venueName: String(linkedVenue.name || submittedVenueName).trim(),
     evaluatorName: (url.searchParams.get("evaluator") || "").trim(),
     status: "analyzing",
     originalName,
@@ -543,16 +572,6 @@ async function uploadReport(request: Request, env: Env) {
   await saveReport(env, report);
   await analyzeAndSave(env, report);
   return json(request, env, 201, { ok: true, report: publicReport(report) });
-}
-
-async function listUploadVenues(request: Request, env: Env) {
-  if (!requireUploadSecret(request, env)) return json(request, env, 401, { error: "体验官上传口令无效" });
-  const result = await env.DB.prepare("SELECT id, venue_json FROM published_venues ORDER BY published_at DESC").all<{ id: string; venue_json: string }>();
-  const venues = (result.results || []).map(row => {
-    const venue = parseJson(row.venue_json) || {};
-    return { id: row.id, name: venue.name || "未命名场馆", district: venue.district || "", type: venue.type || "" };
-  });
-  return json(request, env, 200, { venues });
 }
 
 async function listPublished(request: Request, env: Env) {
@@ -650,8 +669,19 @@ async function adminReports(request: Request, env: Env, url: URL) {
   if (action === "read" && request.method === "DELETE") {
     if (role !== "platform_admin") return json(request, env, 403, { error: "只有平台管理员可以删除报告" });
     if (report.status === "published" && !report.venueDraft?.testMode) return json(request, env, 409, { error: "已发布报告需先下架对应场馆，不能直接删除" });
-    await env.DB.prepare("DELETE FROM reports WHERE id = ?").bind(reportId).run();
-    if (report.venueDraft?.testMode) await env.DB.prepare("DELETE FROM published_venues WHERE report_id = ?").bind(reportId).run();
+    const archive = await env.DB.prepare("SELECT id, visible, venue_json FROM published_venues WHERE report_id = ?")
+      .bind(reportId).first<{ id: string; visible: number; venue_json: string }>();
+    const archiveVenue = archive ? parseJson(archive.venue_json) || {} : {};
+    if (archive && !Boolean(archive.visible) && (report.venueDraft?.testMode || archiveVenue.source === "evaluator_upload")) {
+      await env.DB.batch([
+        env.DB.prepare("DELETE FROM venue_reviewers WHERE venue_id = ?").bind(archive.id),
+        env.DB.prepare("DELETE FROM venue_change_log WHERE venue_id = ?").bind(archive.id),
+        env.DB.prepare("DELETE FROM published_venues WHERE id = ?").bind(archive.id),
+        env.DB.prepare("DELETE FROM reports WHERE id = ?").bind(reportId)
+      ]);
+    } else {
+      await env.DB.prepare("DELETE FROM reports WHERE id = ?").bind(reportId).run();
+    }
     await env.FILES.delete(report.r2Key);
     return json(request, env, 200, { ok: true });
   }
@@ -895,26 +925,6 @@ async function platformVenues(request: Request, env: Env, url: URL) {
     const reviewerByVenue = new Map((assignments.results || []).map(item => [item.venue_id, { name: item.reviewer_name, updatedAt: item.updated_at }]));
     return json(request, env, 200, { role: auth.role, venueId: auth.venueId, venues: (result.results || []).map((row: JsonObject) => ({ ...parseJson(row.venue_json), visible: Boolean(row.visible), version: row.version, reportId: row.report_id, publishedAt: row.published_at, reviewer: reviewerByVenue.get(row.id) || null })) });
   }
-  if (!venueId && request.method === "POST") {
-    if (auth.role !== "platform_admin") return json(request, env, 403, { error: "审核员不能新建健身房" });
-    const body = (await request.json()) as JsonObject;
-    const draft = manualVenueDraft(body.venue || body);
-    if (!draft.name) return json(request, env, 422, { error: "请填写场馆名称" });
-    const visible = body.publish === true ? 1 : 0;
-    const missing = visible ? manualVenueMissing(draft) : [];
-    if (missing.length) return json(request, env, 422, { error: "发布前请补齐前端卡片信息", missing });
-    const publishedAt = new Date().toISOString();
-    await env.DB.prepare("INSERT INTO published_venues (id, venue_json, visible, version, report_id, published_at, hidden_at) VALUES (?, ?, ?, 1, 'manual', ?, ?)")
-      .bind(draft.id, JSON.stringify(draft), visible, publishedAt, visible ? null : publishedAt).run();
-    await recordVenueChange(env, {
-      venueId: draft.id,
-      auth,
-      action: visible ? "建立并上线基础资料" : "建立基础资料草稿",
-      after: draft
-    });
-    return json(request, env, 201, { ok: true, venue: { ...draft, visible: Boolean(visible), version: 1 } });
-  }
-
   if (!canAccessVenue(auth, venueId)) return json(request, env, 403, { error: "你只能修改被分配的健身房" });
 
   if (action === "reviewer") {
@@ -999,7 +1009,6 @@ export async function handleApiRequest(request: Request, env: Env, _ctx: Executi
       return json(request, env, 200, { ok: true, storage: "d1-r2", aiConfigured: Boolean(env.OPENAI_API_KEY) });
     }
     if (url.pathname === "/api/venues" && request.method === "GET") return listPublished(request, env);
-    if (url.pathname === "/api/upload/venues" && request.method === "GET") return listUploadVenues(request, env);
     if (url.pathname.startsWith("/api/media/")) return publicMedia(request, env, url);
     if (url.pathname === "/api/reports" && request.method === "POST") return uploadReport(request, env);
     if (url.pathname === "/api/admin/session" && request.method === "GET") {

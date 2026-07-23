@@ -32,7 +32,6 @@ reportFilters.addEventListener("click", event => {
 });
 document.querySelector("#reviewTab").addEventListener("click", () => switchWorkspace("review"));
 document.querySelector("#venueTab").addEventListener("click", () => switchWorkspace("venues"));
-document.querySelector("#newVenueButton").addEventListener("click", () => openPlatformVenue(null));
 initialize();
 
 async function initialize() {
@@ -48,6 +47,7 @@ async function initialize() {
     reviewerName = session.reviewerName || "";
     applyRoleUi();
     await loadReports();
+    if (role === "platform_admin") await switchWorkspace("venues");
   } catch (error) {
     listElement.innerHTML = `<p class="empty">${escapeHtml(error.message)}</p>`;
     document.querySelector("#roleBadge").textContent = "权限验证失败";
@@ -70,18 +70,19 @@ function applyRoleUi() {
   document.querySelector("#venueAsideEyebrow").textContent = isPlatform ? "VENUES" : "ASSIGNED VENUE";
   document.querySelector("#venueAsideTitle").textContent = isPlatform ? "场馆资料库" : "我的场馆";
   document.querySelector("#venuePermissionSummary").textContent = isPlatform
-    ? "平台管理员可建立基础资料、上传实拍图片，并控制场馆上线或下架。"
+    ? "体验官上传报告后会自动建档。打开标记为“待分配审核员”的档案，生成专属链接并发给审核员。"
     : "这里只显示你被分配的场馆。你可以补齐资料和图片，但不能上线、下架或访问其他场馆。";
   document.querySelector("#reviewTab").innerHTML = isPlatform
-    ? "<strong>① 审核体验报告</strong><span>生成并核对场馆草稿</span>"
+    ? "<strong>② 报告处理记录</strong><span>查看分析情况与处理结果</span>"
     : "<strong>① 核对体验报告</strong><span>检查证据、评分与风险</span>";
   document.querySelector("#venueTab").innerHTML = isPlatform
-    ? "<strong>② 管理已建场馆</strong><span>上线、下架与分配审核员</span>"
+    ? "<strong>① 自动建档与分配审核员</strong><span>打开新档案并生成专属链接</span>"
     : "<strong>② 完善场馆资料</strong><span>补齐用户端展示信息</span>";
+  document.querySelector("#reviewTab").style.order = isPlatform ? "2" : "1";
+  document.querySelector("#venueTab").style.order = isPlatform ? "1" : "2";
   reportStats.hidden = !isPlatform;
   reportFilters.hidden = !isPlatform;
   document.querySelector("#workspaceTabs").hidden = false;
-  document.querySelector("#newVenueButton").hidden = !isPlatform;
 }
 
 async function api(path, options = {}) {
@@ -104,7 +105,7 @@ function switchWorkspace(target) {
   venueWorkspace.hidden = !venues;
   document.querySelector("#reviewTab").classList.toggle("is-active", !venues);
   document.querySelector("#venueTab").classList.toggle("is-active", venues);
-  if (venues) loadPlatformVenues();
+  if (venues) return loadPlatformVenues();
 }
 
 async function loadReports() {
@@ -557,32 +558,46 @@ async function loadPlatformVenues() {
       if (refreshed) openPlatformVenue(refreshed);
     } else if (role === "reviewer" && platformVenues[0]) {
       openPlatformVenue(platformVenues[0]);
+    } else if (role === "platform_admin") {
+      const nextArchive = platformVenues.find(item => !item.visible && !item.reviewer && item.source === "evaluator_upload");
+      if (nextArchive) openPlatformVenue(nextArchive);
     }
   } catch (error) { venueListElement.innerHTML = `<p class="empty">${escapeHtml(error.message)}</p>`; }
 }
 
 function renderVenueList() {
-  if (!platformVenues.length) { venueListElement.innerHTML = `<p class="empty">${role === "platform_admin" ? "还没有场馆资料，点击“新增”。" : "当前没有可访问的场馆，请联系平台管理员。"}</p>`; return; }
-  venueListElement.innerHTML = platformVenues.map(venue => `<button class="report-item ${activeVenue?.id === venue.id ? "is-active" : ""}" data-venue-id="${escapeAttribute(venue.id)}"><strong>${escapeHtml(venue.name || "待命名场馆")}</strong><span>${venue.visible ? "已上线" : "草稿/已下架"} · ${escapeHtml(venue.district || "未填写区域")}</span><small>${escapeHtml(venue.hours || "未填写营业时间")}</small></button>`).join("");
+  if (!platformVenues.length) { venueListElement.innerHTML = `<p class="empty">${role === "platform_admin" ? "还没有档案。体验官上传第一份报告后会自动出现在这里。" : "当前没有可访问的场馆，请联系平台管理员。"}</p>`; return; }
+  venueListElement.innerHTML = platformVenues.map(venue => {
+    const workflowStatus = venue.visible
+      ? "已上线"
+      : venue.reviewer
+        ? `已分配 · ${venue.reviewer.name}`
+        : venue.source === "evaluator_upload"
+          ? "新档案 · 待分配审核员"
+          : "草稿 · 未分配审核员";
+    const isNewArchive = !venue.visible && !venue.reviewer && venue.source === "evaluator_upload";
+    return `<button class="report-item ${activeVenue?.id === venue.id ? "is-active" : ""} ${isNewArchive ? "is-new-archive" : ""}" data-venue-id="${escapeAttribute(venue.id)}"><strong>${escapeHtml(venue.name || "待命名场馆")}</strong><span>${escapeHtml(workflowStatus)} · ${escapeHtml(venue.district || "未填写区域")}</span><small>${escapeHtml(venue.hours || "未填写营业时间")}</small></button>`;
+  }).join("");
   venueListElement.querySelectorAll("[data-venue-id]").forEach(button => button.addEventListener("click", () => openPlatformVenue(platformVenues.find(item => item.id === button.dataset.venueId))));
 }
 
 function openPlatformVenue(venue) {
-  if (!venue && role !== "platform_admin") { platformToast("审核员不能新建健身房", true); return; }
-  activeVenue = venue ? JSON.parse(JSON.stringify(venue)) : {
-    gallery: [], contact: {}, coordinates: [], highlights: [], evidence: [], additionalFees: [],
-    type: "健身房", category: "商业健身房",
-    crowd: { morning: "一般", evening: "一般", weekend: "一般", flexible: "一般" },
-    testedAt: new Date().toISOString().slice(0, 10), verificationStatus: "base_only"
-  };
+  if (!venue) return;
+  activeVenue = JSON.parse(JSON.stringify(venue));
   renderVenueList();
   venuePanel.innerHTML = "";
   venuePanel.append(venueTemplate.content.cloneNode(true));
   venuePanel.querySelectorAll(".platform-only").forEach(element => { element.hidden = role !== "platform_admin"; });
-  venuePanel.querySelector("#venueTitle").textContent = activeVenue.name || "新建一家健身房";
-  venuePanel.querySelector("#venueVisibility").textContent = activeVenue.id ? (activeVenue.visible ? "已上线" : "草稿/已下架") : "新建草稿";
+  venuePanel.querySelector("#venueTitle").textContent = activeVenue.name || "待命名场馆档案";
+  venuePanel.querySelector("#venueVisibility").textContent = activeVenue.id
+    ? (activeVenue.visible ? "已上线" : activeVenue.reviewer ? "已分配审核员" : activeVenue.source === "evaluator_upload" ? "新档案 · 待分配" : "草稿 · 未分配")
+    : "草稿";
   if (role === "reviewer") {
     venuePanel.querySelector("#venueIntro").textContent = "这里只显示你负责的场馆。请补齐用户真正会看到的基础资料，保存后再返回报告审核。";
+  } else if (activeVenue.source === "evaluator_upload") {
+    venuePanel.querySelector("#venueIntro").textContent = activeVenue.reviewer
+      ? "这份档案由体验官报告自动建立，审核员已分配。你可以重新生成链接或查看处理状态。"
+      : "这份档案由体验官报告自动建立。下一步只需生成审核员链接；场馆资料由审核员核对并发布。";
   }
   const form = venuePanel.querySelector("#platformVenueForm");
   fillForm(form, activeVenue);
@@ -610,7 +625,7 @@ function setupReviewerAssignment() {
   const revokeButton = venuePanel.querySelector("#revokeReviewerButton");
   const assignment = activeVenue.reviewer;
   nameInput.value = assignment?.name || "";
-  status.textContent = assignment ? `已分配给：${assignment.name}。出于安全原因，旧链接不会再次显示；需要时可重新生成。` : "暂未分配审核员。";
+  status.textContent = assignment ? `已分配给：${assignment.name}。出于安全原因，旧链接不会再次显示；需要时可重新生成。` : "下一步：填写审核员姓名或编号，生成专属链接并发送给对方。";
   revokeButton.hidden = !assignment;
   generateButton.disabled = !activeVenue.id;
   generateButton.addEventListener("click", async () => {
@@ -621,7 +636,7 @@ function setupReviewerAssignment() {
       const body = await api(`/api/platform/venues/${encodeURIComponent(activeVenue.id)}/reviewer`, { method: "POST", body: JSON.stringify({ reviewerName: name }) });
       linkOutput.value = body.reviewerUrl;
       copyButton.hidden = false;
-      status.textContent = `已分配给：${body.assignment.name}。链接会一直保留在上方，直到你切换场馆或刷新页面。`;
+      status.textContent = `已分配给：${body.assignment.name}。链接已生成，发送给审核员即可；本页刷新前会一直保留。`;
       revokeButton.hidden = false;
       activeVenue.reviewer = body.assignment;
       const savedVenue = platformVenues.find(item => item.id === activeVenue.id);
@@ -647,7 +662,7 @@ function setupReviewerAssignment() {
       await api(`/api/platform/venues/${encodeURIComponent(activeVenue.id)}/reviewer`, { method: "DELETE" });
       linkOutput.value = "";
       copyButton.hidden = true;
-      status.textContent = "暂未分配审核员。";
+      status.textContent = "下一步：填写审核员姓名或编号，生成专属链接并发送给对方。";
       revokeButton.hidden = true;
       activeVenue.reviewer = null;
       const savedVenue = platformVenues.find(item => item.id === activeVenue.id);
@@ -692,12 +707,8 @@ async function savePlatformVenue(publishAfter) {
     const form = venuePanel.querySelector("#platformVenueForm");
     if (publishAfter && !form.reportValidity()) { platformToast("请先补齐所有必填信息", true); return; }
     const venue = readForm(form, activeVenue);
-    if (!activeVenue.id) {
-      activeVenue = (await api("/api/platform/venues", { method: "POST", body: JSON.stringify({ venue, publish: publishAfter }) })).venue;
-    } else {
-      activeVenue = (await api(`/api/platform/venues/${encodeURIComponent(activeVenue.id)}`, { method: "PATCH", body: JSON.stringify({ venue }) })).venue;
-      if (publishAfter) await api(`/api/platform/venues/${encodeURIComponent(activeVenue.id)}/publish`, { method: "POST" });
-    }
+    activeVenue = (await api(`/api/platform/venues/${encodeURIComponent(activeVenue.id)}`, { method: "PATCH", body: JSON.stringify({ venue }) })).venue;
+    if (publishAfter) await api(`/api/platform/venues/${encodeURIComponent(activeVenue.id)}/publish`, { method: "POST" });
     platformToast(publishAfter ? "基础资料已保存并上线" : (role === "platform_admin" ? "基础资料草稿已保存" : "这家场馆的修改已保存"));
     await loadPlatformVenues();
   } catch (error) { platformToast(`${error.message}${error.details?.length ? `：${error.details.join("、")}` : ""}`, true); }
