@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>练哪儿｜体验官报告上传</title>
+    <link rel="stylesheet" href="./report-upload.css?v=7" />
+  </head>
+  <body>
+    <main class="upload-shell">
+      <header>
+        <span class="brand">练</span>
+        <div><p>练哪儿体验官</p><h1>提交测评报告</h1></div>
+      </header>
+      <section class="upload-card">
+        <p class="notice">请上传《体验官 7 天测评表 V1.1》：7天内完成4次真实训练，并非连续7天每天打卡。系统会按《评分机制 V1.2》提取事实、固定计算六模块总分与证据可信度，再交给审核员；审核通过前不会公开。</p>
+        <form id="reportForm">
+          <label>体验官姓名或编号<input id="evaluatorName" required autocomplete="name" placeholder="例如：TYG-001" /></label>
+          <label>选择体验场馆<select id="venueId" required disabled><option value="">正在读取已建档场馆…</option></select><span class="field-help">报告会直接进入这家健身房的专属审核流程。</span></label>
+          <label class="file-field">最新版体验官报告（DOCX 或 TXT）<input id="reportFile" type="file" accept=".docx,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" required /><span id="fileHint">选择填写完成的 V1.1 报告</span></label>
+          <button id="submitButton" type="submit">上传并开始分析</button>
+        </form>
+        <div id="result" class="result" hidden aria-live="polite"></div>
+      </section>
+    </main>
+    <script src="./report-upload.js?v=7" defer></script>
+  </body>
+</html>

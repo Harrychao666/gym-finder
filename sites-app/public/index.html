@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>练哪儿｜广州健身房选馆助手</title>
+    <link rel="icon" href="./assets/gym-map.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css?v=20260717-1" />
+    <link rel="stylesheet" href="./enhancements.css" />
+  </head>
+  <body class="is-intro-active">
+    <section class="intro-screen" id="introScreen" aria-label="练哪儿真实评分机制介绍">
+      <div class="intro-video-stage" id="introHero">
+        <div class="intro-video-frame" id="introVideoFrame">
+          <video class="intro-video" id="introVideo" muted playsinline preload="auto" aria-label="练哪儿真实评分机制介绍">
+            <source src="./video/练哪儿_核心卖点视频_v3.mp4?v=5" type="video/mp4" />
+            当前浏览器无法播放介绍视频。
+          </video>
+
+          <div class="intro-video-fallback" id="introVideoFallback" hidden>
+            <span class="intro-logo" aria-hidden="true">练</span>
+            <p class="intro-kicker">练哪儿</p>
+            <h1>只做<span>真实</span>的评分</h1>
+            <p>平台自费体验官到店实测，不接受商家付费排名。</p>
+          </div>
+
+          <button class="intro-video-play" id="introPlayVideo" type="button" hidden>
+            <span aria-hidden="true">▶</span>
+            <strong>播放介绍</strong>
+          </button>
+
+          <div class="intro-video-end" id="introVideoEnd" hidden>
+            <button class="intro-video-continue" id="enterApp" type="button">继续了解</button>
+          </div>
+        </div>
+
+        <div class="intro-video-controls" aria-label="介绍视频操作">
+          <button id="replayIntroVideo" type="button" aria-label="重新播放介绍视频"><span aria-hidden="true">↻</span> 重播</button>
+          <span class="intro-video-progress" aria-hidden="true"><i id="introVideoProgress"></i></span>
+          <button id="skipIntroVideo" type="button">跳过介绍</button>
+        </div>
+      </div>
+
+      <div class="intro-notice-panel" id="introNotice" tabindex="-1" hidden>
+        <div class="intro-notice-brand">
+          <span class="intro-logo" aria-hidden="true">练</span>
+          <div>
+            <p class="intro-kicker">练哪儿</p>
+            <p class="intro-system">广州健身房真实评分系统</p>
+          </div>
+        </div>
+        <div class="intro-notice-heading">
+          <p class="intro-notice-eyebrow">使用前须知</p>
+          <h2>核心评分，来自<br /><span>平台体验官实测</span></h2>
+          <p class="intro-notice-copy">体验费用由平台承担。体验官在真实训练时段到店，按同一套标准完成记录与评分。</p>
+        </div>
+        <div class="intro-notice-list" aria-label="真实评分说明">
+          <div>
+            <b>01</b>
+            <span><strong>平台自费</strong><small>不接受商家付费排名</small></span>
+          </div>
+          <div>
+            <b>02</b>
+            <span><strong>真实训练时段到店</strong><small>核验价格、器械、拥挤与卫生</small></span>
+          </div>
+          <div>
+            <b>03</b>
+            <span><strong>消费者评价仅作补充</strong><small>不参与体验官主评分核算</small></span>
+          </div>
+        </div>
+        <div class="intro-read-status" id="introReadStatus">
+          <span class="intro-read-progress" aria-hidden="true"><i id="introReadProgress"></i></span>
+          <p id="introCountdown" aria-live="polite">请完整阅读，5 秒后可继续</p>
+        </div>
+        <button class="intro-start-button" id="confirmIntro" type="button" disabled aria-describedby="introCountdown">请阅读，5 秒后继续</button>
+      </div>
+    </section>
+
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="练哪儿首页">
+          <span class="brand-mark" aria-hidden="true">练</span>
+          <span>
+            <strong>练哪儿</strong>
+            <small class="brand-slogan">只做真实的评分</small>
+          </span>
+        </a>
+        <button class="trust-trigger" id="openTrust" type="button">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span class="trust-trigger-copy">
+            <strong>我们如何保证真实</strong>
+            <small>点击查看实测依据</small>
+          </span>
+          <span class="trust-info-icon" aria-hidden="true">i</span>
+        </button>
+      </header>
+
+      <main class="workspace">
+        <aside class="preference-panel" aria-labelledby="preferenceTitle">
+          <div class="section-heading">
+            <span class="step-number">1</span>
+            <div>
+              <p class="eyebrow">告诉我你的需求</p>
+              <h1 id="preferenceTitle">你想找怎样的健身房？</h1>
+            </div>
+          </div>
+
+          <form id="preferenceForm">
+            <div class="form-group">
+              <label for="locationInput">你现在的位置</label>
+              <div class="location-control">
+                <input id="locationInput" name="location" type="text" value="珠江新城地铁站" placeholder="输入小区、写字楼或地铁站" autocomplete="street-address" />
+                <button class="location-button" id="locateButton" type="button" title="使用设备定位">
+                  <span aria-hidden="true">⌖</span>
+                  定位
+                </button>
+              </div>
+              <p class="field-help" id="locationStatus">用于估算你到各家场馆的通勤时间</p>
+            </div>
+
+            <fieldset class="form-group">
+              <legend>单程最多多久？</legend>
+              <div class="segmented-control" id="commuteControl">
+                <label><input type="radio" name="commute" value="15" /><span>15 分钟</span></label>
+                <label><input type="radio" name="commute" value="30" checked /><span>30 分钟</span></label>
+                <label><input type="radio" name="commute" value="45" /><span>45 分钟</span></label>
+              </div>
+            </fieldset>
+
+            <fieldset class="form-group">
+              <legend>每月预算</legend>
+              <div class="segmented-control">
+                <label><input type="radio" name="budget" value="300" /><span>¥300内</span></label>
+                <label><input type="radio" name="budget" value="500" checked /><span>¥500内</span></label>
+                <label><input type="radio" name="budget" value="800" /><span>¥800内</span></label>
+              </div>
+            </fieldset>
+
+            <div class="form-group">
+              <label for="trainingTime">通常什么时候练？</label>
+              <select id="trainingTime" name="trainingTime">
+                <option value="evening">工作日晚间</option>
+                <option value="morning">工作日早晨</option>
+                <option value="weekend">周末</option>
+                <option value="flexible">时间灵活</option>
+              </select>
+            </div>
+
+            <fieldset class="form-group">
+              <legend>想去什么类型的健身房？</legend>
+              <div class="segmented-control gym-category-control">
+                <label><input type="radio" name="gymCategory" value="all" checked /><span>不限类型</span></label>
+                <label><input type="radio" name="gymCategory" value="商业健身房" /><span>商业健身房</span></label>
+                <label><input type="radio" name="gymCategory" value="铁馆" /><span>铁馆</span></label>
+              </div>
+            </fieldset>
+
+            <fieldset class="form-group">
+              <legend>你最在意什么？<small>可多选 · 点击顺序即优先级</small></legend>
+              <div class="choice-grid">
+                <label class="choice"><input type="checkbox" name="priority" value="beginner" /><span>新手入门支持</span></label>
+                <label class="choice"><input type="checkbox" name="priority" value="sales" /><span>不强推办卡</span></label>
+                <label class="choice"><input type="checkbox" name="priority" value="crowd" /><span>晚高峰不拥挤</span></label>
+                <label class="choice"><input type="checkbox" name="priority" value="equipment" /><span>力量器械充足</span></label>
+                <label class="choice"><input type="checkbox" name="priority" value="cleanliness" /><span>整体环境干净</span></label>
+                <label class="choice"><input type="checkbox" name="priority" value="open24" /><span>24 小时开放</span></label>
+                <label class="choice"><input type="checkbox" name="priority" value="women" /><span>女性友好</span></label>
+                <label class="choice"><input type="checkbox" name="priority" value="nightSafety" /><span>夜间安全</span></label>
+              </div>
+            </fieldset>
+
+            <button class="primary-button" type="submit">帮我筛出 3 家</button>
+          </form>
+        </aside>
+
+        <section class="recommendation-panel" id="recommendationPanel" aria-labelledby="resultTitle" hidden>
+          <div class="result-heading">
+            <div class="section-heading">
+              <span class="step-number">2</span>
+              <div>
+                <p class="eyebrow">根据你的条件</p>
+                <h2 id="resultTitle">先看这 3 家</h2>
+              </div>
+            </div>
+            <p id="resultSummary" class="result-summary">珠江新城 · 30分钟内 · 每月¥500内</p>
+          </div>
+
+          <div id="venueList" class="venue-list" aria-live="polite"></div>
+
+          <section class="decision-tip">
+            <strong>第一次选馆，不建议当场办年卡</strong>
+            <p>先在你常去的训练时段试练一次，再确认月卡、暂停和退款规则。</p>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div class="compare-bar" id="compareBar" hidden>
+      <div>
+        <strong>已选 <span id="compareCount">0</span> 家</strong>
+        <span id="compareNames">选择 2 家即可比较</span>
+      </div>
+      <button class="primary-button compact" id="openCompare" type="button" disabled>开始比较</button>
+    </div>
+
+    <dialog id="detailDialog" class="app-dialog">
+      <article id="detailContent"></article>
+    </dialog>
+
+    <dialog id="galleryDialog" class="app-dialog gallery-dialog" aria-labelledby="galleryTitle">
+      <article>
+        <header class="dialog-header gallery-header">
+          <div>
+            <p class="eyebrow">场馆照片</p>
+            <h2 id="galleryTitle"></h2>
+          </div>
+          <div class="gallery-header-actions">
+            <span id="galleryCounter" class="gallery-counter">1 / 3</span>
+            <button class="icon-button" data-close="galleryDialog" type="button" aria-label="关闭照片">×</button>
+          </div>
+        </header>
+        <div class="gallery-stage">
+          <div id="galleryTrack" class="gallery-track"></div>
+          <button id="galleryPrevious" class="gallery-arrow gallery-previous" type="button" aria-label="上一张照片">‹</button>
+          <button id="galleryNext" class="gallery-arrow gallery-next" type="button" aria-label="下一张照片">›</button>
+        </div>
+        <p class="gallery-note">左右滑动查看照片 · 当前为访谈演示素材</p>
+      </article>
+    </dialog>
+
+    <dialog id="crowdDialog" class="app-dialog crowd-dialog" aria-labelledby="crowdTitle">
+      <article>
+        <header class="dialog-header">
+          <div>
+            <p class="eyebrow">全天客流参考</p>
+            <h2 id="crowdTitle"></h2>
+          </div>
+          <button class="icon-button" data-close="crowdDialog" type="button" aria-label="关闭客流图">×</button>
+        </header>
+        <div id="crowdContent" class="crowd-content"></div>
+      </article>
+    </dialog>
+
+    <dialog id="pricingDialog" class="app-dialog pricing-dialog" aria-labelledby="pricingTitle">
+      <article>
+        <header class="dialog-header">
+          <div>
+            <p class="eyebrow">参考收费</p>
+            <h2 id="pricingTitle"></h2>
+          </div>
+          <button class="icon-button" data-close="pricingDialog" type="button" aria-label="关闭收费详情">×</button>
+        </header>
+        <div id="pricingContent" class="pricing-dialog-content"></div>
+      </article>
+    </dialog>
+
+    <dialog id="ratingDialog" class="app-dialog rating-dialog" aria-labelledby="ratingTitle">
+      <article>
+        <header class="dialog-header">
+          <div>
+            <p class="eyebrow">平台实测评分</p>
+            <h2 id="ratingTitle"></h2>
+          </div>
+          <button class="icon-button" data-close="ratingDialog" type="button" aria-label="关闭评分详情">×</button>
+        </header>
+        <div id="ratingContent" class="rating-dialog-content"></div>
+      </article>
+    </dialog>
+
+    <dialog id="commuteDialog" class="app-dialog commute-dialog" aria-labelledby="commuteTitle">
+      <article>
+        <header class="dialog-header">
+          <div>
+            <p class="eyebrow">单程通勤估算</p>
+            <h2 id="commuteTitle"></h2>
+          </div>
+          <button class="icon-button" data-close="commuteDialog" type="button" aria-label="关闭通勤详情">×</button>
+        </header>
+        <div id="commuteContent" class="commute-dialog-content"></div>
+      </article>
+    </dialog>
+
+    <dialog id="compareDialog" class="app-dialog compare-dialog">
+      <article>
+        <header class="dialog-header">
+          <div>
+            <p class="eyebrow">放在一起看</p>
+            <h2>场馆对比</h2>
+          </div>
+          <button class="icon-button dialog-close" data-close="compareDialog" type="button" aria-label="关闭">×</button>
+        </header>
+        <div id="compareContent" class="compare-content"></div>
+      </article>
+    </dialog>
+
+    <dialog id="trustDialog" class="app-dialog trust-dialog" aria-labelledby="trustTitle">
+      <article>
+        <header class="dialog-header">
+          <div>
+            <p class="eyebrow">真实原则</p>
+            <h2 id="trustTitle">我们如何保证真实？</h2>
+          </div>
+          <button class="icon-button" data-close="trustDialog" type="button" aria-label="关闭真实性说明">×</button>
+        </header>
+        <div class="trust-content">
+          <p class="trust-intro">评分不靠商家提供，我们用自己的标准、预算和时间核验。</p>
+          <ol class="trust-list">
+            <li>
+              <span class="trust-number">1</span>
+              <div>
+                <h3>自费体验官深度体验</h3>
+                <p>由平台承担体验费用，体验官在真实训练时段到店，核验价格、器械、拥挤度、卫生和推销情况。</p>
+              </div>
+            </li>
+            <li>
+              <span class="trust-number">2</span>
+              <div>
+                <h3>评分不与健身房合作</h3>
+                <p>不接受场馆付费修改评分、隐藏问题或购买推荐位，合作关系不会进入实测评分。</p>
+              </div>
+            </li>
+            <li>
+              <span class="trust-number">3</span>
+              <div>
+                <h3>所有信息标注核验日期</h3>
+                <p>价格、器械和客流都会展示最近实测人数与日期；过期信息重新核验，不确定的信息明确标注。</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </article>
+    </dialog>
+
+    <script src="./config.js"></script>
+    <script src="./app.js?v=20260723-2"></script>
+    <script src="./enhancements-data.js"></script>
+    <script src="./enhancements-ui.js"></script>
+  </body>
+</html>

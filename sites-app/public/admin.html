@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>练哪儿｜内容管理后台</title>
+    <link rel="stylesheet" href="./admin.css?v=10" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">练</div>
+      <div><small>练哪儿管理后台</small><h1>报告审核与场馆资料</h1></div>
+      <span id="roleBadge" class="role-badge">正在验证权限…</span>
+      <a href="./" target="_blank">查看用户网站 ↗</a>
+    </header>
+    <nav id="workspaceTabs" class="workspace-tabs" hidden>
+      <button id="reviewTab" class="is-active" type="button">报告审核</button>
+      <button id="venueTab" type="button">场馆资料库</button>
+    </nav>
+
+    <main id="reviewWorkspace" class="admin-layout">
+      <aside>
+        <div class="aside-heading"><div><small>REPORTS</small><h2>待处理报告</h2></div><button id="refreshButton" type="button">刷新</button></div>
+        <div id="permissionSummary" class="permission-summary"></div>
+        <div id="reportList" class="report-list"><p class="empty">正在读取…</p></div>
+      </aside>
+      <section id="reviewPanel" class="review-panel">
+        <div class="empty-state"><strong>选择一份报告</strong><p>查看 AI 总结、核对差异并决定是否发布。</p></div>
+      </section>
+    </main>
+
+    <main id="venueWorkspace" class="admin-layout" hidden>
+      <aside>
+        <div class="aside-heading venue-library-heading"><div><small>VENUES</small><h2>场馆资料库</h2></div></div>
+        <button id="newVenueButton" class="new-venue-button" type="button">＋ 新建一家健身房</button>
+        <p class="permission-summary">平台管理员可建立基础资料、上传实拍图片，并控制场馆上线或下架。</p>
+        <div id="venueList" class="report-list"><p class="empty">正在读取…</p></div>
+      </aside>
+      <section id="venuePanel" class="review-panel">
+        <div class="empty-state"><strong>选择或新增场馆</strong><p>录入图片、营业时间、地址等基础信息。</p></div>
+      </section>
+    </main>
+
+    <template id="reviewTemplate">
+      <div class="review-heading">
+        <div><span id="statusBadge" class="status"></span><h2 id="reportTitle"></h2><p id="reportMeta"></p></div>
+        <div class="heading-actions">
+          <button id="downloadReportButton" class="secondary" type="button">下载原始报告</button>
+          <button id="reanalyzeButton" class="secondary platform-only" type="button">重新分析</button>
+          <button id="testAnalyzeButton" class="secondary platform-only" type="button">生成测试审核草稿</button>
+          <button id="deleteReportButton" class="danger platform-only" type="button">删除报告</button>
+          <button id="saveButton" class="secondary" type="button">保存审核草稿</button>
+        </div>
+      </div>
+      <div id="systemNotice" class="system-notice"></div>
+      <section id="scoreCard" class="score-card"></section>
+      <section class="comparison-card"><div><small>同馆交叉核验</small><h3>体验结果差异检查</h3></div><div id="comparisonDetails"></div></section>
+      <section class="audit-card"><div><small>CHANGE LOG</small><h3>本馆修改留痕</h3><p>原始体验官报告不会被覆盖；这里记录审核员对展示资料和评分输入的每次修改。</p></div><div id="auditTrail"></div></section>
+      <form id="venueForm">
+        <fieldset>
+          <legend>基础信息（审核员可临时补充）</legend>
+          <p class="fieldset-help">报告模板只包含部分字段；请在发布前补齐营业时间、地址和真实场馆图片。</p>
+          <div class="field-grid">
+            <label>场馆名称<input name="name" required /></label><label>所在区域<input name="district" required /></label>
+            <label>场馆类型<input name="type" /></label><label>分类<select name="category"><option>商业健身房</option><option>铁馆</option></select></label>
+            <label>体验价格<input name="trialPrice" type="number" min="0" /></label><label>周卡价格<input name="weeklyPrice" type="number" min="0" /></label>
+            <label>月卡价格<input name="monthlyPrice" type="number" min="0" /></label><label>年卡价格<input name="annualPrice" type="number" min="0" /></label>
+            <label class="wide">其他费用说明（每行一项）<textarea name="additionalFees" rows="3"></textarea></label>
+            <label>营业时间<input name="hours" placeholder="例如 07:00–23:00" required /></label><label>信息核验日期<input name="testedAt" type="date" /></label>
+            <label>体验总分（系统自动）<input name="rating" type="number" readonly /></label><label>器械模块（系统自动，0–10）<input name="equipment" type="number" readonly /></label>
+            <label>早间客流<select name="crowd.morning"><option>宽松</option><option>一般</option><option>拥挤</option></select></label><label>晚高峰客流<select name="crowd.evening"><option>宽松</option><option>一般</option><option>拥挤</option></select></label>
+            <label>周末客流<select name="crowd.weekend"><option>宽松</option><option>一般</option><option>拥挤</option></select></label><label>灵活时段客流<select name="crowd.flexible"><option>宽松</option><option>一般</option><option>拥挤</option></select></label>
+            <label class="wide">主图网址<input name="image" type="url" placeholder="上传图片后会自动填写" /></label>
+            <label class="wide upload-box">上传场馆图片<input id="venueImageInput" type="file" accept="image/jpeg,image/png,image/webp" multiple /><span>支持 JPG、PNG、WebP；单张不超过 10 MB。请勿上传带有清晰人脸或私人信息的图片。</span></label>
+            <div id="galleryEditor" class="gallery-editor wide"></div>
+          </div>
+        </fieldset>
+        <fieldset><legend>AI 总结与展示文案</legend><div class="field-grid">
+          <label class="wide">三个亮点（每行一个）<textarea name="highlights" rows="3"></textarea></label>
+          <label class="wide">适合人群<textarea name="fit" rows="3"></textarea></label>
+          <label class="wide">注意事项<textarea name="caution" rows="3"></textarea></label>
+          <label class="wide">证据摘要（每行一个）<textarea name="evidence" rows="4"></textarea></label>
+        </div></fieldset>
+        <fieldset><legend>标签确认</legend><div class="check-grid">
+          <label><input type="checkbox" name="beginner" />新手友好</label><label><input type="checkbox" name="lowSales" />低推销</label><label><input type="checkbox" name="shower" />有淋浴</label>
+          <label><input type="checkbox" name="cleanEnvironment" />环境干净</label><label><input type="checkbox" name="open24" />24小时</label><label><input type="checkbox" name="womenFriendly" />女性友好</label><label><input type="checkbox" name="nightSafety" />夜间安全</label>
+        </div></fieldset>
+        <fieldset><legend>联系方式与位置</legend><div class="field-grid">
+          <label>电话<input name="contact.phone" /></label><label>最近地铁<input name="contact.nearestStation" /></label>
+          <label class="wide">地址<input name="contact.address" required /></label><label class="wide">到店建议<textarea name="contact.booking" rows="2"></textarea></label>
+          <label>经度<input name="longitude" type="number" step="0.000001" /></label><label>纬度<input name="latitude" type="number" step="0.000001" /></label>
+        </div></fieldset>
+        <fieldset><legend>审核结论</legend><div class="field-grid">
+          <label class="wide">审核备注或修改依据<textarea name="reviewNotes" rows="3" placeholder="说明核对结果；如果修改价格、客流、费用或证据，请写明依据。"></textarea></label>
+          <label class="wide risk-review"><input type="checkbox" name="riskReviewed" />如报告存在安全、隐藏收费、合同或严重卫生风险，我已完成二次核验并记录结论</label>
+        </div><div class="decision-actions"><button id="rejectButton" class="danger" type="button">退回补充</button><button id="publishButton" type="button">审核通过并发布</button></div></fieldset>
+      </form>
+      <details><summary>查看 AI 识别详情与原始文字</summary><div class="detail-columns"><section><h3>缺失与风险</h3><div id="analysisDetails"></div></section><section><h3>报告提取文字</h3><pre id="sourceText"></pre></section></div></details>
+      <div id="toast" class="toast" hidden></div>
+    </template>
+
+    <template id="venueTemplate">
+      <div class="review-heading"><div><span id="venueVisibility" class="status"></span><h2 id="venueTitle">新建一家健身房</h2><p>这里建立的是前端基础资料卡；体验官评分会在报告审核通过后补充。</p></div><div class="heading-actions"><button id="venueDeleteButton" class="danger" type="button">删除</button><button id="venueUnpublishButton" class="secondary" type="button">下架</button><button id="venueSaveButton" class="secondary" type="button">保存草稿</button><button id="venuePublishButton" type="button">保存并上线</button></div></div>
+      <form id="platformVenueForm">
+        <section id="platformCardPreview" class="platform-card-preview"></section>
+        <fieldset><legend>1. 前端卡片基础信息</legend><p class="fieldset-help">以下内容会直接出现在用户的推荐卡片和场馆详情页。</p><div class="field-grid">
+          <label>场馆名称<input name="name" required /></label><label>所在区域<input name="district" required /></label>
+          <label>场馆类型<input name="type" required placeholder="例如 24小时健身房、力量训练馆" /></label><label>分类<select name="category"><option>商业健身房</option><option>铁馆</option><option>其他</option></select></label>
+          <label>营业时间<input name="hours" required placeholder="例如 07:00–23:00" /></label><label>信息核验日期<input name="testedAt" type="date" /></label>
+          <label class="wide">三个卡片亮点（每行一个）<textarea name="highlights" rows="3" placeholder="例如：24小时开放&#10;低推销&#10;月卡灵活"></textarea></label>
+          <label class="wide">适合人群/基础介绍<textarea name="fit" rows="3" placeholder="说明这家健身房适合什么人；没有体验官结论时请只写已核实的基础事实。"></textarea></label>
+          <label class="wide">办卡前注意事项<textarea name="caution" rows="3" placeholder="例如开放限制、预约要求或仍待体验官核验的信息。"></textarea></label>
+        </div></fieldset>
+
+        <fieldset><legend>2. 价格与时段</legend><div class="field-grid">
+          <label>单次/体验价格<input name="trialPrice" type="number" min="0" /></label><label>周卡价格<input name="weeklyPrice" type="number" min="0" /></label>
+          <label>月卡价格<input name="monthlyPrice" type="number" min="0" required /></label><label>年卡价格<input name="annualPrice" type="number" min="0" /></label>
+          <label class="wide">其他费用说明（每行一项）<textarea name="additionalFees" rows="3" placeholder="例如：门禁卡押金 ¥50&#10;储物柜按月收费"></textarea></label>
+          <label>早间客流<select name="crowd.morning"><option>宽松</option><option>一般</option><option>拥挤</option></select></label>
+          <label>晚高峰客流<select name="crowd.evening"><option>宽松</option><option selected>一般</option><option>拥挤</option></select></label>
+          <label>周末客流<select name="crowd.weekend"><option>宽松</option><option selected>一般</option><option>拥挤</option></select></label>
+          <label>灵活时段客流<select name="crowd.flexible"><option>宽松</option><option selected>一般</option><option>拥挤</option></select></label>
+        </div></fieldset>
+
+        <fieldset><legend>3. 前端筛选标签</legend><p class="fieldset-help">只勾选已经核实的事实；这些标签会参与用户推荐排序。</p><div class="check-grid">
+          <label><input type="checkbox" name="beginner" />新手友好</label><label><input type="checkbox" name="lowSales" />低推销</label><label><input type="checkbox" name="shower" />有淋浴</label>
+          <label><input type="checkbox" name="cleanEnvironment" />环境干净</label><label><input type="checkbox" name="open24" />24小时</label><label><input type="checkbox" name="womenFriendly" />女性友好</label><label><input type="checkbox" name="nightSafety" />夜间安全</label>
+        </div></fieldset>
+
+        <fieldset><legend>4. 联系方式与地图位置</legend><div class="field-grid">
+          <label>联系电话<input name="contact.phone" /></label><label>最近地铁与路线<input name="contact.nearestStation" /></label>
+          <label class="wide">详细地址<input name="contact.address" required /></label><label class="wide">预约与到店建议<textarea name="contact.booking" rows="2"></textarea></label>
+          <label>经度<input name="longitude" type="number" step="0.000001" placeholder="例如 113.327200" required /></label><label>纬度<input name="latitude" type="number" step="0.000001" placeholder="例如 23.119700" required /></label>
+        </div></fieldset>
+
+        <fieldset><legend>5. 场馆图片与信息来源</legend><div class="field-grid">
+          <label class="wide">主图网址<input name="image" type="url" placeholder="上传图片后会自动填写" /></label>
+          <label class="wide upload-box">上传场馆图片<input id="platformImageInput" type="file" accept="image/jpeg,image/png,image/webp" multiple /><span>第一张图片自动设为主图；可上传最多12张并分别填写图片说明。</span></label>
+          <div id="platformGalleryEditor" class="gallery-editor wide"></div>
+          <label class="wide">基础信息来源（每行一个）<textarea name="evidence" rows="3" placeholder="例如：门店公开价目表&#10;官方营业时间&#10;平台管理员现场拍摄"></textarea></label>
+        </div></fieldset>
+        <fieldset class="platform-only"><legend>6. 分配单馆审核员</legend><p class="fieldset-help">生成链接后，该审核员只能查看和修改这一家健身房。重新生成会立即使旧链接失效。</p><div class="field-grid">
+          <label class="wide">审核员姓名或编号<input id="reviewerNameInput" placeholder="例如：SHY-001" /></label>
+          <div class="wide reviewer-access-actions"><button id="generateReviewerLinkButton" type="button">生成/更新审核员链接</button><button id="revokeReviewerButton" class="danger" type="button">撤销权限</button></div>
+          <label class="wide">审核员专属链接<div class="reviewer-link-row"><input id="reviewerLinkOutput" readonly placeholder="生成后会保留在这里，请单独发送给审核员" /><button id="copyReviewerLinkButton" class="secondary" type="button" hidden>复制链接</button></div></label>
+          <p id="reviewerAssignmentStatus" class="wide permission-summary">暂未分配审核员。</p>
+        </div></fieldset>
+      </form>
+      <div id="platformToast" class="toast" hidden></div>
+    </template>
+    <script src="./admin.js?v=9" defer></script>
+  </body>
+</html>
