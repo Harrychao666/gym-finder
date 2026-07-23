@@ -4,6 +4,8 @@ if (token) sessionStorage.setItem("gymAdminToken", token);
 const listElement = document.querySelector("#reportList");
 const panel = document.querySelector("#reviewPanel");
 const template = document.querySelector("#reviewTemplate");
+const reportStats = document.querySelector("#reportStats");
+const reportFilters = document.querySelector("#reportFilters");
 const venueWorkspace = document.querySelector("#venueWorkspace");
 const reviewWorkspace = document.querySelector("#reviewWorkspace");
 const venueListElement = document.querySelector("#venueList");
@@ -18,8 +20,16 @@ let assignedVenueId = null;
 let reviewerName = "";
 let platformVenues = [];
 let activeVenue = null;
+let reportFilter = "action";
 
 document.querySelector("#refreshButton").addEventListener("click", loadReports);
+reportFilters.addEventListener("click", event => {
+  const button = event.target.closest("[data-report-filter]");
+  if (!button) return;
+  reportFilter = button.dataset.reportFilter;
+  reportFilters.querySelectorAll("button").forEach(item => item.classList.toggle("is-active", item === button));
+  renderList();
+});
 document.querySelector("#reviewTab").addEventListener("click", () => switchWorkspace("review"));
 document.querySelector("#venueTab").addEventListener("click", () => switchWorkspace("venues"));
 document.querySelector("#newVenueButton").addEventListener("click", () => openPlatformVenue(null));
@@ -92,11 +102,23 @@ async function loadReports() {
 }
 
 function renderList() {
+  const actionCount = reports.filter(report => report.status !== "published").length;
+  const failedCount = reports.filter(report => report.status === "analysis_failed").length;
+  reportStats.innerHTML = `<article><strong>${actionCount}</strong><span>待处理</span></article><article><strong>${failedCount}</strong><span>需先修复</span></article>`;
   if (!reports.length) {
     listElement.innerHTML = '<p class="empty">还没有体验官上传报告。</p>';
     return;
   }
-  listElement.innerHTML = reports.map(report => `<button class="report-item ${activeReport?.id === report.id ? "is-active" : ""}" data-id="${escapeAttribute(report.id)}"><strong>${escapeHtml(report.venueName || report.analysis?.venueName || "待命名场馆")}</strong><span>${statusText(report.status)} · ${escapeHtml(report.evaluatorName || "未填写体验官")}</span><small>${new Date(report.createdAt).toLocaleString("zh-CN")}</small></button>`).join("");
+  const visibleReports = reports.filter(report => {
+    if (reportFilter === "all") return true;
+    if (reportFilter === "action") return report.status !== "published";
+    return report.status === reportFilter;
+  });
+  if (!visibleReports.length) {
+    listElement.innerHTML = '<p class="empty">这个筛选条件下没有报告。</p>';
+    return;
+  }
+  listElement.innerHTML = visibleReports.map(report => `<button class="report-item ${activeReport?.id === report.id ? "is-active" : ""}" data-id="${escapeAttribute(report.id)}"><span class="report-item-top"><strong>${escapeHtml(report.venueName || report.analysis?.venueName || "待命名场馆")}</strong><i class="status-dot status-${escapeAttribute(report.status)}"></i></span><span>${statusText(report.status)} · ${escapeHtml(report.evaluatorName || "未填写体验官")}</span><small>${new Date(report.createdAt).toLocaleString("zh-CN")}</small></button>`).join("");
   listElement.querySelectorAll("[data-id]").forEach(button => button.addEventListener("click", () => openReport(button.dataset.id)));
 }
 
@@ -122,6 +144,7 @@ function renderReview() {
   panel.querySelector("#statusBadge").textContent = statusText(report.status);
   panel.querySelector("#reportTitle").textContent = draft.name || report.venueName || "待命名场馆";
   panel.querySelector("#reportMeta").textContent = `${report.evaluatorName || "未填写体验官"} · ${report.originalName} · ${(report.fileSize / 1024 / 1024).toFixed(2)} MB`;
+  panel.querySelector("#auditCount").textContent = auditTrail.length;
   const notice = panel.querySelector("#systemNotice");
   if (report.analysisMode === "openai") {
     notice.classList.add("is-openai");
@@ -135,6 +158,8 @@ function renderReview() {
   renderComparison(panel.querySelector("#comparisonDetails"), comparison);
   renderAuditTrail(panel.querySelector("#auditTrail"), auditTrail);
   const form = panel.querySelector("#venueForm");
+  const hasDraft = hasReviewDraft(draft);
+  panel.querySelector("#reviewContent").hidden = !hasDraft;
   fillForm(form, { ...draft, reviewNotes: report.reviewNotes || "" });
   renderGalleryEditor(panel.querySelector("#galleryEditor"), draft.gallery || [], form);
   panel.querySelector("#venueImageInput").addEventListener("change", event => uploadReviewImages(event.target.files));
@@ -150,6 +175,81 @@ function renderReview() {
   panel.querySelector("#deleteReportButton").addEventListener("click", deleteReport);
   panel.querySelector("#rejectButton").addEventListener("click", rejectReport);
   panel.querySelector("#publishButton").addEventListener("click", publish);
+  form.addEventListener("input", updateReviewProgress);
+  updateReviewProgress();
+}
+
+function hasReviewDraft(draft) {
+  return Boolean(draft && (Array.isArray(draft.scoreModules) || draft.name || draft.experienceScore !== undefined));
+}
+
+function getPublishChecks(draft) {
+  const gates = draft.publicationGates || {};
+  const useful = value => Boolean(String(value ?? "").trim()) && !/待补充|待核实/.test(String(value));
+  return [
+    { label: "场馆名称已确认", passed: useful(draft.name), selector: '[name="name"]' },
+    { label: "所在区域已确认", passed: useful(draft.district), selector: '[name="district"]' },
+    { label: "营业时间已补齐", passed: useful(draft.hours), selector: '[name="hours"]' },
+    { label: "详细地址已补齐", passed: useful(draft.contact?.address), selector: '[name="contact.address"]' },
+    { label: "场馆主图已提供", passed: useful(draft.image), selector: "#venueImageInput" },
+    { label: "适合人群已核对", passed: useful(draft.fit), selector: '[name="fit"]' },
+    { label: "注意事项已核对", passed: useful(draft.caution), selector: '[name="caution"]' },
+    { label: "体验总分已自动生成", passed: Number.isFinite(Number(draft.experienceScore)) && Number(draft.experienceScore) >= 0 && Number(draft.experienceScore) <= 100, selector: "#scoreCard" },
+    { label: "4次训练要求通过", passed: Boolean(gates.trainingComplete), selector: "#scoreCard" },
+    { label: "六模块必填项通过", passed: Boolean(gates.requiredComplete), selector: "#scoreCard" },
+    { label: "证据可信度达到B级", passed: Boolean(gates.confidencePassed), selector: "#scoreCard" },
+    { label: "严重风险已二次核验", passed: !gates.riskReviewRequired || Boolean(draft.riskReviewed), selector: '[name="riskReviewed"]' }
+  ];
+}
+
+function updateReviewProgress() {
+  if (!activeReport) return;
+  const form = panel.querySelector("#venueForm");
+  const storedDraft = activeReport.venueDraft || {};
+  const hasDraft = hasReviewDraft(storedDraft);
+  const draft = hasDraft && form ? readForm(form, storedDraft) : storedDraft;
+  const checks = hasDraft ? getPublishChecks(draft) : [];
+  const completed = checks.filter(check => check.passed).length;
+  const ready = hasDraft && checks.length > 0 && completed === checks.length;
+  const published = activeReport.status === "published";
+  const steps = [
+    { label: "报告已上传", done: true },
+    { label: "生成审核草稿", done: hasDraft },
+    { label: "核对必填项", done: ready },
+    { label: "完成发布", done: published }
+  ];
+  const currentIndex = published ? 3 : ready ? 3 : hasDraft ? 2 : 1;
+  panel.querySelector("#workflowGuide").innerHTML = steps.map((step, index) => `<div class="${step.done ? "is-done" : ""} ${index === currentIndex ? "is-current" : ""}"><span>${step.done ? "✓" : index + 1}</span><strong>${step.label}</strong></div>`).join("");
+
+  const checklist = panel.querySelector("#publishChecklist");
+  if (hasDraft) {
+    checklist.innerHTML = `<div><small>发布检查</small><h3>${ready ? "发布条件已满足" : `还差 ${checks.length - completed} 项`}</h3><p>系统会随着你填写内容自动更新。</p></div><div class="checklist-items">${checks.map(check => `<span class="${check.passed ? "is-pass" : "is-missing"}">${check.passed ? "✓" : "○"} ${escapeHtml(check.label)}</span>`).join("")}</div>`;
+  }
+
+  const nextAction = panel.querySelector("#nextActionCard");
+  if (published) {
+    nextAction.innerHTML = '<div><small>当前状态</small><h3>这份报告已经处理完成</h3><p>需要检查修改记录或原始材料时，再展开下方的次要信息。</p></div><span class="done-mark">✓</span>';
+  } else if (!hasDraft) {
+    nextAction.innerHTML = role === "platform_admin"
+      ? '<div><small>现在只做这一步</small><h3>先生成一份可审核的草稿</h3><p>可以用免费虚构数据跑通流程；配额恢复后再调用 AI 重新分析。</p></div><div class="next-action-buttons"><button data-workflow-action="test" type="button">生成免费测试草稿</button><button class="secondary" data-workflow-action="ai" type="button">调用 AI 重新分析</button></div>'
+      : '<div><small>需要平台管理员处理</small><h3>这份报告还没有审核草稿</h3><p>请联系平台管理员重新分析，完成后你再继续核对。</p></div>';
+  } else if (!ready) {
+    const firstMissing = checks.find(check => !check.passed);
+    nextAction.innerHTML = `<div><small>现在只做这一步</small><h3>补齐发布前检查</h3><p>已完成 ${completed}/${checks.length} 项，先处理“${escapeHtml(firstMissing.label)}”。</p></div><button data-workflow-action="missing" data-selector="${escapeAttribute(firstMissing.selector)}" type="button">去处理这一项</button>`;
+  } else {
+    nextAction.innerHTML = `<div><small>下一步</small><h3>${activeReport.venueDraft?.testMode ? "完成隔离测试发布" : "填写审核备注后发布"}</h3><p>${activeReport.venueDraft?.testMode ? "测试记录不会展示给真实用户。" : "发布前最后检查一次修改依据和风险核验。"}</p></div><button data-workflow-action="decision" type="button">前往审核结论</button>`;
+  }
+  nextAction.querySelector('[data-workflow-action="test"]')?.addEventListener("click", createTestDraft);
+  nextAction.querySelector('[data-workflow-action="ai"]')?.addEventListener("click", reanalyze);
+  nextAction.querySelector('[data-workflow-action="decision"]')?.addEventListener("click", () => scrollToReviewTarget("#decisionSection"));
+  nextAction.querySelector('[data-workflow-action="missing"]')?.addEventListener("click", event => scrollToReviewTarget(event.currentTarget.dataset.selector));
+}
+
+function scrollToReviewTarget(selector) {
+  const target = panel.querySelector(selector);
+  if (!target) return;
+  target.scrollIntoView({ behavior: "smooth", block: "center" });
+  if (typeof target.focus === "function") setTimeout(() => target.focus({ preventScroll: true }), 350);
 }
 
 async function downloadOriginalReport() {
@@ -334,6 +434,8 @@ async function saveDraft({ quiet = false } = {}) {
     activeReport = response.report;
     auditTrail = response.auditTrail || auditTrail;
     renderAuditTrail(panel.querySelector("#auditTrail"), auditTrail);
+    panel.querySelector("#auditCount").textContent = auditTrail.length;
+    updateReviewProgress();
     if (!quiet) toast("审核草稿已保存");
     return true;
   } catch (error) { toast(error.message, true); return false; }
