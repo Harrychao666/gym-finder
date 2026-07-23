@@ -26,6 +26,9 @@ test("ships the public, evaluator, scoped-reviewer, and platform-admin surfaces"
   assert.match(admin, /platformImageInput/);
   assert.match(adminJs, /platform_admin/);
   assert.match(adminJs, /审核员/);
+  assert.match(adminJs, /单馆审核工作台/);
+  assert.match(adminJs, /自动打开|nextReport/);
+  assert.match(adminCss, /\.reviewer-mode #venueWorkspace aside\s*\{\s*display:none/);
   assert.match(adminJs, /setupReviewerAssignment/);
   assert.match(admin, /分配单馆审核员/);
   assert.match(admin, /copyReviewerLinkButton/);

@@ -4,14 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>练哪儿｜内容管理后台</title>
-    <link rel="stylesheet" href="./admin.css?v=11" />
+    <link rel="stylesheet" href="./admin.css?v=12" />
   </head>
   <body>
     <header class="topbar">
       <div class="brand">练</div>
-      <div><small>练哪儿管理后台</small><h1>内容运营台</h1></div>
+      <div><small id="workspaceEyebrow">练哪儿管理后台</small><h1 id="workspaceTitle">内容运营台</h1></div>
       <span id="roleBadge" class="role-badge">正在验证权限…</span>
-      <a href="./" target="_blank">查看用户网站 ↗</a>
+      <a id="publicSiteLink" href="./" target="_blank">查看用户网站 ↗</a>
     </header>
     <nav id="workspaceTabs" class="workspace-tabs" hidden>
       <button id="reviewTab" class="is-active" type="button"><strong>① 审核体验报告</strong><span>生成并核对场馆草稿</span></button>
@@ -20,7 +20,7 @@
 
     <main id="reviewWorkspace" class="admin-layout">
       <aside>
-        <div class="aside-heading"><div><small>REPORTS</small><h2>待处理报告</h2></div><button id="refreshButton" type="button">刷新</button></div>
+        <div class="aside-heading"><div><small id="reportAsideEyebrow">REPORTS</small><h2 id="reportAsideTitle">待处理报告</h2></div><button id="refreshButton" type="button">刷新</button></div>
         <div id="permissionSummary" class="permission-summary"></div>
         <div id="reportStats" class="report-stats"></div>
         <div id="reportFilters" class="report-filters" aria-label="报告筛选">
@@ -38,9 +38,9 @@
 
     <main id="venueWorkspace" class="admin-layout" hidden>
       <aside>
-        <div class="aside-heading venue-library-heading"><div><small>VENUES</small><h2>场馆资料库</h2></div></div>
+        <div class="aside-heading venue-library-heading"><div><small id="venueAsideEyebrow">VENUES</small><h2 id="venueAsideTitle">场馆资料库</h2></div></div>
         <button id="newVenueButton" class="new-venue-button" type="button">＋ 新建一家健身房</button>
-        <p class="permission-summary">平台管理员可建立基础资料、上传实拍图片，并控制场馆上线或下架。</p>
+        <p id="venuePermissionSummary" class="permission-summary">平台管理员可建立基础资料、上传实拍图片，并控制场馆上线或下架。</p>
         <div id="venueList" class="report-list"><p class="empty">正在读取…</p></div>
       </aside>
       <section id="venuePanel" class="review-panel">
@@ -114,7 +114,7 @@
     </template>
 
     <template id="venueTemplate">
-      <div class="review-heading"><div><span id="venueVisibility" class="status"></span><h2 id="venueTitle">新建一家健身房</h2><p>这里建立的是前端基础资料卡；体验官评分会在报告审核通过后补充。</p></div><div class="heading-actions"><button id="venueDeleteButton" class="danger" type="button">删除</button><button id="venueUnpublishButton" class="secondary" type="button">下架</button><button id="venueSaveButton" class="secondary" type="button">保存草稿</button><button id="venuePublishButton" type="button">保存并上线</button></div></div>
+      <div class="review-heading"><div><span id="venueVisibility" class="status"></span><h2 id="venueTitle">新建一家健身房</h2><p id="venueIntro">这里建立的是前端基础资料卡；体验官评分会在报告审核通过后补充。</p></div><div class="heading-actions"><button id="venueDeleteButton" class="danger" type="button">删除</button><button id="venueUnpublishButton" class="secondary" type="button">下架</button><button id="venueSaveButton" class="secondary" type="button">保存草稿</button><button id="venuePublishButton" type="button">保存并上线</button></div></div>
       <form id="platformVenueForm">
         <section id="platformCardPreview" class="platform-card-preview"></section>
         <fieldset><legend>1. 前端卡片基础信息</legend><p class="fieldset-help">以下内容会直接出现在用户的推荐卡片和场馆详情页。</p><div class="field-grid">
@@ -162,6 +162,6 @@
       </form>
       <div id="platformToast" class="toast" hidden></div>
     </template>
-    <script src="./admin.js?v=10" defer></script>
+    <script src="./admin.js?v=11" defer></script>
   </body>
 </html>

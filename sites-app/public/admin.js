@@ -56,10 +56,30 @@ async function initialize() {
 
 function applyRoleUi() {
   const isPlatform = role === "platform_admin";
+  document.body.classList.toggle("reviewer-mode", !isPlatform);
+  document.title = isPlatform ? "练哪儿｜内容管理后台" : "练哪儿｜单馆审核工作台";
   document.querySelector("#roleBadge").textContent = isPlatform ? "平台管理员 · 全部权限" : `${reviewerName || "单馆审核员"} · 单馆权限`;
   document.querySelector("#permissionSummary").textContent = isPlatform
     ? "可审核报告、管理场馆资料、重新调用 AI、删除和下架内容。"
-    : "只可查看和修改被分配的健身房；可审核报告并更新该馆前端资料，不能进入其他场馆。";
+    : `当前只处理平台分配给你的这一家场馆${reviewerName ? `；审核身份：${reviewerName}` : ""}。其他场馆、平台配置和管理操作均不可见。`;
+  document.querySelector("#workspaceEyebrow").textContent = isPlatform ? "练哪儿管理后台" : "练哪儿 · 单馆任务";
+  document.querySelector("#workspaceTitle").textContent = isPlatform ? "内容运营台" : "单馆审核工作台";
+  document.querySelector("#publicSiteLink").hidden = !isPlatform;
+  document.querySelector("#reportAsideEyebrow").textContent = isPlatform ? "REPORTS" : "MY ASSIGNMENT";
+  document.querySelector("#reportAsideTitle").textContent = isPlatform ? "待处理报告" : "本馆报告";
+  document.querySelector("#venueAsideEyebrow").textContent = isPlatform ? "VENUES" : "ASSIGNED VENUE";
+  document.querySelector("#venueAsideTitle").textContent = isPlatform ? "场馆资料库" : "我的场馆";
+  document.querySelector("#venuePermissionSummary").textContent = isPlatform
+    ? "平台管理员可建立基础资料、上传实拍图片，并控制场馆上线或下架。"
+    : "这里只显示你被分配的场馆。你可以补齐资料和图片，但不能上线、下架或访问其他场馆。";
+  document.querySelector("#reviewTab").innerHTML = isPlatform
+    ? "<strong>① 审核体验报告</strong><span>生成并核对场馆草稿</span>"
+    : "<strong>① 核对体验报告</strong><span>检查证据、评分与风险</span>";
+  document.querySelector("#venueTab").innerHTML = isPlatform
+    ? "<strong>② 管理已建场馆</strong><span>上线、下架与分配审核员</span>"
+    : "<strong>② 完善场馆资料</strong><span>补齐用户端展示信息</span>";
+  reportStats.hidden = !isPlatform;
+  reportFilters.hidden = !isPlatform;
   document.querySelector("#workspaceTabs").hidden = false;
   document.querySelector("#newVenueButton").hidden = !isPlatform;
 }
@@ -95,10 +115,24 @@ async function loadReports() {
     assignedVenueId = body.venueId || assignedVenueId;
     reviewerName = body.reviewerName || reviewerName;
     renderList();
-    if (activeReport) await openReport(activeReport.id);
+    if (activeReport) {
+      await openReport(activeReport.id);
+    } else if (role === "reviewer" && reports.length) {
+      const nextReport = reports.find(report => report.status === "needs_review")
+        || reports.find(report => report.status !== "published")
+        || reports[0];
+      await openReport(nextReport.id);
+    } else if (role === "reviewer") {
+      renderReviewerEmptyState();
+    }
   } catch (error) {
     listElement.innerHTML = `<p class="empty">${escapeHtml(error.message)}</p>`;
   }
+}
+
+function renderReviewerEmptyState() {
+  panel.innerHTML = '<div class="empty-state reviewer-empty"><strong>当前没有需要核对的报告</strong><p>你仍然可以完善这家场馆的地址、营业时间和图片。</p><button id="goVenueButton" type="button">前往完善场馆资料</button></div>';
+  panel.querySelector("#goVenueButton").addEventListener("click", () => switchWorkspace("venues"));
 }
 
 function renderList() {
@@ -109,7 +143,7 @@ function renderList() {
     listElement.innerHTML = '<p class="empty">还没有体验官上传报告。</p>';
     return;
   }
-  const visibleReports = reports.filter(report => {
+  const visibleReports = role === "reviewer" ? reports : reports.filter(report => {
     if (reportFilter === "all") return true;
     if (reportFilter === "action") return report.status !== "published";
     return report.status === reportFilter;
@@ -175,6 +209,11 @@ function renderReview() {
   panel.querySelector("#deleteReportButton").addEventListener("click", deleteReport);
   panel.querySelector("#rejectButton").addEventListener("click", rejectReport);
   panel.querySelector("#publishButton").addEventListener("click", publish);
+  if (role === "reviewer") {
+    panel.querySelector("#saveButton").textContent = "保存本次核对";
+    panel.querySelector("#rejectButton").textContent = "退回补充材料";
+    panel.querySelector("#publishButton").textContent = "完成审核并发布";
+  }
   form.addEventListener("input", updateReviewProgress);
   updateReviewProgress();
 }
@@ -542,6 +581,9 @@ function openPlatformVenue(venue) {
   venuePanel.querySelectorAll(".platform-only").forEach(element => { element.hidden = role !== "platform_admin"; });
   venuePanel.querySelector("#venueTitle").textContent = activeVenue.name || "新建一家健身房";
   venuePanel.querySelector("#venueVisibility").textContent = activeVenue.id ? (activeVenue.visible ? "已上线" : "草稿/已下架") : "新建草稿";
+  if (role === "reviewer") {
+    venuePanel.querySelector("#venueIntro").textContent = "这里只显示你负责的场馆。请补齐用户真正会看到的基础资料，保存后再返回报告审核。";
+  }
   const form = venuePanel.querySelector("#platformVenueForm");
   fillForm(form, activeVenue);
   renderPlatformGallery();
