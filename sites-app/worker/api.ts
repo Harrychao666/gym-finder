@@ -200,7 +200,7 @@ function allowedOrigin(request: Request, env: Env) {
   const origin = request.headers.get("origin");
   if (!origin) return null;
   const current = new URL(request.url).origin;
-  const configured = (env.ALLOWED_ORIGINS || "https://gym-finder.netlify.app")
+  const configured = (env.ALLOWED_ORIGINS || "https://youjian-haoguan.harry88767.chatgpt.site")
     .split(",").map(value => value.trim()).filter(Boolean);
   return origin === current || configured.includes(origin) ? origin : null;
 }
