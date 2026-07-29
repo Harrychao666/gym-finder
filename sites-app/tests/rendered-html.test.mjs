@@ -12,7 +12,7 @@ test("ships the public, evaluator, scoped-reviewer, and platform-admin surfaces"
     readFile(new URL("../public/admin.css", import.meta.url), "utf8"),
   ]);
 
-  assert.match(home, /练哪儿/);
+  assert.match(home, /有间好馆/);
   assert.match(upload, /体验官/);
   assert.match(upload, /venueName/);
   assert.match(upload, /自动建立场馆草稿档案/);

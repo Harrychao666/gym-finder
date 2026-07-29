@@ -252,40 +252,48 @@ export function createTestAnalysis(metadata = {}) {
   };
 }
 
-function outputText(response) {
-  for (const output of response.output || []) {
-    for (const content of output.content || []) {
-      if (content.type === "output_text" && content.text) return content.text;
-    }
+function completionText(response) {
+  const content = response?.choices?.[0]?.message?.content;
+  if (typeof content === "string" && content.trim()) return content.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  if (Array.isArray(content)) {
+    const text = content.map(item => item?.text || "").join("").trim();
+    if (text) return text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
   }
   throw new Error("AI 没有返回可解析的分析结果");
 }
 
-export async function analyzeReport({ text, metadata = {}, apiKey = process.env.OPENAI_API_KEY, model = process.env.OPENAI_MODEL || "gpt-5.6-luna" }) {
+export async function analyzeReport({ text, metadata = {}, apiKey = process.env.OPENAI_API_KEY, model = process.env.OPENAI_MODEL || "gpt-4o" }) {
   if (!apiKey) return { mode: "local-preview", model: null, analysis: localPreview(text, metadata) };
 
-  const response = await fetch("https://api.openai.com/v1/responses", {
+  const instructions = [
+    "你是有间好馆平台的体验报告整理助手。只根据报告中的明确事实提取和概括，不得补造价格、设施或体验结论。",
+    "不知道的信息使用空字符串、0、false、未确认或放入 missingItems。",
+    "总结需中性、简洁，明确区分事实、风险和适合人群。评分绝对不由你计算；你只把《体验官7天测评表V1.1》中的事实准确填入 scoringFacts，后台会按《评分机制V1.2》固定计算。",
+    "勾选项只按报告中明确勾选的结果提取；空白、冲突或无法确认均按未填写/unknown处理，并将对应 moduleComplete 设为 false。",
+    "equipment.uniqueTotal 与 uniqueAvailable 必须按同一台器械跨区域去重；数量不一致且没有原因时 conditionComplete=false。",
+    "evidenceStatus 将表格里的充分映射为 full、部分/仅口头映射为 partial、无映射为 none。seriousRisk 只用于明显安全、隐藏收费、合同或严重卫生问题。",
+    "venueName 优先使用上传者提供的场馆名；confidence 表示AI文字提取把握，不是证据可信度，也不是场馆评分。",
+    "只输出符合指定 JSON Schema 的 JSON，不要添加 Markdown 代码块或解释。"
+  ].join("\n");
+
+  const response = await fetch("https://api.gptsapi.net/v1/chat/completions", {
     method: "POST",
     headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
     body: JSON.stringify({
       model,
-      store: false,
-      instructions: [
-        "你是练哪儿平台的体验报告整理助手。只根据报告中的明确事实提取和概括，不得补造价格、设施或体验结论。",
-        "不知道的信息使用空字符串、0、false、未确认或放入 missingItems。",
-        "总结需中性、简洁，明确区分事实、风险和适合人群。评分绝对不由你计算；你只把《体验官7天测评表V1.1》中的事实准确填入 scoringFacts，后台会按《评分机制V1.2》固定计算。",
-        "勾选项只按报告中明确勾选的结果提取；空白、冲突或无法确认均按未填写/unknown处理，并将对应 moduleComplete 设为 false。",
-        "equipment.uniqueTotal 与 uniqueAvailable 必须按同一台器械跨区域去重；数量不一致且没有原因时 conditionComplete=false。",
-        "evidenceStatus 将表格里的充分映射为 full、部分/仅口头映射为 partial、无映射为 none。seriousRisk 只用于明显安全、隐藏收费、合同或严重卫生问题。",
-        "venueName 优先使用上传者提供的场馆名；confidence 表示AI文字提取把握，不是证据可信度，也不是场馆评分。"
-      ].join("\n"),
-      input: `上传信息：${JSON.stringify(metadata)}\n\n体验官报告正文：\n${text.slice(0, 90_000)}`,
-      text: { format: { type: "json_schema", name: "gym_report_analysis", strict: true, schema: analysisSchema } }
+      messages: [
+        { role: "system", content: instructions },
+        { role: "user", content: `上传信息：${JSON.stringify(metadata)}\n\n体验官报告正文：\n${text.slice(0, 90_000)}` }
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: "gym_report_analysis", strict: true, schema: analysisSchema }
+      }
     })
   });
   const body = await response.json();
   if (!response.ok) throw new Error(body?.error?.message || `OpenAI API 请求失败（${response.status}）`);
-  return { mode: "openai", model: body.model || model, responseId: body.id, analysis: JSON.parse(outputText(body)) };
+  return { mode: "openai", model: body.model || model, responseId: body.id, analysis: JSON.parse(completionText(body)) };
 }
 
 export function analysisToVenue(report, analysis) {

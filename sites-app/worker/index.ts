@@ -10,6 +10,7 @@ interface Env {
   PLATFORM_ADMIN_TOKEN?: string;
   UPLOAD_TOKEN?: string;
   ALLOWED_ORIGINS?: string;
+  TENCENT_LBS_KEY?: string;
 }
 
 interface ExecutionContext {

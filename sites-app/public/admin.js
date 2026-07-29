@@ -57,12 +57,12 @@ async function initialize() {
 function applyRoleUi() {
   const isPlatform = role === "platform_admin";
   document.body.classList.toggle("reviewer-mode", !isPlatform);
-  document.title = isPlatform ? "练哪儿｜内容管理后台" : "练哪儿｜单馆审核工作台";
+  document.title = isPlatform ? "有间好馆｜内容管理后台" : "有间好馆｜单馆审核工作台";
   document.querySelector("#roleBadge").textContent = isPlatform ? "平台管理员 · 全部权限" : `${reviewerName || "单馆审核员"} · 单馆权限`;
   document.querySelector("#permissionSummary").textContent = isPlatform
     ? "可审核报告、管理场馆资料、重新调用 AI、删除和下架内容。"
     : `当前只处理平台分配给你的这一家场馆${reviewerName ? `；审核身份：${reviewerName}` : ""}。其他场馆、平台配置和管理操作均不可见。`;
-  document.querySelector("#workspaceEyebrow").textContent = isPlatform ? "练哪儿管理后台" : "练哪儿 · 单馆任务";
+  document.querySelector("#workspaceEyebrow").textContent = isPlatform ? "有间好馆管理后台" : "有间好馆 · 单馆任务";
   document.querySelector("#workspaceTitle").textContent = isPlatform ? "内容运营台" : "单馆审核工作台";
   document.querySelector("#publicSiteLink").hidden = !isPlatform;
   document.querySelector("#reportAsideEyebrow").textContent = isPlatform ? "REPORTS" : "MY ASSIGNMENT";

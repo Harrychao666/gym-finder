@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render a fast-paced vertical intro video for Lian Nar."""
+"""Render a fast-paced vertical intro video for 有间好馆."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont, ImageOps
 ROOT = Path(__file__).resolve().parent
 ASSETS = ROOT / "assets"
 PREVIEW = ROOT / "preview"
-OUTPUT = ROOT / "练哪儿_核心卖点视频_v3.mp4"
+OUTPUT = ROOT / "有间好馆_核心卖点视频_v3.mp4"
 
 WIDTH = 720
 HEIGHT = 1280
@@ -200,11 +200,11 @@ def draw_logo(draw: ImageDraw.ImageDraw, x: int, y: int, compact: bool = False) 
     size = 84 if compact else 104
     rounded_box(draw, (x, y, x + size, y + size), WHITE, radius=22)
     mark_font = F46 if compact else F54
-    mark = "练"
+    mark = "馆"
     mark_w = text_width(draw, mark, mark_font)
     draw.text((x + (size - mark_w) // 2, y + 13), mark, font=mark_font, fill=BLACK)
     name_x = x + size + 22
-    draw.text((name_x, y + 6), "练哪儿", font=F32 if compact else F38, fill=WHITE)
+    draw.text((name_x, y + 6), "有间好馆", font=F32 if compact else F38, fill=WHITE)
     draw.text((name_x, y + 50), "广州健身房真实评分系统", font=F18, fill=MUTED)
 
 
@@ -403,7 +403,7 @@ def scene_four(local_t: float) -> Image.Image:
     bar_width = int(470 * ease((local_t - 0.72) / 0.48))
     draw.line((WIDTH // 2 - bar_width // 2, 770, WIDTH // 2 + bar_width // 2, 770), fill=GOLD, width=3)
     brand = ease_out_back((local_t - 0.92) / 0.52)
-    scale_text(frame, (WIDTH // 2, 875), "练哪儿", F46, WHITE, 1.10 - brand * 0.10, int(255 * brand))
+    scale_text(frame, (WIDTH // 2, 875), "有间好馆", F46, WHITE, 1.10 - brand * 0.10, int(255 * brand))
     return frame
 
 
@@ -451,7 +451,7 @@ def build_contact_sheet(paths: list[Path]) -> None:
     positions = [(20, 20), (310, 20), (20, 520), (310, 520)]
     for image, position in zip(thumbs, positions):
         sheet.paste(image, position)
-    sheet.save(PREVIEW / "练哪儿视频关键帧总览.png", quality=95)
+    sheet.save(PREVIEW / "有间好馆视频关键帧总览.png", quality=95)
 
 
 def render_video() -> None:

@@ -259,7 +259,8 @@ const fallbackVenues = [
   }
 ];
 
-let venues = [...fallbackVenues];
+// 消费者端只展示后台已审核并发布的真实场馆；演示数据不得作为兜底对外展示。
+let venues = [];
 
 const pricingPlans = {
   luma: { single: 39, weekly: 129, monthly: 399, annual: 3599 },
@@ -908,6 +909,14 @@ function hideRecommendations() {
 
 function renderRecommendations(preferences) {
   els.venueList.innerHTML = "";
+  if (!state.recommendations.length) {
+    els.venueList.innerHTML = `
+      <section class="decision-tip" role="status">
+        <strong>暂未发布符合条件的已核验场馆</strong>
+        <p>我们不会用演示场馆填充结果。请稍后再试，或调整筛选条件。</p>
+      </section>`;
+    return;
+  }
   state.recommendations.forEach((venue, index) => {
     const evaluatorScore = ratingProfiles[venue.id]
       .reduce((total, item) => total + item.score * item.weight / 100, 0) / 2;
@@ -1080,10 +1089,10 @@ function showDetail(id) {
     .reduce((total, item) => total + item.score * item.weight / 100, 0);
   els.detailContent.innerHTML = `
     <header class="topbar detail-dialog-topbar" aria-label="详情页导航">
-      <button class="brand detail-dialog-home" type="button" aria-label="返回练哪儿选馆列表">
-        <span class="brand-mark" aria-hidden="true">练</span>
+      <button class="brand detail-dialog-home" type="button" aria-label="返回有间好馆选馆列表">
+        <span class="brand-mark" aria-hidden="true">馆</span>
         <span>
-          <strong>练哪儿</strong>
+          <strong>有间好馆</strong>
           <small class="brand-slogan">只做真实的评分</small>
         </span>
       </button>
@@ -1925,9 +1934,15 @@ async function loadPublishedVenues() {
   const apiBase = (window.GYM_API_BASE || "").replace(/\/$/, "");
   try {
     const response = await fetch(`${apiBase}/api/venues`, { headers: { accept: "application/json" } });
-    if (!response.ok) return;
+    if (!response.ok) {
+      venues = [];
+      return;
+    }
     const body = await response.json();
-    if (!Array.isArray(body.venues) || !body.venues.length) return;
+    if (!Array.isArray(body.venues)) {
+      venues = [];
+      return;
+    }
     const published = body.venues.filter(venue => venue?.id && venue?.name).map(venue => ({
       ...venue,
       coordinates: Array.isArray(venue.coordinates) && venue.coordinates.length === 2 ? venue.coordinates.map(Number) : [113.2644, 23.1291],
@@ -1936,11 +1951,11 @@ async function loadPublishedVenues() {
       evidence: Array.isArray(venue.evidence) ? venue.evidence : [],
       crowd: { evening: "一般", morning: "一般", weekend: "一般", flexible: "一般", ...(venue.crowd || {}) }
     }));
-    const publishedIds = new Set(published.map(venue => venue.id));
     for (const venue of published) registerPublishedVenueDetails(venue);
-    venues = [...fallbackVenues.filter(venue => !publishedIds.has(venue.id)), ...published];
+    venues = published;
   } catch {
-    // Netlify 前端尚未连接后台或后台暂时离线时，继续使用演示数据。
+    // 后台暂时离线时保持空状态，绝不回退展示演示场馆。
+    venues = [];
   }
 }
 

@@ -12,6 +12,7 @@ interface Env {
   PLATFORM_ADMIN_TOKEN?: string;
   UPLOAD_TOKEN?: string;
   ALLOWED_ORIGINS?: string;
+  TENCENT_LBS_KEY?: string;
 }
 
 interface ExecutionContext {
@@ -406,7 +407,7 @@ async function analyzeAndSave(env: Env, report: JsonObject) {
         originalName: report.originalName
       },
       apiKey: env.OPENAI_API_KEY,
-      model: env.OPENAI_MODEL || "gpt-5.6-luna"
+      model: env.OPENAI_MODEL || "gpt-4o"
     });
     report.status = "needs_review";
     report.analysis = result.analysis;
@@ -578,6 +579,66 @@ async function listPublished(request: Request, env: Env) {
   const result = await env.DB.prepare("SELECT venue_json FROM published_venues WHERE visible = 1 ORDER BY published_at DESC").all<{ venue_json: string }>();
   const venues = (result.results || []).map((row: { venue_json: string }) => parseJson(row.venue_json)).filter(Boolean);
   return json(request, env, 200, { venues, updatedAt: new Date().toISOString() });
+}
+
+type RouteMode = "walking" | "transit" | "driving";
+
+function numberInRange(value: unknown, min: number, max: number) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= min && number <= max ? number : null;
+}
+
+function routePoint(value: unknown) {
+  const point = value as { latitude?: unknown; longitude?: unknown } | null;
+  if (!point) return null;
+  const latitude = numberInRange(point.latitude, -90, 90);
+  const longitude = numberInRange(point.longitude, -180, 180);
+  return latitude === null || longitude === null ? null : { latitude, longitude };
+}
+
+function venueRoutePoint(value: unknown) {
+  const venue = value as { id?: unknown; coordinates?: unknown } | null;
+  const coordinates = Array.isArray(venue?.coordinates) ? venue.coordinates : [];
+  const longitude = numberInRange(coordinates[0], -180, 180);
+  const latitude = numberInRange(coordinates[1], -90, 90);
+  const id = String(venue?.id || "").trim();
+  return !id || latitude === null || longitude === null ? null : { id, latitude, longitude };
+}
+
+async function commuteForVenue(origin: { latitude: number; longitude: number }, destination: { id: string; latitude: number; longitude: number }, mode: RouteMode, key: string) {
+  const params = new URLSearchParams({
+    from: `${origin.latitude},${origin.longitude}`,
+    to: `${destination.latitude},${destination.longitude}`,
+    key
+  });
+  const response = await fetch(`https://apis.map.qq.com/ws/direction/v1/${mode}/?${params.toString()}`);
+  if (!response.ok) throw new Error("路线服务暂不可用");
+  const payload = await response.json() as { status?: number; message?: string; result?: { routes?: Array<{ duration?: number; distance?: number }> } };
+  const route = payload?.result?.routes?.[0];
+  if (payload.status !== 0 || !route || !Number.isFinite(Number(route.duration))) throw new Error(payload.message || "未能计算路线");
+  return {
+    id: destination.id,
+    minutes: Math.max(1, Math.round(Number(route.duration) / 60)),
+    distanceMeters: Number.isFinite(Number(route.distance)) ? Number(route.distance) : null
+  };
+}
+
+async function calculateCommute(request: Request, env: Env) {
+  if (!env.TENCENT_LBS_KEY) return json(request, env, 503, { error: "路线服务尚未配置" });
+  const body = await request.json().catch(() => null) as { origin?: unknown; venues?: unknown; mode?: unknown } | null;
+  const origin = routePoint(body?.origin);
+  const mode = body?.mode;
+  const allowedModes: RouteMode[] = ["walking", "transit", "driving"];
+  const venues = Array.isArray(body?.venues) ? body!.venues.map(venueRoutePoint).filter(Boolean).slice(0, 3) as Array<{ id: string; latitude: number; longitude: number }> : [];
+  if (!origin || !allowedModes.includes(mode as RouteMode) || !venues.length) return json(request, env, 422, { error: "通勤参数不完整或不合法" });
+
+  const settled = await Promise.allSettled(venues.map(venue => commuteForVenue(origin, venue, mode as RouteMode, env.TENCENT_LBS_KEY!)));
+  const commutes: Record<string, { minutes: number; distanceMeters: number | null }> = {};
+  for (const item of settled) {
+    if (item.status === "fulfilled") commutes[item.value.id] = { minutes: item.value.minutes, distanceMeters: item.value.distanceMeters };
+  }
+  if (!Object.keys(commutes).length) return json(request, env, 503, { error: "暂时无法计算通勤时间" });
+  return json(request, env, 200, { mode, commutes, calculatedAt: new Date().toISOString() });
 }
 
 function normalizedVenueName(value: unknown) {
@@ -1009,6 +1070,7 @@ export async function handleApiRequest(request: Request, env: Env, _ctx: Executi
       return json(request, env, 200, { ok: true, storage: "d1-r2", aiConfigured: Boolean(env.OPENAI_API_KEY) });
     }
     if (url.pathname === "/api/venues" && request.method === "GET") return listPublished(request, env);
+    if (url.pathname === "/api/commute" && request.method === "POST") return calculateCommute(request, env);
     if (url.pathname.startsWith("/api/media/")) return publicMedia(request, env, url);
     if (url.pathname === "/api/reports" && request.method === "POST") return uploadReport(request, env);
     if (url.pathname === "/api/admin/session" && request.method === "GET") {
