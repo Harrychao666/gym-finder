@@ -1,5 +1,6 @@
 export const FORM_VERSION = "experience-v1.1";
 export const SCORING_VERSION = "scoring-v1.2";
+export const REPORT_SCHEMA_VERSION = "experience-report-v2.0";
 
 export const cardTypes = ["单次", "周卡", "月卡", "季卡", "年卡"];
 export const extraFeeTypes = ["停卡费", "转卡费", "押金", "储物柜", "淋浴", "门禁卡", "自动续费", "其他"];
@@ -52,6 +53,103 @@ export const equipmentCategories = [
   }
 ];
 
+const equipmentReferenceFiles = {
+  cardio: [
+    "03A-01-treadmill.png", "03A-02-stair-climber.png", "03A-03-elliptical.png", "03A-04-upright-bike.png",
+    "03A-05-recumbent-bike.png", "03A-06-spin-bike.png", "03A-07-rower.png", "03A-08-air-bike.png",
+    "03A-09-skierg.png", "03A-10-arc-trainer.png"
+  ],
+  back: [
+    "03B-01-lat-pulldown.png", "03B-02-seated-row-v2.png", "03B-03-low-row-v2.png", "03B-04-high-row-v2.png",
+    "03B-07-tbar-row-v2.png", "03B-09-pullover.png", "03B-10-rear-delt-v2.png", "03B-11-assisted-pullup.png",
+    "03B-12-hyperextension-bench.png"
+  ],
+  chest: [
+    "03C-01-seated-chest-press.png", "03C-02-incline-chest-press.png", "03C-03-decline-chest-press.png",
+    "03C-04-plate-horizontal-press.png", "03C-05-plate-incline-press-v2.png", "03C-06-iso-chest-press.png",
+    "03C-07-pec-fly-v2.png", "03C-08-cable-crossover.png", "03C-09-smith-machine.png",
+    "03C-10-bench-press-rack.png", "03C-11-assisted-dip.png"
+  ],
+  legs: [
+    "03D-01-45-leg-press.png", "03D-02-horizontal-leg-press.png", "03D-03-hack-squat.png",
+    "03D-04-pendulum-squat-v2.png", "03D-05-belt-squat.png", "03D-06-leg-extension.png",
+    "03D-07-seated-leg-curl.png", "03D-08-prone-leg-curl.png", "03D-09-standing-leg-curl.png",
+    "03D-10-hip-abduction.png", "03D-11-hip-adduction.png", "03D-12-hip-thrust.png",
+    "03D-13-standing-calf.png", "03D-14-seated-calf.png", "03D-15-power-rack.png", "03C-09-smith-machine.png"
+  ],
+  dumbbells: [
+    "03E-01-fixed-dumbbells.png", "03E-03-missing-dumbbells.png", "03E-04-flat-bench.png",
+    "03E-05-adjustable-bench.png", "03E-06-dumbbell-rack.png", "03E-07-dumbbell-space.png"
+  ],
+  arms: [
+    "03F-01-biceps-curl.png", "03F-02-triceps-extension-v2.png", "03F-03-preacher-curl-bench.png",
+    "03C-11-assisted-dip.png"
+  ],
+  shoulders: ["03G-01-shoulder-press.png", "03G-02-lateral-raise.png", "03B-10-rear-delt-v2.png"],
+  core: ["03H-01-ab-crunch.png", "03H-02-torso-rotation.png", "03H-03-vertical-knee-raise.png", "03B-12-hyperextension-bench.png"],
+  stretch: [
+    "03I-01-stretching-area.png", "03I-02-yoga-mat.png", "03I-03-foam-roller.png", "03I-04-massage-ball.png",
+    "03I-05-resistance-band.png", "03I-06-yoga-strap.png", "03I-07-yoga-block.png", "03I-08-balance-pad.png",
+    "03I-09-bosu.png", "03I-10-stall-bars.png", "03I-11-stretching-cage.png", "03I-12-mirror-area.png"
+  ]
+};
+
+const equipmentCategoryNumbers = {
+  cardio: "03A", back: "03B", chest: "03C", legs: "03D", dumbbells: "03E",
+  arms: "03F", shoulders: "03G", core: "03H", stretch: "03I"
+};
+
+function equipmentCode(file, categoryNumber, index) {
+  const match = file.match(/^(03[A-I]-\d{2})-/);
+  if (match && match[1].startsWith(categoryNumber)) return match[1];
+  return `${categoryNumber}-${String(index + 1).padStart(2, "0")}`;
+}
+
+/**
+ * Canonical equipment catalog used by the report-analysis and published-card
+ * data models. `equipmentCategories` above intentionally keeps its legacy shape
+ * so the V1.1 pilot form remains backwards compatible.
+ */
+export const equipmentReferenceCatalog = equipmentCategories.map(category => {
+  const number = equipmentCategoryNumbers[category.id];
+  const files = equipmentReferenceFiles[category.id];
+  return {
+    id: number,
+    key: category.id,
+    label: category.label.replace(/^03[A-I]\s+/, ""),
+    items: category.items.map((name, index) => {
+      const file = files[index];
+      return {
+        name,
+        code: equipmentCode(file, number, index),
+        referenceImage: `/assets/equipment-reference/${file}`
+      };
+    })
+  };
+});
+
+export function createEmptyEquipmentInventory() {
+  return equipmentReferenceCatalog.map(category => ({
+    id: category.id,
+    label: category.label,
+    total: 0,
+    available: 0,
+    maxWaitMinutes: -1,
+    summary: "",
+    items: category.items.map(item => ({
+      ...item,
+      total: 0,
+      available: 0,
+      maxWaitMinutes: -1,
+      status: "unknown",
+      issueSummary: "",
+      issuePhotos: [],
+      note: "",
+      evidence: []
+    }))
+  }));
+}
+
 export const hygieneAreas = ["更衣区", "卫生间", "淋浴间", "训练区地面", "器械表面", "瑜伽垫/泡沫轴", "通风与气味"];
 
 export const salesQuestions = [
@@ -90,9 +188,11 @@ export function publicFormSchema() {
   return {
     formVersion: FORM_VERSION,
     scoringVersion: SCORING_VERSION,
+    reportSchemaVersion: REPORT_SCHEMA_VERSION,
     cardTypes,
     extraFeeTypes,
     equipmentCategories,
+    equipmentReferenceCatalog,
     hygieneAreas,
     salesQuestions,
     beginnerQuestions,

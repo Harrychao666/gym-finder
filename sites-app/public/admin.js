@@ -21,6 +21,24 @@ let reviewerName = "";
 let platformVenues = [];
 let activeVenue = null;
 let reportFilter = "action";
+const PRICING_PLAN_DEFS = [
+  ["single", "单次 / 体验卡"],
+  ["weekly", "周卡"],
+  ["monthly", "月卡"],
+  ["quarterly", "季卡"],
+  ["annual", "年卡"]
+];
+const EQUIPMENT_CATEGORY_DEFS = [
+  ["03A", "有氧器械"],
+  ["03B", "背部训练"],
+  ["03C", "胸部训练"],
+  ["03D", "腿部训练"],
+  ["03E", "哑铃区"],
+  ["03F", "手臂训练"],
+  ["03G", "肩部训练"],
+  ["03H", "核心训练"],
+  ["03I", "拉伸与放松"]
+];
 
 document.querySelector("#refreshButton").addEventListener("click", loadReports);
 reportFilters.addEventListener("click", event => {
@@ -196,6 +214,7 @@ function renderReview() {
   const hasDraft = hasReviewDraft(draft);
   panel.querySelector("#reviewContent").hidden = !hasDraft;
   fillForm(form, { ...draft, reviewNotes: report.reviewNotes || "" });
+  setupStructuredEditors(form, draft, { scope: report.id, notify: toast });
   renderGalleryEditor(panel.querySelector("#galleryEditor"), draft.gallery || [], form);
   panel.querySelector("#venueImageInput").addEventListener("change", event => uploadReviewImages(event.target.files));
 
@@ -226,16 +245,36 @@ function hasReviewDraft(draft) {
 function getPublishChecks(draft) {
   const gates = draft.publicationGates || {};
   const useful = value => Boolean(String(value ?? "").trim()) && !/待补充|待核实/.test(String(value));
+  const pricing = normalizePricing(draft);
+  const observations = normalizeCrowdObservations(draft);
+  const inventory = normalizeEquipmentInventory(draft);
+  const summary = normalizeFullReport(draft);
+  const plansReviewed = pricing.plans.length >= 5 && pricing.plans.every(plan => plan.evidenceStatus && plan.evidenceStatus !== "unknown");
+  const observationsComplete = observations.length >= 5 && observations.slice(0, 5).every(observation => {
+    const hasWait = Number.isFinite(Number(observation.cardioWaitMinutes)) || Number.isFinite(Number(observation.cableWaitMinutes));
+    return useful(observation.observedAt) && useful(observation.start) && useful(observation.end)
+      && Number.isFinite(Number(observation.approxPeople)) && hasWait && useful(observation.description);
+  });
+  const equipmentComplete = EQUIPMENT_CATEGORY_DEFS.every(([id]) => {
+    const category = inventory.find(item => item.id === id);
+    if (!category || !Number.isFinite(Number(category.total)) || !Number.isFinite(Number(category.available))) return false;
+    return Number(category.total) === 0 || (Array.isArray(category.items) && category.items.length > 0);
+  });
   return [
     { label: "场馆名称已确认", passed: useful(draft.name), selector: '[name="name"]' },
     { label: "所在区域已确认", passed: useful(draft.district), selector: '[name="district"]' },
     { label: "营业时间已补齐", passed: useful(draft.hours), selector: '[name="hours"]' },
     { label: "详细地址已补齐", passed: useful(draft.contact?.address), selector: '[name="contact.address"]' },
     { label: "场馆主图已提供", passed: useful(draft.image), selector: "#venueImageInput" },
+    { label: "五种卡型已逐项核对", passed: plansReviewed && Boolean(pricing.feesReviewed), selector: "#pricingSection" },
+    { label: "5次客流观察可展示", passed: observationsComplete, selector: "#crowdObservationSection" },
+    { label: "03A–03I器械已核对", passed: equipmentComplete, selector: "#equipmentInventorySection" },
+    { label: "完整报告六项已核对", passed: useful(summary.conclusion) && summary.recommendations.length > 0 && summary.cautions.length > 0 && useful(summary.fit) && useful(summary.unfit) && useful(summary.sessionSummary), selector: "#contentSection" },
     { label: "适合人群已核对", passed: useful(draft.fit), selector: '[name="fit"]' },
     { label: "注意事项已核对", passed: useful(draft.caution), selector: '[name="caution"]' },
     { label: "体验总分已自动生成", passed: Number.isFinite(Number(draft.experienceScore)) && Number(draft.experienceScore) >= 0 && Number(draft.experienceScore) <= 100, selector: "#scoreCard" },
-    { label: "4次训练要求通过", passed: Boolean(gates.trainingComplete), selector: "#scoreCard" },
+    { label: "有效训练与晚高峰覆盖通过", passed: Boolean(gates.trainingComplete), selector: "#scoreCard" },
+    { label: "六模块评分可解释", passed: Array.isArray(draft.scoreModules) && draft.scoreModules.length >= 6, selector: "#scoreCard" },
     { label: "六模块必填项通过", passed: Boolean(gates.requiredComplete), selector: "#scoreCard" },
     { label: "证据可信度达到B级", passed: Boolean(gates.confidencePassed), selector: "#scoreCard" },
     { label: "严重风险已二次核验", passed: !gates.riskReviewRequired || Boolean(draft.riskReviewed), selector: '[name="riskReviewed"]' }
@@ -314,7 +353,7 @@ function renderScoreCard(target, draft) {
   const modules = Array.isArray(draft.scoreModules) ? draft.scoreModules : [];
   const gates = draft.publicationGates || {};
   const gateRows = [
-    ["4次训练且含工作日晚高峰", gates.trainingComplete],
+    ["有效训练且覆盖工作日晚高峰", gates.trainingComplete],
     ["六模块必填项完整", gates.requiredComplete],
     ["证据可信度至少B级", gates.confidencePassed],
     ["严重风险已处理", !gates.riskReviewRequired || draft.riskReviewed]
@@ -350,7 +389,482 @@ function renderAuditTrail(target, entries) {
   }).join("")}</ol>`;
 }
 
+function setupStructuredEditors(form, draft, options) {
+  form._structuredOptions = options;
+  const pricingTarget = form.querySelector("[data-pricing-editor]");
+  if (pricingTarget) {
+    form._pricingState = normalizePricing(draft);
+    renderPricingEditor(form, pricingTarget);
+  }
+  const crowdTarget = form.querySelector("[data-crowd-editor]");
+  if (crowdTarget) {
+    form._crowdState = normalizeCrowdObservations(draft);
+    while (form._crowdState.length < 5) form._crowdState.push(blankCrowdObservation(form._crowdState.length));
+    renderCrowdEditor(form, crowdTarget);
+  }
+  const equipmentTarget = form.querySelector("[data-equipment-editor]");
+  if (equipmentTarget) {
+    form._equipmentState = normalizeEquipmentInventory(draft);
+    renderEquipmentEditor(form, equipmentTarget);
+  }
+}
+
+function normalizePricing(draft = {}) {
+  const pricing = draft.pricing || {};
+  const sourcePlans = Array.isArray(pricing.plans) ? pricing.plans : [];
+  const plans = PRICING_PLAN_DEFS.map(([id, label]) => {
+    const source = sourcePlans.find(plan => [plan?.id, plan?.key, plan?.type].includes(id) || pricingPlanNameMatches(plan?.name || plan?.label, id, label))
+      || (pricing[id] && typeof pricing[id] === "object" ? pricing[id] : {});
+    const legacyKey = ({ single: "trialPrice", weekly: "weeklyPrice", monthly: "monthlyPrice", quarterly: "quarterlyPrice", annual: "annualPrice" })[id];
+    const amount = firstDefined(source.amount, source.price, pricing[id]?.amount, draft[legacyKey]);
+    return {
+      ...source,
+      id,
+      key: id,
+      name: source.name || source.label || label,
+      label: source.label || label,
+      amount: optionalNumber(amount),
+      validity: source.validity || source.period || "",
+      source: source.source || "",
+      evidenceStatus: source.evidenceStatus || source.status || (hasValue(amount) ? "reported" : "unknown"),
+      provided: source.provided === false ? false : hasValue(amount)
+    };
+  });
+  const rawFees = Array.isArray(pricing.fees)
+    ? pricing.fees
+    : Array.isArray(pricing.additionalFees)
+      ? pricing.additionalFees
+      : Array.isArray(draft.additionalFees)
+        ? draft.additionalFees
+        : [];
+  const fees = rawFees.map((fee, index) => typeof fee === "string"
+    ? { id: `fee-${index + 1}`, key: `fee-${index + 1}`, label: fee, amount: null, rule: "", proactivelyDisclosed: null, source: "", evidenceStatus: "reported" }
+    : {
+        ...fee,
+        id: fee.id || fee.key || `fee-${index + 1}`,
+        key: fee.key || fee.id || `fee-${index + 1}`,
+        name: fee.name || fee.label || "",
+        label: fee.label || fee.name || "",
+        amount: optionalNumber(fee.amount),
+        rule: fee.rule || fee.description || "",
+        proactivelyDisclosed: typeof fee.proactivelyDisclosed === "boolean" ? fee.proactivelyDisclosed : null,
+        source: fee.source || "",
+        evidenceStatus: fee.evidenceStatus || fee.status || "reported"
+      });
+  return {
+    ...pricing,
+    plans,
+    fees,
+    feesReviewed: Boolean(pricing.feesReviewed || pricing.additionalFeesReviewed)
+  };
+}
+
+function renderPricingEditor(form, target) {
+  const state = form._pricingState;
+  target.innerHTML = `<div class="structured-heading"><div><strong>五种卡型</strong><span>金额未知可留空，但必须标记“未提供”或“待核对”</span></div></div>
+    <div class="pricing-plan-grid">${state.plans.map((plan, index) => `<article class="pricing-plan-card">
+      <header><span>${String(index + 1).padStart(2, "0")}</span><strong>${escapeHtml(plan.label)}</strong></header>
+      <div class="mini-field-grid">
+        <label>金额（元）<input type="number" min="0" step="0.01" data-plan-index="${index}" data-plan-field="amount" value="${inputValue(plan.amount)}" /></label>
+        <label>有效期 / 规则<input data-plan-index="${index}" data-plan-field="validity" value="${escapeAttribute(plan.validity || "")}" placeholder="例如 30 天" /></label>
+        <label>价格来源<input data-plan-index="${index}" data-plan-field="source" value="${escapeAttribute(plan.source || "")}" placeholder="例如 门店价目表" /></label>
+        <label>核对状态<select data-plan-index="${index}" data-plan-field="evidenceStatus">${pricingStatusOptions(plan.evidenceStatus)}</select></label>
+      </div>
+    </article>`).join("")}</div>
+    <div class="structured-subheading"><div><strong>额外收费</strong><span>押金、转卡、储物柜、淋浴、门禁卡、自动续费等</span></div><button class="mini secondary" data-add-fee type="button">＋ 添加费用</button></div>
+    <div class="fee-editor">${state.fees.map((fee, index) => `<article class="fee-row">
+      <label>费用名称<input data-fee-index="${index}" data-fee-field="label" value="${escapeAttribute(fee.label || "")}" placeholder="例如 门禁卡押金" /></label>
+      <label>金额（元）<input type="number" min="0" step="0.01" data-fee-index="${index}" data-fee-field="amount" value="${inputValue(fee.amount)}" /></label>
+      <label>收取规则<input data-fee-index="${index}" data-fee-field="rule" value="${escapeAttribute(fee.rule || "")}" placeholder="例如 退卡时返还" /></label>
+      <label>门店是否主动告知<select data-fee-index="${index}" data-fee-field="proactivelyDisclosed"><option value="" ${fee.proactivelyDisclosed === null ? "selected" : ""}>待核对</option><option value="true" ${fee.proactivelyDisclosed === true ? "selected" : ""}>是</option><option value="false" ${fee.proactivelyDisclosed === false ? "selected" : ""}>否</option></select></label>
+      <label>证据来源<input data-fee-index="${index}" data-fee-field="source" value="${escapeAttribute(fee.source || "")}" /></label>
+      <button class="mini danger fee-remove" data-remove-fee="${index}" type="button">删除</button>
+    </article>`).join("") || '<p class="empty structured-empty">报告没有识别到额外收费；确认无额外收费后勾选下方。</p>'}</div>
+    <label class="structured-confirm"><input type="checkbox" data-fees-reviewed ${state.feesReviewed ? "checked" : ""} /> 我已逐项核对额外收费；如无收费，也已确认门店未收取或报告未发现</label>`;
+  target.querySelectorAll("[data-plan-field]").forEach(element => element.addEventListener("input", () => {
+    const plan = state.plans[Number(element.dataset.planIndex)];
+    plan[element.dataset.planField] = element.dataset.planField === "amount" ? optionalNumber(element.value) : element.value.trim();
+    plan.provided = hasValue(plan.amount);
+    notifyStructuredInput(form);
+  }));
+  target.querySelectorAll("[data-fee-field]").forEach(element => element.addEventListener("input", () => {
+    const fee = state.fees[Number(element.dataset.feeIndex)];
+    if (element.dataset.feeField === "amount") fee.amount = optionalNumber(element.value);
+    else if (element.dataset.feeField === "proactivelyDisclosed") fee.proactivelyDisclosed = element.value === "" ? null : element.value === "true";
+    else fee[element.dataset.feeField] = element.value.trim();
+    notifyStructuredInput(form);
+  }));
+  target.querySelector("[data-fees-reviewed]").addEventListener("change", event => {
+    state.feesReviewed = event.target.checked;
+    notifyStructuredInput(form);
+  });
+  target.querySelector("[data-add-fee]").addEventListener("click", () => {
+    const id = makeRowId("fee");
+    state.fees.push({ id, key: id, label: "", amount: null, rule: "", proactivelyDisclosed: null, source: "", evidenceStatus: "reported" });
+    renderPricingEditor(form, target);
+  });
+  target.querySelectorAll("[data-remove-fee]").forEach(button => button.addEventListener("click", () => {
+    state.fees.splice(Number(button.dataset.removeFee), 1);
+    renderPricingEditor(form, target);
+    notifyStructuredInput(form);
+  }));
+}
+
+function pricingStatusOptions(selected) {
+  return [
+    ["unknown", "待核对"],
+    ["reported", "报告已提取"],
+    ["verified", "审核员已核实"],
+    ["not_offered", "门店未提供"]
+  ].map(([value, label]) => `<option value="${value}" ${selected === value ? "selected" : ""}>${label}</option>`).join("");
+}
+
+function readPricingEditor(form, current) {
+  const state = form._pricingState || normalizePricing(current);
+  const plans = state.plans.map(plan => ({
+    ...plan,
+    id: plan.id || plan.key,
+    key: plan.key || plan.id,
+    name: plan.name || plan.label,
+    amount: optionalNumber(plan.amount),
+    provided: hasValue(plan.amount) && plan.evidenceStatus !== "not_offered"
+  }));
+  const fees = state.fees.filter(fee => hasValue(fee.label) || hasValue(fee.amount) || hasValue(fee.rule)).map(fee => ({
+    ...fee,
+    id: fee.id || fee.key || makeRowId("fee"),
+    key: fee.key || fee.id || makeRowId("fee"),
+    name: fee.name || fee.label,
+    amount: optionalNumber(fee.amount)
+  }));
+  const pricing = { ...state, plans, fees, feesReviewed: Boolean(state.feesReviewed) };
+  for (const plan of plans) pricing[plan.id] = { ...plan };
+  return pricing;
+}
+
+function normalizeCrowdObservations(draft = {}) {
+  const observations = Array.isArray(draft.crowdObservations)
+    ? draft.crowdObservations
+    : Array.isArray(draft.crowd?.observations)
+      ? draft.crowd.observations
+      : [];
+  return observations.map((observation, index) => {
+    const [rangeStart, rangeEnd] = String(observation.timeRange || "").split(/\s*[-–—至]\s*/);
+    return {
+      ...observation,
+      id: observation.id || `observation-${index + 1}`,
+      observedAt: observation.observedAt || observation.date || "",
+      start: observation.start || observation.startTime || rangeStart || "",
+      end: observation.end || observation.endTime || rangeEnd || "",
+      dayType: observation.dayType || "",
+      state: observation.state || observation.judgment || "",
+      cardioVacancies: optionalNumber(observation.cardioVacancies),
+      cardioWaitMinutes: optionalNumber(observation.cardioWaitMinutes),
+      cableVacancies: optionalNumber(observation.cableVacancies),
+      cableWaitMinutes: optionalNumber(firstDefined(observation.cableWaitMinutes, observation.rackWaitMinutes)),
+      queuePeople: optionalNumber(observation.queuePeople),
+      approxPeople: optionalNumber(observation.approxPeople),
+      description: observation.description || "",
+      evidence: normalizeStringList(observation.evidence)
+    };
+  });
+}
+
+function blankCrowdObservation(index) {
+  return {
+    id: `observation-${index + 1}`,
+    observedAt: "",
+    start: "",
+    end: "",
+    dayType: "",
+    state: "",
+    cardioVacancies: null,
+    cardioWaitMinutes: null,
+    cableVacancies: null,
+    cableWaitMinutes: null,
+    queuePeople: null,
+    approxPeople: null,
+    description: "",
+    evidence: []
+  };
+}
+
+function renderCrowdEditor(form, target) {
+  const state = form._crowdState;
+  target.innerHTML = `<div class="structured-heading"><div><strong>客流观察记录</strong><span>至少 5 次，且覆盖报告规定的晚高峰时段</span></div><button class="mini secondary" data-add-observation type="button">＋ 添加观察</button></div>
+    <div class="observation-editor">${state.map((observation, index) => `<details class="observation-card" ${index === 0 ? "open" : ""}>
+      <summary><span>第 ${index + 1} 次</span><strong>${escapeHtml(observation.observedAt || "日期待填写")} ${escapeHtml([observation.start, observation.end].filter(Boolean).join("–"))}</strong><em>${escapeHtml(observation.state || "拥挤程度待判断")}</em></summary>
+      <div class="observation-fields">
+        <label>观察日期<input type="date" data-observation-index="${index}" data-observation-field="observedAt" value="${escapeAttribute(observation.observedAt || "")}" /></label>
+        <label>日期类型<select data-observation-index="${index}" data-observation-field="dayType">${simpleOptions(observation.dayType, [["", "待核对"],["weekday", "工作日"],["weekend", "周末"]])}</select></label>
+        <label>开始时间<input type="time" data-observation-index="${index}" data-observation-field="start" value="${escapeAttribute(observation.start || "")}" /></label>
+        <label>结束时间<input type="time" data-observation-index="${index}" data-observation-field="end" value="${escapeAttribute(observation.end || "")}" /></label>
+        <label>有氧空位（台）<input type="number" min="0" data-observation-index="${index}" data-observation-field="cardioVacancies" value="${inputValue(observation.cardioVacancies)}" /></label>
+        <label>有氧等待（分钟）<input type="number" min="0" data-observation-index="${index}" data-observation-field="cardioWaitMinutes" value="${inputValue(observation.cardioWaitMinutes)}" /></label>
+        <label>龙门架 / 绳索区空位<input type="number" min="0" data-observation-index="${index}" data-observation-field="cableVacancies" value="${inputValue(observation.cableVacancies)}" /></label>
+        <label>龙门架最长等待（分钟）<input type="number" min="0" data-observation-index="${index}" data-observation-field="cableWaitMinutes" value="${inputValue(observation.cableWaitMinutes)}" /></label>
+        <label>排队人数<input type="number" min="0" data-observation-index="${index}" data-observation-field="queuePeople" value="${inputValue(observation.queuePeople)}" /></label>
+        <label>现场约有多少人<input type="number" min="0" data-observation-index="${index}" data-observation-field="approxPeople" value="${inputValue(observation.approxPeople)}" /></label>
+        <label>拥挤判断<select data-observation-index="${index}" data-observation-field="state">${simpleOptions(observation.state, [["", "待核对"],["宽松", "宽松"],["一般", "一般"],["拥挤", "拥挤"]])}</select></label>
+        <label class="wide">现场具体描述<textarea rows="3" data-observation-index="${index}" data-observation-field="description">${escapeHtml(observation.description || "")}</textarea></label>
+        <label class="wide">证据说明（每行一项）<textarea rows="2" data-observation-index="${index}" data-observation-field="evidence">${escapeHtml((observation.evidence || []).join("\n"))}</textarea></label>
+        <button class="mini danger observation-remove" data-remove-observation="${index}" type="button">删除这次观察</button>
+      </div>
+    </details>`).join("")}</div>`;
+  target.querySelectorAll("[data-observation-field]").forEach(element => element.addEventListener("input", () => {
+    const observation = state[Number(element.dataset.observationIndex)];
+    const field = element.dataset.observationField;
+    if (["cardioVacancies", "cardioWaitMinutes", "cableVacancies", "cableWaitMinutes", "queuePeople", "approxPeople"].includes(field)) observation[field] = optionalNumber(element.value);
+    else if (field === "evidence") observation.evidence = normalizeStringList(element.value);
+    else observation[field] = element.value.trim();
+    notifyStructuredInput(form);
+  }));
+  target.querySelector("[data-add-observation]").addEventListener("click", () => {
+    state.push(blankCrowdObservation(state.length));
+    renderCrowdEditor(form, target);
+  });
+  target.querySelectorAll("[data-remove-observation]").forEach(button => button.addEventListener("click", () => {
+    state.splice(Number(button.dataset.removeObservation), 1);
+    renderCrowdEditor(form, target);
+    notifyStructuredInput(form);
+  }));
+}
+
+function readCrowdEditor(form, current) {
+  const state = form._crowdState || normalizeCrowdObservations(current);
+  return state.filter(crowdObservationHasContent).map((observation, index) => ({
+    ...observation,
+    id: observation.id || `observation-${index + 1}`,
+    observedAt: observation.observedAt || "",
+    start: observation.start || "",
+    end: observation.end || "",
+    state: observation.state || "",
+    date: observation.observedAt || "",
+    startTime: observation.start || "",
+    endTime: observation.end || "",
+    timeRange: observation.start || observation.end ? `${observation.start || ""}–${observation.end || ""}` : "",
+    judgment: observation.state || "",
+    rackWaitMinutes: optionalNumber(observation.cableWaitMinutes)
+  }));
+}
+
+function crowdObservationHasContent(observation) {
+  return ["observedAt", "start", "end", "description", "state"].some(field => hasValue(observation[field]))
+    || ["cardioVacancies", "cardioWaitMinutes", "cableVacancies", "cableWaitMinutes", "queuePeople", "approxPeople"].some(field => hasValue(observation[field]));
+}
+
+function normalizeEquipmentInventory(draft = {}) {
+  const sourceInventory = Array.isArray(draft.equipmentInventory) ? draft.equipmentInventory : [];
+  const normalized = EQUIPMENT_CATEGORY_DEFS.map(([id, label]) => {
+    const category = sourceInventory.find(item => [item?.id, item?.code].includes(id)) || {};
+    const items = Array.isArray(category.items) ? category.items : [];
+    return {
+      ...category,
+      id,
+      code: id,
+      label: category.label || label,
+      total: optionalNumber(firstDefined(category.total, category.totalCount)),
+      available: optionalNumber(firstDefined(category.available, category.availableCount)),
+      items: items.map((item, index) => ({
+        ...item,
+        id: item.id || item.code || `${id}-${index + 1}`,
+        code: item.code || item.id || `${id}-${index + 1}`,
+        name: item.name || "",
+        total: optionalNumber(item.total),
+        available: optionalNumber(item.available),
+        maxWaitMinutes: optionalNumber(item.maxWaitMinutes),
+        status: item.status || (item.issueSummary ? "issue" : "unknown"),
+        issueSummary: item.issueSummary || "",
+        issuePhotos: Array.isArray(item.issuePhotos) ? item.issuePhotos : []
+      }))
+    };
+  });
+  for (const category of sourceInventory) {
+    const id = category?.id || category?.code;
+    if (id && !normalized.some(item => item.id === id)) normalized.push(category);
+  }
+  return normalized;
+}
+
+function renderEquipmentEditor(form, target) {
+  const state = form._equipmentState;
+  target.innerHTML = `<div class="structured-heading"><div><strong>九类器械清单</strong><span>点击分类展开；问题照片会跟随具体器械发布</span></div></div>
+    <div class="equipment-editor">${state.map((category, categoryIndex) => `<details class="equipment-category" ${categoryIndex === 0 ? "open" : ""}>
+      <summary><span>${escapeHtml(category.id)}</span><strong>${escapeHtml(category.label)}</strong><em>总数 ${displayNumber(category.total)} · 可用 ${displayNumber(category.available)} · ${category.items.length} 个项目</em></summary>
+      <div class="equipment-category-body">
+        <div class="category-counts">
+          <label>分类总数<input type="number" min="0" data-category-index="${categoryIndex}" data-category-field="total" value="${inputValue(category.total)}" /></label>
+          <label>当前可用数<input type="number" min="0" data-category-index="${categoryIndex}" data-category-field="available" value="${inputValue(category.available)}" /></label>
+          <button class="mini secondary" data-add-equipment="${categoryIndex}" type="button">＋ 添加器械项目</button>
+        </div>
+        <div class="equipment-items">${category.items.map((item, itemIndex) => `<article class="equipment-item">
+          <header><div>${item.referenceImage ? `<img src="${escapeAttribute(item.referenceImage)}" alt="" />` : `<span>${escapeHtml(item.code || category.id)}</span>`}<strong>${escapeHtml(item.name || "器械名称待填写")}</strong></div><button class="mini danger" data-remove-equipment="${categoryIndex}:${itemIndex}" type="button">删除</button></header>
+          <div class="equipment-item-fields">
+            <label>器械编号<input data-equipment-index="${categoryIndex}:${itemIndex}" data-equipment-field="code" value="${escapeAttribute(item.code || "")}" /></label>
+            <label>器械名称<input data-equipment-index="${categoryIndex}:${itemIndex}" data-equipment-field="name" value="${escapeAttribute(item.name || "")}" /></label>
+            <label>总数<input type="number" min="0" data-equipment-index="${categoryIndex}:${itemIndex}" data-equipment-field="total" value="${inputValue(item.total)}" /></label>
+            <label>可用数<input type="number" min="0" data-equipment-index="${categoryIndex}:${itemIndex}" data-equipment-field="available" value="${inputValue(item.available)}" /></label>
+            <label>最长等待（分钟）<input type="number" min="0" data-equipment-index="${categoryIndex}:${itemIndex}" data-equipment-field="maxWaitMinutes" value="${inputValue(item.maxWaitMinutes)}" /></label>
+            <label>状态<select data-equipment-index="${categoryIndex}:${itemIndex}" data-equipment-field="status">${simpleOptions(item.status, [["unknown", "待核对"],["ok", "正常"],["issue", "有问题"]])}</select></label>
+            <label class="wide">问题或现场反馈<textarea rows="2" data-equipment-index="${categoryIndex}:${itemIndex}" data-equipment-field="issueSummary" placeholder="无问题可留空；有问题请写明损坏、缺件或安全隐患">${escapeHtml(item.issueSummary || "")}</textarea></label>
+            <label class="wide upload-box equipment-upload">上传该器械的问题照片<input type="file" accept="image/jpeg,image/png,image/webp" multiple data-equipment-photo="${categoryIndex}:${itemIndex}" /><span>照片只挂到这一项器械；上传后仍需点击“保存草稿”。</span></label>
+            <div class="wide issue-photo-list">${renderIssuePhotos(item.issuePhotos, categoryIndex, itemIndex)}</div>
+          </div>
+        </article>`).join("") || '<p class="empty structured-empty">该分类还没有器械项目；如果分类总数为 0 可不添加，否则请逐项添加。</p>'}</div>
+      </div>
+    </details>`).join("")}</div>`;
+  target.querySelectorAll("[data-category-field]").forEach(element => element.addEventListener("input", () => {
+    state[Number(element.dataset.categoryIndex)][element.dataset.categoryField] = optionalNumber(element.value);
+    notifyStructuredInput(form);
+  }));
+  target.querySelectorAll("[data-equipment-field]").forEach(element => element.addEventListener("input", () => {
+    const [categoryIndex, itemIndex] = element.dataset.equipmentIndex.split(":").map(Number);
+    const item = state[categoryIndex].items[itemIndex];
+    const field = element.dataset.equipmentField;
+    item[field] = ["total", "available", "maxWaitMinutes"].includes(field) ? optionalNumber(element.value) : element.value.trim();
+    notifyStructuredInput(form);
+  }));
+  target.querySelectorAll("[data-add-equipment]").forEach(button => button.addEventListener("click", () => {
+    const categoryIndex = Number(button.dataset.addEquipment);
+    const category = state[categoryIndex];
+    const id = `${category.id}-${String(category.items.length + 1).padStart(2, "0")}`;
+    category.items.push({ id, code: id, name: "", total: null, available: null, maxWaitMinutes: null, status: "unknown", issueSummary: "", issuePhotos: [] });
+    renderEquipmentEditor(form, target);
+  }));
+  target.querySelectorAll("[data-remove-equipment]").forEach(button => button.addEventListener("click", () => {
+    const [categoryIndex, itemIndex] = button.dataset.removeEquipment.split(":").map(Number);
+    state[categoryIndex].items.splice(itemIndex, 1);
+    renderEquipmentEditor(form, target);
+    notifyStructuredInput(form);
+  }));
+  target.querySelectorAll("[data-remove-issue-photo]").forEach(button => button.addEventListener("click", () => {
+    const [categoryIndex, itemIndex, photoIndex] = button.dataset.removeIssuePhoto.split(":").map(Number);
+    state[categoryIndex].items[itemIndex].issuePhotos.splice(photoIndex, 1);
+    renderEquipmentEditor(form, target);
+    notifyStructuredInput(form);
+  }));
+  target.querySelectorAll("[data-equipment-photo]").forEach(input => input.addEventListener("change", () => uploadEquipmentIssuePhotos(form, target, input)));
+}
+
+function renderIssuePhotos(photos, categoryIndex, itemIndex) {
+  if (!photos?.length) return '<p class="empty issue-photo-empty">还没有问题照片。</p>';
+  return photos.map((photo, photoIndex) => `<figure><img src="${escapeAttribute(photo.src || photo.url || "")}" alt="器械问题现场照片" /><figcaption>${escapeHtml(photo.caption || "器械问题现场照片")}</figcaption><button class="mini danger" data-remove-issue-photo="${categoryIndex}:${itemIndex}:${photoIndex}" type="button">移除</button></figure>`).join("");
+}
+
+async function uploadEquipmentIssuePhotos(form, target, input) {
+  if (!input.files?.length) return;
+  const [categoryIndex, itemIndex] = input.dataset.equipmentPhoto.split(":").map(Number);
+  const item = form._equipmentState[categoryIndex].items[itemIndex];
+  input.disabled = true;
+  try {
+    const scope = form._structuredOptions.scope;
+    const uploaded = await uploadFiles(input.files, scope);
+    item.issuePhotos = [...(item.issuePhotos || []), ...uploaded.map(image => ({ ...image, caption: image.caption || "器械问题现场照片" }))].slice(0, 8);
+    if (item.issuePhotos.length) item.status = "issue";
+    renderEquipmentEditor(form, target);
+    notifyStructuredInput(form);
+    form._structuredOptions.notify(`已给“${item.name || item.code}”上传 ${uploaded.length} 张问题照片，请保存草稿`);
+  } catch (error) {
+    input.disabled = false;
+    form._structuredOptions.notify(error.message, true);
+  }
+}
+
+function readEquipmentEditor(form, current) {
+  const state = form._equipmentState || normalizeEquipmentInventory(current);
+  return state.map(category => ({
+    ...category,
+    id: category.id || category.code,
+    code: category.code || category.id,
+    total: optionalNumber(category.total),
+    available: optionalNumber(category.available),
+    totalCount: optionalNumber(category.total),
+    availableCount: optionalNumber(category.available),
+    items: (category.items || []).filter(equipmentItemHasContent).map(item => ({
+      ...item,
+      id: item.id || item.code || makeRowId("equipment"),
+      code: item.code || item.id || "",
+      total: optionalNumber(item.total),
+      available: optionalNumber(item.available),
+      maxWaitMinutes: optionalNumber(item.maxWaitMinutes),
+      issuePhotos: Array.isArray(item.issuePhotos) ? item.issuePhotos : []
+    }))
+  }));
+}
+
+function equipmentItemHasContent(item) {
+  return ["name", "code", "issueSummary"].some(field => hasValue(item[field]))
+    || ["total", "available", "maxWaitMinutes"].some(field => hasValue(item[field]))
+    || (item.issuePhotos || []).length > 0;
+}
+
+function normalizeFullReport(draft = {}) {
+  const summary = draft.fullReport || draft.reportSummary || {};
+  return {
+    ...summary,
+    conclusion: summary.conclusion || draft.conclusion || "",
+    recommendations: normalizeStringList(firstDefined(summary.recommendations, draft.recommendations)),
+    cautions: normalizeStringList(firstDefined(summary.cautions, summary.mustKnow, draft.mustKnow)),
+    fit: summary.fit || draft.fit || "",
+    unfit: summary.unfit || draft.unfit || "",
+    sessionSummary: summary.sessionSummary || draft.sessionSummary || ""
+  };
+}
+
+function pricingPlanNameMatches(value, id, label) {
+  const text = String(value || "").trim();
+  if (!text) return false;
+  if (text === label) return true;
+  const aliases = {
+    single: ["单次", "单次卡", "体验卡", "次卡", "单次 / 体验卡"],
+    weekly: ["周卡", "星期卡"],
+    monthly: ["月卡"],
+    quarterly: ["季卡", "季度卡"],
+    annual: ["年卡", "年度卡"]
+  };
+  return (aliases[id] || []).includes(text);
+}
+
+function notifyStructuredInput(form) {
+  form.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+function simpleOptions(selected, options) {
+  return options.map(([value, label]) => `<option value="${escapeAttribute(value)}" ${selected === value ? "selected" : ""}>${escapeHtml(label)}</option>`).join("");
+}
+
+function normalizeStringList(value) {
+  if (Array.isArray(value)) return value.map(item => typeof item === "string" ? item.trim() : String(item?.text || item?.label || "").trim()).filter(Boolean);
+  return String(value || "").split(/\n+/).map(item => item.trim()).filter(Boolean);
+}
+
+function firstDefined(...values) {
+  return values.find(value => value !== undefined && value !== null && value !== "");
+}
+
+function hasValue(value) {
+  return value !== undefined && value !== null && String(value).trim() !== "";
+}
+
+function optionalNumber(value) {
+  if (!hasValue(value)) return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function inputValue(value) {
+  return hasValue(value) ? escapeAttribute(value) : "";
+}
+
+function displayNumber(value) {
+  return hasValue(value) ? escapeHtml(value) : "—";
+}
+
+function makeRowId(prefix) {
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
 function fillForm(form, draft) {
+  const fullReport = normalizeFullReport(draft);
   const flat = {
     ...draft,
     "crowd.evening": draft.crowd?.evening,
@@ -365,7 +879,12 @@ function fillForm(form, draft) {
     latitude: draft.coordinates?.[1],
     highlights: (draft.highlights || []).join("\n"),
     evidence: (draft.evidence || []).join("\n"),
-    additionalFees: (draft.additionalFees || []).join("\n")
+    additionalFees: (draft.additionalFees || []).join("\n"),
+    "fullReport.conclusion": fullReport.conclusion,
+    "fullReport.recommendations": fullReport.recommendations.join("\n"),
+    "fullReport.cautions": fullReport.cautions.join("\n"),
+    "fullReport.unfit": fullReport.unfit,
+    "fullReport.sessionSummary": fullReport.sessionSummary
   };
   for (const element of form.elements) {
     if (!element.name) continue;
@@ -382,25 +901,49 @@ function readForm(form, current = {}) {
   };
   const checked = name => form.elements.namedItem(name)?.checked || false;
   const gallery = Array.isArray(current.gallery) ? current.gallery : [];
+  const pricing = readPricingEditor(form, current);
+  const planAmount = id => pricing.plans.find(plan => plan.id === id)?.amount ?? 0;
+  const crowdObservations = readCrowdEditor(form, current);
+  const equipmentInventory = readEquipmentEditor(form, current);
+  const currentSummary = normalizeFullReport(current);
+  const fullReport = {
+    ...currentSummary,
+    conclusion: optionalValue("fullReport.conclusion") ?? currentSummary.conclusion,
+    recommendations: normalizeStringList(optionalValue("fullReport.recommendations") ?? currentSummary.recommendations),
+    cautions: normalizeStringList(optionalValue("fullReport.cautions") ?? currentSummary.cautions),
+    fit: value("fit") || currentSummary.fit,
+    unfit: optionalValue("fullReport.unfit") ?? currentSummary.unfit,
+    sessionSummary: optionalValue("fullReport.sessionSummary") ?? currentSummary.sessionSummary
+  };
+  const additionalFees = pricing.fees.map(fee => [
+    fee.label,
+    hasValue(fee.amount) ? `¥${fee.amount}` : "",
+    fee.rule
+  ].filter(Boolean).join(" · ")).filter(Boolean);
   return {
     ...current,
     name: value("name"), district: value("district"), type: value("type"), category: value("category"),
-    monthlyPrice: value("monthlyPrice"), trialPrice: value("trialPrice"),
-    weeklyPrice: optionalValue("weeklyPrice") ?? current.weeklyPrice ?? 0,
-    annualPrice: optionalValue("annualPrice") ?? current.annualPrice ?? 0,
+    pricing,
+    monthlyPrice: planAmount("monthly"), trialPrice: planAmount("single"),
+    weeklyPrice: planAmount("weekly"), quarterlyPrice: planAmount("quarterly"), annualPrice: planAmount("annual"),
     hours: value("hours"), testedAt: optionalValue("testedAt") || current.testedAt || new Date().toISOString().slice(0, 10),
     rating: optionalValue("rating") ?? current.rating ?? 0, equipment: optionalValue("equipment") ?? current.equipment ?? 0, image: value("image"), gallery,
+    crowdObservations,
+    equipmentInventory,
+    fullReport,
+    reportSummary: { ...fullReport },
     crowd: {
       ...(current.crowd || {}),
       morning: optionalValue("crowd.morning") || current.crowd?.morning || "一般",
       evening: optionalValue("crowd.evening") || current.crowd?.evening || "一般",
       weekend: optionalValue("crowd.weekend") || current.crowd?.weekend || "一般",
-      flexible: optionalValue("crowd.flexible") || current.crowd?.flexible || "一般"
+      flexible: optionalValue("crowd.flexible") || current.crowd?.flexible || "一般",
+      observations: crowdObservations
     },
     highlights: value("highlights").split(/\n+/).map(item => item.trim()).filter(Boolean).slice(0, 5),
     fit: value("fit") || current.fit || "", caution: value("caution") || current.caution || "",
     evidence: value("evidence").split(/\n+/).map(item => item.trim()).filter(Boolean),
-    additionalFees: (optionalValue("additionalFees") ?? (current.additionalFees || []).join("\n")).split(/\n+/).map(item => item.trim()).filter(Boolean).slice(0, 12),
+    additionalFees,
     beginner: checked("beginner"), lowSales: checked("lowSales"), shower: checked("shower"), cleanEnvironment: checked("cleanEnvironment"), open24: checked("open24"), womenFriendly: checked("womenFriendly"), nightSafety: checked("nightSafety"), riskReviewed: checked("riskReviewed"),
     coordinates: value("longitude") && value("latitude")
       ? [Number(value("longitude")), Number(value("latitude"))]
@@ -601,6 +1144,7 @@ function openPlatformVenue(venue) {
   }
   const form = venuePanel.querySelector("#platformVenueForm");
   fillForm(form, activeVenue);
+  setupStructuredEditors(form, activeVenue, { scope: activeVenue.id || "new-venue", notify: platformToast });
   renderPlatformGallery();
   renderPlatformCardPreview();
   form.addEventListener("input", renderPlatformCardPreview);

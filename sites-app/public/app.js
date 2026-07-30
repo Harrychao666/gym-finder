@@ -620,6 +620,9 @@ const els = {
   pricingDialog: document.querySelector("#pricingDialog"),
   pricingTitle: document.querySelector("#pricingTitle"),
   pricingContent: document.querySelector("#pricingContent"),
+  equipmentDialog: document.querySelector("#equipmentDialog"),
+  equipmentTitle: document.querySelector("#equipmentTitle"),
+  equipmentContent: document.querySelector("#equipmentContent"),
   ratingDialog: document.querySelector("#ratingDialog"),
   ratingTitle: document.querySelector("#ratingTitle"),
   ratingContent: document.querySelector("#ratingContent"),
@@ -747,8 +750,8 @@ function scoreVenue(venue, preferences) {
   let score = 0;
   if (venue.district === preferences.district) score += 35;
   else if (venue.estimatedCommute <= preferences.commute) score += 18;
-  if (venue.monthlyPrice <= preferences.budget) score += 24;
-  else score -= Math.min(18, Math.ceil((venue.monthlyPrice - preferences.budget) / 30));
+  if (venue.monthlyPrice > 0 && venue.monthlyPrice <= preferences.budget) score += 24;
+  else if (venue.monthlyPrice > 0) score -= Math.min(18, Math.ceil((venue.monthlyPrice - preferences.budget) / 30));
   if (venue.estimatedCommute <= preferences.commute) score += 14;
   if (venue.crowd[preferences.trainingTime] === "宽松") score += 10;
   if (venue.crowd[preferences.trainingTime] === "拥挤") score -= 6;
@@ -806,7 +809,7 @@ function getMatchSummary(venue, preferences) {
       label: `${venue.estimatedCommute}分钟通勤`
     },
     {
-      matched: venue.monthlyPrice <= preferences.budget,
+      matched: venue.monthlyPrice > 0 && venue.monthlyPrice <= preferences.budget,
       label: "月费预算内"
     }
   );
@@ -842,7 +845,7 @@ function getEvidenceClass(item) {
 
 function getMatchReason(venue, preferences, index) {
   if (index === 0) return "最符合你的条件";
-  if (venue.monthlyPrice <= Math.min(preferences.budget, 350)) return "预算更轻松";
+  if (venue.monthlyPrice > 0 && venue.monthlyPrice <= Math.min(preferences.budget, 350)) return "预算更轻松";
   if (venue.estimatedCommute <= 15) return "通勤更方便";
   if (venue.crowd[preferences.trainingTime] === "宽松") return "常练时段更舒适";
   return "设备与服务更均衡";
@@ -888,7 +891,7 @@ function generateRecommendations() {
     .sort((a, b) => (
       b.matchScore - a.matchScore
       || a.estimatedCommute - b.estimatedCommute
-      || a.monthlyPrice - b.monthlyPrice
+      || (a.monthlyPrice || Number.POSITIVE_INFINITY) - (b.monthlyPrice || Number.POSITIVE_INFINITY)
     ))
     .slice(0, 3);
 
@@ -1018,6 +1021,440 @@ function renderRecommendations(preferences) {
     button.addEventListener("click", () => showCommute(button.dataset.commute));
   });
 }
+
+const reportCardEquipmentGroups = [
+  { code: "03A", key: "cardio", label: "有氧器械" },
+  { code: "03B", key: "back", label: "背部器械" },
+  { code: "03C", key: "chest", label: "胸部器械" },
+  { code: "03D", key: "legs", label: "腿部器械" },
+  { code: "03E", key: "dumbbells", label: "哑铃区" },
+  { code: "03F", key: "arms", label: "手臂器械" },
+  { code: "03G", key: "shoulders", label: "肩部器械" },
+  { code: "03H", key: "core", label: "核心器械" },
+  { code: "03I", key: "stretching", label: "拉伸区" }
+];
+
+let equipmentReferenceByCode = {};
+let equipmentReferenceByName = {};
+
+function escapeReportText(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function firstReportValue(...values) {
+  return values.find((value) => value !== undefined && value !== null && value !== "");
+}
+
+function reportArray(value) {
+  if (Array.isArray(value)) return value;
+  if (value === undefined || value === null || value === "") return [];
+  return [value];
+}
+
+function reportNumber(value) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string" || !value.trim()) return null;
+  const match = value.replaceAll(",", "").match(/-?\d+(?:\.\d+)?/);
+  return match ? Number(match[0]) : null;
+}
+
+function displayReportValue(value, suffix = "") {
+  if (value === undefined || value === null || value === "") return "待补充";
+  return `${escapeReportText(value)}${suffix}`;
+}
+
+function getPricingSource(venue) {
+  return venue.pricing || venue.priceDetails || venue.report?.pricing || {};
+}
+
+function getVenuePricePlans(venue) {
+  const source = getPricingSource(venue);
+  const rawPlans = reportArray(firstReportValue(source.plans, venue.pricePlans, venue.pricingPlans));
+  const definitions = [
+    { key: "single", label: "单次", aliases: ["single", "trial", "day", "单次", "体验"] },
+    { key: "weekly", label: "周卡", aliases: ["weekly", "week", "周卡"] },
+    { key: "monthly", label: "月卡", aliases: ["monthly", "month", "月卡"] },
+    { key: "quarterly", label: "季卡", aliases: ["quarterly", "quarter", "季卡"] },
+    { key: "annual", label: "年卡", aliases: ["annual", "yearly", "year", "年卡"] }
+  ];
+  const flatValues = {
+    single: firstReportValue(source.single, source.trial, venue.trialPrice, venue.singlePrice),
+    weekly: firstReportValue(source.weekly, venue.weeklyPrice),
+    monthly: firstReportValue(source.monthly, venue.monthlyPrice),
+    quarterly: firstReportValue(source.quarterly, venue.quarterlyPrice),
+    annual: firstReportValue(source.annual, source.yearly, venue.annualPrice)
+  };
+
+  return definitions.map((definition) => {
+    const matching = rawPlans.find((plan) => {
+      if (!plan || typeof plan !== "object") return false;
+      const identity = `${plan.key || plan.type || ""} ${plan.label || plan.name || ""}`.toLowerCase();
+      return definition.aliases.some((alias) => identity.includes(String(alias).toLowerCase()));
+    });
+    const rawAmount = matching && typeof matching === "object"
+      ? firstReportValue(matching.amount, matching.price, matching.value)
+      : flatValues[definition.key] && typeof flatValues[definition.key] === "object"
+        ? firstReportValue(flatValues[definition.key].amount, flatValues[definition.key].price, flatValues[definition.key].value)
+        : flatValues[definition.key];
+    const numericAmount = reportNumber(rawAmount);
+    const provided = matching?.provided !== false && rawAmount !== undefined && rawAmount !== null && rawAmount !== "";
+    return {
+      ...definition,
+      amount: provided
+        ? (numericAmount !== null ? `¥${numericAmount.toLocaleString("zh-CN")}` : String(rawAmount))
+        : "待补充",
+      amountNumber: provided ? numericAmount : null,
+      validity: firstReportValue(matching?.validity, matching?.duration, matching?.term),
+      source: firstReportValue(matching?.source, matching?.evidenceStatus, matching?.evidence)
+    };
+  });
+}
+
+function getVenueAdditionalFees(venue) {
+  const source = getPricingSource(venue);
+  return reportArray(firstReportValue(
+    source.fees,
+    source.additionalFees,
+    venue.additionalFeeDetails,
+    venue.additionalFees
+  )).map((fee) => {
+    if (fee && typeof fee === "object") {
+      return {
+        label: firstReportValue(fee.label, fee.name, fee.type, "其他费用"),
+        amount: firstReportValue(fee.amount, fee.rule, fee.value, "待补充"),
+        disclosed: firstReportValue(fee.proactivelyDisclosed, fee.disclosed),
+        source: firstReportValue(fee.source, fee.evidenceStatus, fee.note)
+      };
+    }
+    const [label, ...rest] = String(fee).split(/[：:]/);
+    return {
+      label: rest.length ? label.trim() : "费用说明",
+      amount: rest.length ? rest.join("：").trim() : String(fee),
+      disclosed: undefined,
+      source: undefined
+    };
+  }).filter((fee) => fee.label || fee.amount);
+}
+
+function getCrowdObservations(venue) {
+  const raw = firstReportValue(
+    venue.crowdObservations,
+    venue.crowd?.observations,
+    venue.report?.crowdObservations,
+    venue.reportSummary?.crowdObservations
+  );
+  return reportArray(raw).filter((item) => item && typeof item === "object").map((item, index) => ({
+    id: firstReportValue(item.id, `observation-${index + 1}`),
+    date: firstReportValue(item.date, item.observedAt, item.day),
+    dayType: firstReportValue(item.dayType, item.periodType, item.sessionType, item.peakType),
+    time: firstReportValue(
+      item.timeRange,
+      item.time,
+      item.start && item.end ? `${item.start}–${item.end}` : firstReportValue(item.startTime && item.endTime ? `${item.startTime}–${item.endTime}` : item.startTime, item.start)
+    ),
+    cableWait: firstReportValue(
+      item.cableWaitMinutes,
+      item.crossoverWaitMinutes,
+      item.dragonGateWaitMinutes,
+      item.functionalWaitMinutes,
+      item.rigWaitMinutes,
+      item.cableWait
+    ),
+    cardioWait: firstReportValue(item.cardioWaitMinutes, item.aerobicWaitMinutes, item.cardioWait),
+    cableVacancies: firstReportValue(item.cableVacancies, item.crossoverVacancies),
+    cardioVacancies: firstReportValue(item.cardioVacancies, item.aerobicVacancies),
+    people: firstReportValue(item.approxPeople, item.peopleCount, item.headcount, item.people),
+    judgment: firstReportValue(item.state, item.judgment, item.level, item.crowdLevel, item.result),
+    description: firstReportValue(item.description, item.sceneDescription, item.notes, item.note),
+    evidence: reportArray(firstReportValue(item.evidence, item.evidenceSummary, item.photos))
+  }));
+}
+
+function formatWaitValue(value) {
+  if (value === undefined || value === null || value === "") return "待补充";
+  const number = reportNumber(value);
+  if (number !== null && number < 0) return "待补充";
+  if (number === 0) return "无需等待";
+  if (typeof value === "number" || /^\s*\d+(?:\.\d+)?\s*$/.test(String(value))) return `${number} 分钟`;
+  return String(value);
+}
+
+function getLongestWait(venue) {
+  const observations = getCrowdObservations(venue);
+  const values = observations.flatMap((item) => [reportNumber(item.cableWait), reportNumber(item.cardioWait)])
+    .filter((value) => value !== null && value >= 0);
+  const explicit = reportNumber(firstReportValue(
+    venue.maxWaitMinutes,
+    venue.crowd?.maxWaitMinutes,
+    venue.reportSummary?.maxWaitMinutes
+  ));
+  if (explicit !== null && explicit >= 0) values.push(explicit);
+  return values.length ? Math.max(...values) : null;
+}
+
+function getRawEquipmentGroups(venue) {
+  const raw = firstReportValue(
+    venue.equipmentInventory,
+    venue.equipmentGroups,
+    venue.equipment?.inventory,
+    venue.report?.equipmentInventory
+  );
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === "object") {
+    return Object.entries(raw).map(([key, value]) => (
+      Array.isArray(value)
+        ? { key, items: value }
+        : { key, ...(value || {}) }
+    ));
+  }
+  return [];
+}
+
+function getVenueEquipmentGroups(venue) {
+  return getRawEquipmentGroups(venue).map((group, groupIndex) => {
+    const identity = String(firstReportValue(group.id, group.code, group.number, group.key, "")).toUpperCase();
+    const definition = reportCardEquipmentGroups.find((candidate) => (
+      identity.includes(candidate.code)
+      || identity === candidate.key.toUpperCase()
+    )) || reportCardEquipmentGroups[groupIndex] || {
+      code: identity || `03-${groupIndex + 1}`,
+      key: identity || `group-${groupIndex + 1}`,
+      label: firstReportValue(group.label, group.title, group.name, "其他器械")
+    };
+    const items = reportArray(firstReportValue(group.items, group.equipment, group.entries, group.machines))
+      .filter((item) => item && typeof item === "object")
+      .map((item, itemIndex) => ({
+        id: firstReportValue(item.id, item.code, `${definition.key}-${itemIndex + 1}`),
+        code: firstReportValue(item.code, item.number, item.referenceCode),
+        name: firstReportValue(item.name, item.label, item.equipmentName, "未命名器械"),
+        referenceImage: firstReportValue(item.referenceImage, item.reference_image, item.referencePhoto),
+        total: firstReportValue(item.total, item.totalCount, item.quantity),
+        available: firstReportValue(item.available, item.availableCount, item.usableCount),
+        wait: firstReportValue(item.maxWaitMinutes, item.waitMinutes, item.maxWait, item.wait),
+        status: firstReportValue(item.status, item.condition),
+        issue: firstReportValue(item.issueSummary, item.issue, item.problem, item.feedback),
+        issuePhotos: reportArray(firstReportValue(item.issuePhotos, item.problemPhotos, item.issueEvidence)),
+        note: firstReportValue(item.note, item.notes, item.description),
+        evidence: reportArray(item.evidence)
+      }))
+      .filter((item) => (
+        (reportNumber(item.total) ?? 0) > 0
+        || (reportNumber(item.available) ?? 0) > 0
+        || Boolean(item.issue)
+        || item.status === "issue"
+        || Boolean(item.note)
+        || item.evidence.length > 0
+      ));
+    return {
+      ...definition,
+      code: identity.match(/03[A-I]/)?.[0] || definition.code,
+      label: firstReportValue(group.label, group.title, group.name, definition.label),
+      total: firstReportValue(group.total, group.totalCount),
+      available: firstReportValue(group.available, group.availableCount),
+      items
+    };
+  }).sort((a, b) => a.code.localeCompare(b.code));
+}
+
+function getEquipmentReferenceImage(item) {
+  const raw = item.referenceImage;
+  if (raw) {
+    const value = String(raw);
+    const fileName = value.split("/").pop();
+    if (fileName) return `./assets/equipment-reference/${encodeURIComponent(fileName)}`;
+  }
+  const fileName = equipmentReferenceByCode[String(item.code || "").toUpperCase()]
+    || equipmentReferenceByName[String(item.name || "").replaceAll(/\s/g, "")];
+  return fileName ? `./assets/equipment-reference/${encodeURIComponent(fileName)}` : "";
+}
+
+function getScoreModules(venue) {
+  return reportArray(firstReportValue(
+    venue.scoreModules,
+    venue.scoreBreakdown,
+    venue.scoring?.modules,
+    venue.report?.scoreModules
+  )).filter((item) => item && typeof item === "object").map((item) => {
+    const score = reportNumber(firstReportValue(item.score10, item.score, item.value));
+    const weight = reportNumber(firstReportValue(item.weight, item.weightPercent, item.max));
+    const suppliedContribution = reportNumber(item.contribution);
+    return {
+      key: firstReportValue(item.key, item.code),
+      label: firstReportValue(item.label, item.name, "未命名模块"),
+      score,
+      weight,
+      contribution: suppliedContribution ?? (
+        score !== null && weight !== null ? score * weight / 100 : null
+      ),
+      note: firstReportValue(item.note, item.description, item.basis, "评分依据待补充")
+    };
+  });
+}
+
+function getVerifiedScore(venue) {
+  const modules = getScoreModules(venue);
+  const weighted = modules.length && modules.every((item) => item.score !== null && item.weight !== null)
+    ? modules.reduce((total, item) => total + item.score * item.weight / 100, 0)
+    : null;
+  if (weighted !== null) return weighted;
+  const rating = reportNumber(venue.rating);
+  if (rating !== null) return rating;
+  const experienceScore = reportNumber(venue.experienceScore);
+  return experienceScore === null ? null : experienceScore > 10 ? experienceScore / 10 : experienceScore;
+}
+
+function getReportSummaryData(venue) {
+  const summary = venue.fullReport || venue.reportSummary || venue.report?.summary || {};
+  return {
+    conclusion: firstReportValue(summary.conclusion, summary.verdict, venue.fit),
+    recommendations: reportArray(firstReportValue(summary.recommendations, summary.strengths, venue.highlights)),
+    cautions: reportArray(firstReportValue(summary.mustKnow, summary.cautions, summary.risks, venue.caution)),
+    fit: firstReportValue(summary.fit, summary.suitableFor, venue.fit),
+    unfit: firstReportValue(summary.unfit, summary.unsuitableFor, venue.unfit),
+    sessions: firstReportValue(summary.sessionsCompleted, summary.sessionCount, venue.sessionCount),
+    coverage: firstReportValue(summary.sessionSummary, summary.coverage, summary.testCoverage),
+    sections: reportArray(firstReportValue(summary.sections, venue.reportSections))
+  };
+}
+
+function getReportEvidenceLabel(venue) {
+  const count = reportArray(venue.evidence).length;
+  if (count) return `${count} 项证据已录入`;
+  return "证据摘要待补充";
+}
+
+function getReportProofText(venue) {
+  const testerCount = reportNumber(venue.testerCount);
+  const date = firstReportValue(venue.testedAt, venue.updated);
+  if (testerCount && date) return `实测 ${testerCount} 人 · ${escapeReportText(date)}`;
+  if (date) return `最近核验 ${escapeReportText(date)}`;
+  return "实测信息待补充";
+}
+
+renderRecommendations = function renderReportCards(preferences) {
+  els.venueList.innerHTML = "";
+  if (!state.recommendations.length) {
+    els.venueList.innerHTML = `
+      <section class="decision-tip" role="status">
+        <strong>暂未发布符合条件的已核验场馆</strong>
+        <p>我们不会用演示场馆填充结果。请稍后再试，或调整筛选条件。</p>
+      </section>`;
+    return;
+  }
+
+  state.recommendations.forEach((venue, index) => {
+    const score = getVerifiedScore(venue);
+    const hasScore = venue.verificationStatus !== "base_only" && score !== null && score > 0;
+    const matchSummary = getMatchSummary(venue, preferences);
+    const summary = getReportSummaryData(venue);
+    const pricePlan = getVenuePricePlans(venue).find((plan) => plan.key === "monthly");
+    const longestWait = getLongestWait(venue);
+    const equipmentGroups = getVenueEquipmentGroups(venue);
+    const equipmentItemCount = equipmentGroups.reduce((total, group) => total + group.items.length, 0);
+    const gallery = reportArray(venue.gallery).filter((photo) => photo?.src);
+    const heroImage = firstReportValue(venue.image, gallery[0]?.src);
+    const features = getVenueFeatureTags(venue, preferences);
+
+    const article = document.createElement("article");
+    article.className = "venue-card report-card-v2";
+    article.innerHTML = `
+      <button class="venue-image report-card-photo" data-gallery="${escapeReportText(venue.id)}" type="button" aria-label="查看 ${escapeReportText(venue.name)} 的场馆照片" ${gallery.length ? "" : "disabled"}>
+        ${heroImage
+          ? `<img src="${escapeReportText(heroImage)}" alt="${escapeReportText(venue.name)}训练空间实拍" loading="lazy" referrerpolicy="no-referrer" />`
+          : `<span class="venue-photo-placeholder">场馆照片待补充</span>`}
+        <span class="rank-label">推荐第 ${index + 1} 名</span>
+        <span class="photo-count"><span aria-hidden="true">▣</span> ${gallery.length ? `${gallery.length} 张` : "照片待补充"}</span>
+        <span class="report-photo-proof">
+          <span><strong>体验官实测凭证</strong><small>${getReportProofText(venue)}</small></span>
+          <b>${venue.verificationStatus === "base_only" ? "待实测" : "审核通过"}</b>
+        </span>
+      </button>
+      <div class="venue-card-body">
+        <div class="report-match-row">
+          <p class="match-reason">${escapeReportText(getMatchReason(venue, preferences, index))}</p>
+          <span class="match-count">匹配 ${matchSummary.matched}/${matchSummary.total} 项</span>
+        </div>
+        <div class="venue-title-row">
+          <div class="venue-heading-copy">
+            <div class="venue-name-line"><h3>${escapeReportText(venue.name)}</h3></div>
+            <div class="venue-meta-row">
+              <p class="venue-meta">${escapeReportText(venue.district || "地区待补充")} · ${escapeReportText(venue.type || "类型待补充")}</p>
+              ${venue.category ? `<span class="venue-category ${venue.category === "铁馆" ? "is-iron" : "is-commercial"}">${escapeReportText(venue.category)}</span>` : ""}
+            </div>
+          </div>
+          ${hasScore
+            ? `<button class="report-score" data-rating="${escapeReportText(venue.id)}" type="button" aria-label="查看 ${escapeReportText(venue.name)} 的体验官评分计算"><strong>${score.toFixed(1)}</strong><span>体验官评测得分</span></button>`
+            : `<span class="report-score is-pending"><strong>—</strong><span>评分待补充</span></span>`}
+        </div>
+        <section class="report-verdict">
+          <span>体验官综合结论</span>
+          <strong>${escapeReportText(summary.conclusion || "综合结论待体验官报告补充")}</strong>
+        </section>
+        <div class="venue-features" aria-label="${escapeReportText(venue.name)}的突出特点">
+          ${features.length
+            ? features.map((highlight) => `<span class="venue-feature">${escapeReportText(highlight)}</span>`).join("")
+            : `<span class="venue-feature is-pending">特点待补充</span>`}
+        </div>
+        <div class="report-facts">
+          <button class="report-fact price-fact" data-pricing="${escapeReportText(venue.id)}" type="button">
+            <span>参考月费</span><strong>${escapeReportText(pricePlan?.amount || "待补充")}</strong><small>查看五种卡型与额外费用</small>
+          </button>
+          <button class="report-fact commute-fact" data-commute="${escapeReportText(venue.id)}" type="button">
+            <span>预计通勤</span><strong>${Number.isFinite(venue.estimatedCommute) ? `${venue.estimatedCommute} 分钟` : "待补充"}</strong><small>查看通勤说明</small>
+          </button>
+          <button class="report-fact crowd-fact" data-crowd="${escapeReportText(venue.id)}" type="button">
+            <span>晚高峰实测最长等待</span><strong>${longestWait === null ? "待补充" : `${longestWait} 分钟`}</strong><small>查看多次现场观察</small>
+          </button>
+          <button class="report-fact equipment-fact" data-equipment="${escapeReportText(venue.id)}" type="button">
+            <span>器械清单</span><strong>${equipmentItemCount ? `${equipmentGroups.length} 类 · ${equipmentItemCount} 项` : "待补充"}</strong><small>按 03A–03I 查看</small>
+          </button>
+        </div>
+        <div class="report-risk"><b>办卡前留意</b><span>${escapeReportText(summary.cautions[0] || "风险与合同提醒待体验官补充")}</span></div>
+        <footer class="card-footer report-card-footer">
+          <div class="report-evidence"><strong>${getReportEvidenceLabel(venue)}</strong><span>${getReportProofText(venue)}</span></div>
+          <div class="report-card-actions">
+            <label class="compare-toggle">
+              <input type="checkbox" data-compare="${escapeReportText(venue.id)}" />
+              <span class="report-compare-label">加入对比</span>
+            </label>
+            <button class="card-action detail-button" data-detail="${escapeReportText(venue.id)}" type="button">查看完整实测报告 →</button>
+          </div>
+        </footer>
+      </div>
+    `;
+    els.venueList.append(article);
+  });
+
+  document.querySelectorAll("[data-compare]").forEach((input) => {
+    input.addEventListener("change", handleCompareSelection);
+  });
+  document.querySelectorAll("[data-detail]").forEach((button) => {
+    button.addEventListener("click", () => showDetail(button.dataset.detail));
+  });
+  document.querySelectorAll("[data-gallery]").forEach((button) => {
+    if (!button.disabled) button.addEventListener("click", () => showGallery(button.dataset.gallery));
+  });
+  document.querySelectorAll("[data-crowd]").forEach((button) => {
+    button.addEventListener("click", () => showCrowd(button.dataset.crowd));
+  });
+  document.querySelectorAll("[data-pricing]").forEach((button) => {
+    button.addEventListener("click", () => showPricing(button.dataset.pricing));
+  });
+  document.querySelectorAll("[data-rating]").forEach((button) => {
+    button.addEventListener("click", () => showRating(button.dataset.rating));
+  });
+  document.querySelectorAll("[data-commute]").forEach((button) => {
+    button.addEventListener("click", () => showCommute(button.dataset.commute));
+  });
+  document.querySelectorAll("[data-equipment]").forEach((button) => {
+    button.addEventListener("click", () => showEquipment(button.dataset.equipment));
+  });
+};
 
 function handleCompareSelection(event) {
   const id = event.target.dataset.compare;
@@ -1607,7 +2044,19 @@ function showRating(id) {
 
 function showCommute(id) {
   const venue = state.recommendations.find((item) => item.id === id);
+  if (!venue) return;
   const preferences = getPreferences();
+  if (!venue.hasCoordinates || !Number.isFinite(venue.estimatedCommute)) {
+    els.commuteTitle.textContent = venue.name;
+    els.commuteContent.innerHTML = `
+      <div class="report-empty-state is-dialog">
+        <strong>场馆坐标待补充</strong>
+        <p>当前报告没有可用于通勤计算的坐标，页面不会使用默认位置生成估算。补齐坐标并接入高德 API 后，将显示步行、骑行、公交和驾车的实时预计时间。</p>
+      </div>
+    `;
+    els.commuteDialog.showModal();
+    return;
+  }
   const distance = distanceInKm(preferences.coordinates, venue.coordinates);
   els.commuteTitle.textContent = venue.name;
   els.commuteContent.innerHTML = `
@@ -1634,6 +2083,338 @@ function showCommute(id) {
   `;
   els.commuteDialog.showModal();
 }
+
+function renderPricePlansV2(venue) {
+  return getVenuePricePlans(venue).map((plan) => `
+    <article class="report-price-plan ${plan.key === "monthly" ? "is-primary" : ""} ${plan.amount === "待补充" ? "is-pending" : ""}">
+      <span>${escapeReportText(plan.label)}</span>
+      <strong>${escapeReportText(plan.amount)}</strong>
+      <small>${plan.validity ? escapeReportText(plan.validity) : "有效期待补充"}</small>
+      ${plan.source ? `<em>${escapeReportText(typeof plan.source === "string" ? plan.source : "已录入证据")}</em>` : ""}
+    </article>
+  `).join("");
+}
+
+function renderAdditionalFeesV2(venue) {
+  const fees = getVenueAdditionalFees(venue);
+  if (!fees.length) {
+    return `<div class="report-empty-state"><strong>额外费用待补充</strong><p>停卡、转卡、押金、储物柜、淋浴、门禁卡和自动续费尚未录入。</p></div>`;
+  }
+  return `
+    <div class="report-fee-list">
+      ${fees.map((fee) => `
+        <article>
+          <span>${escapeReportText(fee.label)}</span>
+          <strong>${escapeReportText(fee.amount)}</strong>
+          <small>${fee.disclosed === true || fee.disclosed === "yes" ? "门店主动说明" : fee.disclosed === false || fee.disclosed === "no" ? "门店未主动说明" : fee.disclosed === "na" ? "本项不适用" : "主动告知情况待补充"}${fee.source ? ` · ${escapeReportText(typeof fee.source === "string" ? fee.source : "证据已录入")}` : ""}</small>
+        </article>
+      `).join("")}
+    </div>
+  `;
+}
+
+showPricing = function showReportPricing(id) {
+  const venue = venues.find((item) => item.id === id);
+  if (!venue) return;
+  els.pricingTitle.textContent = venue.name;
+  els.pricingContent.innerHTML = `
+    <section class="report-dialog-section">
+      <p class="report-section-kicker">五种卡型</p>
+      <h3>体验官实际获取到的收费信息</h3>
+      <div class="report-price-grid">${renderPricePlansV2(venue)}</div>
+    </section>
+    <section class="report-dialog-section">
+      <p class="report-section-kicker">额外费用与条款</p>
+      <h3>办卡前还要确认什么？</h3>
+      ${renderAdditionalFeesV2(venue)}
+    </section>
+    <p class="source-note">页面只展示审核通过的报告内容；“待补充”表示该字段未录入，不代表免费或没有这项费用。实际收费以门店最新书面报价和合同为准。</p>
+  `;
+  els.pricingDialog.showModal();
+};
+
+function observationEvidenceText(evidence) {
+  const values = evidence.map((item) => {
+    if (item && typeof item === "object") return firstReportValue(item.caption, item.label, item.type, item.url, item.src);
+    return item;
+  }).filter(Boolean);
+  return values.length ? values.join("、") : "证据摘要待补充";
+}
+
+showCrowd = function showReportCrowd(id) {
+  const venue = venues.find((item) => item.id === id);
+  if (!venue) return;
+  const observations = getCrowdObservations(venue);
+  const maxCable = observations.map((item) => reportNumber(item.cableWait)).filter((value) => value !== null && value >= 0);
+  const maxCardio = observations.map((item) => reportNumber(item.cardioWait)).filter((value) => value !== null && value >= 0);
+  const maxPeople = observations.map((item) => reportNumber(item.people)).filter((value) => value !== null && value >= 0);
+  const longestWait = getLongestWait(venue);
+
+  els.crowdTitle.textContent = `${venue.name} · 晚高峰实测`;
+  els.crowdContent.innerHTML = `
+    <div class="report-crowd-lead">
+      <div class="${longestWait !== null && longestWait >= 10 ? "is-alert" : ""}"><span>最长器械等待</span><strong>${longestWait === null ? "待补充" : `${longestWait} 分钟`}</strong></div>
+      <div><span>龙门架／绳索器械</span><strong>${maxCable.length ? `${Math.max(...maxCable)} 分钟` : "待补充"}</strong></div>
+      <div><span>有氧器械</span><strong>${maxCardio.length ? `${Math.max(...maxCardio)} 分钟` : "待补充"}</strong></div>
+      <div><span>现场人数峰值</span><strong>${maxPeople.length ? `约 ${Math.max(...maxPeople)} 人` : "待补充"}</strong></div>
+    </div>
+    <section class="report-dialog-section">
+      <p class="report-section-kicker">固定窗口观察</p>
+      <h3>${observations.length ? `已录入 ${observations.length} 次现场观察` : "现场观察待补充"}</h3>
+      ${observations.length ? `
+        <div class="report-observation-list">
+          ${observations.map((observation, index) => `
+            <article class="report-observation">
+              <div class="report-observation-time">
+                <strong>${escapeReportText(firstReportValue(observation.date, `第 ${index + 1} 次观察`))}${observation.time ? ` · ${escapeReportText(observation.time)}` : ""}</strong>
+                <span>${escapeReportText(observation.dayType || "时段类型待补充")}</span>
+              </div>
+              <div class="report-observation-copy">
+                <strong>龙门架／绳索 ${escapeReportText(formatWaitValue(observation.cableWait))} · 有氧 ${escapeReportText(formatWaitValue(observation.cardioWait))} · ${reportNumber(observation.people) === null || reportNumber(observation.people) < 0 ? "人数待补充" : `约 ${escapeReportText(observation.people)} 人`}</strong>
+                <span>${escapeReportText(observation.description || "现场描述待补充")}</span>
+                <small>空位：龙门架／绳索 ${reportNumber(observation.cableVacancies) === null || reportNumber(observation.cableVacancies) < 0 ? "待补充" : escapeReportText(observation.cableVacancies)} · 有氧 ${reportNumber(observation.cardioVacancies) === null || reportNumber(observation.cardioVacancies) < 0 ? "待补充" : escapeReportText(observation.cardioVacancies)}；证据：${escapeReportText(observationEvidenceText(observation.evidence))}</small>
+              </div>
+              <span class="report-observation-state">${escapeReportText(observation.judgment || "待判断")}</span>
+            </article>
+          `).join("")}
+        </div>
+      ` : `<div class="report-empty-state"><strong>尚无可展示的客流实测</strong><p>旧报告没有录入龙门架、有氧器械、人数与现场描述，页面不会用推测曲线代替。</p></div>`}
+    </section>
+    <p class="source-note">这里展示的是体验官报告中的抽样观察，不是实时人数，也不代表全天客流预测。</p>
+  `;
+  els.crowdDialog.showModal();
+};
+
+function getEquipmentGroupTotals(group) {
+  const itemTotals = group.items.map((item) => reportNumber(item.total)).filter((value) => value !== null);
+  const itemAvailable = group.items.map((item) => reportNumber(item.available)).filter((value) => value !== null);
+  return {
+    total: reportNumber(group.total) ?? (itemTotals.length ? itemTotals.reduce((sum, value) => sum + value, 0) : null),
+    available: reportNumber(group.available) ?? (itemAvailable.length ? itemAvailable.reduce((sum, value) => sum + value, 0) : null)
+  };
+}
+
+function renderEquipmentIssuePhotos(item) {
+  const photos = item.issuePhotos.map((photo) => {
+    if (photo && typeof photo === "object") {
+      return {
+        src: firstReportValue(photo.src, photo.url, photo.image),
+        caption: firstReportValue(photo.caption, photo.note, photo.label, "器械问题现场照片")
+      };
+    }
+    return { src: photo, caption: "器械问题现场照片" };
+  }).filter((photo) => photo.src);
+  if (!photos.length) return "";
+  return `
+    <div class="equipment-issue-photos">
+      ${photos.map((photo) => `<figure><img src="${escapeReportText(photo.src)}" alt="${escapeReportText(photo.caption)}" loading="lazy" /><figcaption>${escapeReportText(photo.caption)}</figcaption></figure>`).join("")}
+    </div>
+  `;
+}
+
+function renderEquipmentGroupV2(group) {
+  const totals = getEquipmentGroupTotals(group);
+  const summary = totals.total !== null || totals.available !== null
+    ? `总数 ${totals.total ?? "待补充"} · 可用 ${totals.available ?? "待补充"}`
+    : `${group.items.length} 项已录入`;
+  return `
+    <div class="report-equipment-summary">
+      <div><p class="report-section-kicker">本馆已核验器械</p><h3>${escapeReportText(group.code)} ${escapeReportText(group.label)}</h3></div>
+      <span>${escapeReportText(summary)}</span>
+    </div>
+    ${group.items.length ? `
+      <div class="report-equipment-grid">
+        ${group.items.map((item) => {
+          const image = getEquipmentReferenceImage(item);
+          const hasIssue = Boolean(item.issue) || String(item.status || "").toLowerCase().includes("issue") || String(item.status || "").includes("异常");
+          return `
+            <article class="report-equipment-item">
+              ${image
+                ? `<img src="${escapeReportText(image)}" alt="${escapeReportText(item.name)}统一参考图片" loading="lazy" />`
+                : `<div class="equipment-image-missing" role="img" aria-label="${escapeReportText(item.name)}参考图片待补充">参考图待补充</div>`}
+              <div class="report-equipment-copy">
+                <div class="report-equipment-title"><strong>${escapeReportText(item.name)}</strong><span class="${hasIssue ? "is-issue" : ""}">${hasIssue ? "有反馈" : item.status ? escapeReportText(item.status) : "状态待补充"}</span></div>
+                <div class="report-equipment-metrics">
+                  <span>总数 ${displayReportValue(item.total)}</span>
+                  <span>可用 ${displayReportValue(item.available)}</span>
+                  <span>最长等待 ${escapeReportText(formatWaitValue(item.wait))}</span>
+                </div>
+                <p>${escapeReportText(item.issue || item.note || "现场问题与说明待补充")}</p>
+                ${renderEquipmentIssuePhotos(item)}
+              </div>
+            </article>
+          `;
+        }).join("")}
+      </div>
+    ` : `<div class="report-empty-state"><strong>该分类尚未录入器械</strong><p>审核发布后会在这里显示总数、可用数、最长等待和异常反馈。</p></div>`}
+  `;
+}
+
+function showEquipment(id) {
+  const venue = venues.find((item) => item.id === id);
+  if (!venue) return;
+  const groups = getVenueEquipmentGroups(venue);
+  els.equipmentTitle.textContent = `${venue.name} · 器械清单`;
+  if (!groups.length) {
+    els.equipmentContent.innerHTML = `
+      <div class="report-empty-state is-dialog"><strong>九类器械清单待补充</strong><p>这份旧报告尚未录入 03A–03I 的器械总数、可用数、等待时间和现场问题，页面不会自动补演示器械。</p></div>
+    `;
+    els.equipmentDialog.showModal();
+    return;
+  }
+  els.equipmentContent.innerHTML = `
+    <div class="report-equipment-tabs" role="tablist" aria-label="器械分类">
+      ${groups.map((group, index) => `<button type="button" role="tab" data-equipment-group="${escapeReportText(group.code)}" aria-selected="${index === 0}">${escapeReportText(group.code)} ${escapeReportText(group.label)}</button>`).join("")}
+    </div>
+    <div class="report-equipment-panel">${renderEquipmentGroupV2(groups[0])}</div>
+    <section class="report-public-feedback-note">
+      <strong>器械问题如何显示？</strong>
+      <p>体验官在上传报告时提交问题说明和现场照片，审核员确认后才会同步到对应器械；用户端不能直接修改审核结果。</p>
+    </section>
+  `;
+  const panel = els.equipmentContent.querySelector(".report-equipment-panel");
+  els.equipmentContent.querySelectorAll("[data-equipment-group]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const group = groups.find((item) => item.code === button.dataset.equipmentGroup) || groups[0];
+      els.equipmentContent.querySelectorAll("[data-equipment-group]").forEach((tab) => {
+        tab.setAttribute("aria-selected", String(tab === button));
+      });
+      panel.innerHTML = renderEquipmentGroupV2(group);
+    });
+  });
+  els.equipmentDialog.showModal();
+}
+
+showRating = function showReportRating(id) {
+  const venue = venues.find((item) => item.id === id);
+  if (!venue) return;
+  const modules = getScoreModules(venue);
+  const total = getVerifiedScore(venue);
+  els.ratingTitle.textContent = `${venue.name} · 评分计算`;
+  els.ratingContent.innerHTML = `
+    <section class="report-score-formula">
+      <strong>${total === null ? "待补充" : `${total.toFixed(2)} / 10`}</strong>
+      <p>各模块得分 × 固定权重后相加<br />体验官提交事实和证据，不自行填写总分</p>
+    </section>
+    ${modules.length ? `
+      <section class="report-score-modules" aria-label="体验官评分模块">
+        ${modules.map((module) => `
+          <article>
+            <div class="report-score-module-label">
+              <strong>${escapeReportText(module.label)}</strong>
+              <span>权重 ${module.weight === null ? "待补充" : `${module.weight}%`} · ${escapeReportText(module.note)}</span>
+            </div>
+            <div class="report-score-bar"><span style="width:${module.score === null ? 0 : Math.max(0, Math.min(100, module.score * 10))}%"></span></div>
+            <div class="report-score-module-value">
+              <strong>${module.score === null ? "—" : module.score.toFixed(1)}</strong>
+              <span>贡献 ${module.contribution === null ? "待补充" : module.contribution.toFixed(3)}</span>
+            </div>
+          </article>
+        `).join("")}
+      </section>
+      <section class="report-method-grid">
+        <article><strong>统一采集</strong><p>每家场馆按相同字段记录价格、器械、拥挤、卫生、销售和新手体验。</p></article>
+        <article><strong>证据先审核</strong><p>图片、合同和现场记录先由审核员确认，缺证据的项目按当前评分规则处理。</p></article>
+        <article><strong>系统固定计算</strong><p>模块权重由当前发布版规则固定，场馆和体验官均不能直接修改总分。</p></article>
+      </section>
+      <div class="report-calculation"><strong>本报告计算式</strong><code>${modules.map((module) => `${module.score === null ? "—" : module.score.toFixed(1)}×${module.weight === null ? "—" : `${module.weight}%`}`).join(" + ")}${total === null ? "" : ` = ${total.toFixed(2)}`}</code></div>
+    ` : `<div class="report-empty-state"><strong>分项评分待补充</strong><p>旧报告可能只有综合分，没有六模块权重、分项与贡献值。页面不会用同一个总分反推各模块。</p></div>`}
+    <p class="source-note">证据可信度：${venue.evidenceConfidence === undefined ? "待补充" : `${escapeReportText(venue.evidenceConfidence)}%`}${venue.confidenceGrade ? `（${escapeReportText(venue.confidenceGrade)} 级）` : ""}。可信度与体验得分分别展示，不相乘。</p>
+  `;
+  els.ratingDialog.showModal();
+};
+
+function renderReportList(items, emptyText) {
+  const values = reportArray(items).filter(Boolean);
+  if (!values.length) return `<p class="report-missing-copy">${escapeReportText(emptyText)}</p>`;
+  return `<ul>${values.map((item) => `<li>${escapeReportText(typeof item === "object" ? firstReportValue(item.text, item.label, item.summary, "内容待补充") : item)}</li>`).join("")}</ul>`;
+}
+
+showDetail = function showFullReport(id) {
+  const venue = venues.find((item) => item.id === id);
+  if (!venue) return;
+  const summary = getReportSummaryData(venue);
+  const observations = getCrowdObservations(venue);
+  const equipmentGroups = getVenueEquipmentGroups(venue);
+  const modules = getScoreModules(venue);
+  const evidence = reportArray(venue.evidence);
+  const heroImage = firstReportValue(venue.image, reportArray(venue.gallery)[0]?.src);
+
+  els.detailContent.innerHTML = `
+    <header class="report-detail-header">
+      <div><p>完整实测报告</p><h2>${escapeReportText(venue.name)}${summary.sessions ? ` · ${escapeReportText(summary.sessions)} 次测评` : ""}</h2></div>
+      <button class="icon-button detail-close" type="button" aria-label="关闭完整实测报告">×</button>
+    </header>
+    ${heroImage ? `<div class="report-detail-photo" style="background-image:linear-gradient(rgba(8,8,9,.08),rgba(8,8,9,.86)),url('${escapeReportText(heroImage)}')"><span>${getReportProofText(venue)}</span></div>` : ""}
+    <div class="report-detail-scroll">
+      <section class="report-detail-hero">
+        <span>体验官综合结论</span>
+        <h3>${escapeReportText(summary.conclusion || "综合结论待体验官报告补充")}</h3>
+      </section>
+      <section class="report-dialog-section">
+        <p class="report-section-kicker">快速决策</p>
+        <h3>推荐与风险分开看</h3>
+        <div class="report-decision-grid">
+          <article><strong>最推荐的点</strong>${renderReportList(summary.recommendations, "推荐理由待补充")}</article>
+          <article><strong>办卡前必须知道</strong>${renderReportList(summary.cautions, "风险与合同提醒待补充")}</article>
+          <article><strong>适合／不适合</strong><p><b>适合：</b>${escapeReportText(summary.fit || "待补充")}</p><p><b>不适合：</b>${escapeReportText(summary.unfit || "待补充")}</p></article>
+        </div>
+      </section>
+      <section class="report-dialog-section">
+        <p class="report-section-kicker">测评覆盖</p>
+        <h3>这份报告包含什么？</h3>
+        <div class="report-method-grid">
+          <article><strong>训练与观察</strong><p>${summary.sessions ? `${escapeReportText(summary.sessions)} 次到店训练` : "训练次数待补充"}${summary.coverage ? ` · ${escapeReportText(summary.coverage)}` : ""}；已录入 ${observations.length} 次客流观察。</p></article>
+          <article><strong>器械盘点</strong><p>${equipmentGroups.length ? `已录入 ${equipmentGroups.length} 个分类、${equipmentGroups.reduce((total, group) => total + group.items.length, 0)} 项器械。` : "九类器械盘点待补充。"}</p></article>
+          <article><strong>统一评分</strong><p>${modules.length ? `已发布 ${modules.length} 个评分模块及固定权重。` : "六模块分项评分待补充。"}</p></article>
+        </div>
+        <div class="report-detail-actions">
+          <button type="button" data-report-open="pricing">查看价格与附加费用</button>
+          <button type="button" data-report-open="crowd">查看客流实测</button>
+          <button type="button" data-report-open="equipment">查看器械清单</button>
+          <button class="is-primary" type="button" data-report-open="rating">查看评分计算过程</button>
+        </div>
+      </section>
+      ${summary.sections.length ? `
+        <section class="report-dialog-section">
+          <p class="report-section-kicker">报告正文</p>
+          <h3>逐项实测记录</h3>
+          <div class="report-full-sections">
+            ${summary.sections.map((section, index) => `
+              <article>
+                <span>${escapeReportText(firstReportValue(section.id, `SECTION-${index + 1}`))}</span>
+                <h4>${escapeReportText(firstReportValue(section.title, `报告第 ${index + 1} 部分`))}</h4>
+                <p>${escapeReportText(firstReportValue(section.summary, "本节摘要待补充"))}</p>
+                ${renderReportList(section.facts, "本节事实待补充")}
+                ${reportArray(section.evidence).length ? `<small>证据：${escapeReportText(reportArray(section.evidence).join("、"))}</small>` : ""}
+              </article>
+            `).join("")}
+          </div>
+        </section>
+      ` : ""}
+      <section class="report-dialog-section">
+        <p class="report-section-kicker">证据与核验</p>
+        <h3>${getReportEvidenceLabel(venue)}</h3>
+        ${evidence.length
+          ? `<div class="report-evidence-list">${evidence.map((item) => `<span>${escapeReportText(typeof item === "object" ? firstReportValue(item.label, item.type, item.caption, "证据已录入") : item)}</span>`).join("")}</div>`
+          : `<p class="report-missing-copy">证据摘要待补充。</p>`}
+        <p class="source-note">最近核验：${escapeReportText(firstReportValue(venue.testedAt, venue.updated, "待补充"))}。仅展示审核员已确认并发布的报告内容。</p>
+      </section>
+    </div>
+  `;
+  els.detailContent.querySelector(".detail-close").addEventListener("click", () => els.detailDialog.close());
+  els.detailContent.querySelectorAll("[data-report-open]").forEach((button) => {
+    button.addEventListener("click", () => {
+      els.detailDialog.close();
+      const target = button.dataset.reportOpen;
+      if (target === "pricing") showPricing(id);
+      if (target === "crowd") showCrowd(id);
+      if (target === "equipment") showEquipment(id);
+      if (target === "rating") showRating(id);
+    });
+  });
+  els.detailDialog.showModal();
+};
 
 function renderFinalChoiceCard(venue) {
   const contact = venueContacts[venue.id] || venue.contact || { phone: "待核实", nearestStation: "待核实", address: "待核实", booking: "到店前请先联系场馆确认。" };
@@ -1924,15 +2705,37 @@ document.querySelectorAll("[data-close]").forEach((button) => {
   button.addEventListener("click", () => document.querySelector(`#${button.dataset.close}`).close());
 });
 
-[els.detailDialog, els.galleryDialog, els.crowdDialog, els.pricingDialog, els.ratingDialog, els.commuteDialog, els.compareDialog, els.trustDialog].forEach((dialog) => {
+[els.detailDialog, els.galleryDialog, els.crowdDialog, els.pricingDialog, els.equipmentDialog, els.ratingDialog, els.commuteDialog, els.compareDialog, els.trustDialog].forEach((dialog) => {
   dialog.addEventListener("click", (event) => {
     if (event.target === dialog) dialog.close();
   });
 });
 
+async function loadEquipmentReferenceManifest() {
+  try {
+    const response = await fetch("./assets/equipment-reference/manifest.json", { headers: { accept: "application/json" } });
+    if (!response.ok) return;
+    const groups = await response.json();
+    if (!Array.isArray(groups)) return;
+    equipmentReferenceByCode = {};
+    equipmentReferenceByName = {};
+    groups.forEach((group) => {
+      reportArray(group?.items).forEach((item) => {
+        if (!item?.file) return;
+        if (item.code) equipmentReferenceByCode[String(item.code).toUpperCase()] = item.file;
+        if (item.label) equipmentReferenceByName[String(item.label).replaceAll(/\s/g, "")] = item.file;
+      });
+    });
+  } catch {
+    equipmentReferenceByCode = {};
+    equipmentReferenceByName = {};
+  }
+}
+
 async function loadPublishedVenues() {
   const apiBase = (window.GYM_API_BASE || "").replace(/\/$/, "");
   try {
+    await loadEquipmentReferenceManifest();
     const response = await fetch(`${apiBase}/api/venues`, { headers: { accept: "application/json" } });
     if (!response.ok) {
       venues = [];
@@ -1943,14 +2746,27 @@ async function loadPublishedVenues() {
       venues = [];
       return;
     }
-    const published = body.venues.filter(venue => venue?.id && venue?.name).map(venue => ({
-      ...venue,
-      coordinates: Array.isArray(venue.coordinates) && venue.coordinates.length === 2 ? venue.coordinates.map(Number) : [113.2644, 23.1291],
-      gallery: Array.isArray(venue.gallery) && venue.gallery.length ? venue.gallery : [{ src: venue.image, caption: "体验官核验场馆图片", date: venue.testedAt }],
-      highlights: Array.isArray(venue.highlights) ? venue.highlights : [],
-      evidence: Array.isArray(venue.evidence) ? venue.evidence : [],
-      crowd: { evening: "一般", morning: "一般", weekend: "一般", flexible: "一般", ...(venue.crowd || {}) }
-    }));
+    const published = body.venues.filter(venue => venue?.id && venue?.name).map(venue => {
+      const hasCoordinates = Array.isArray(venue.coordinates)
+        && venue.coordinates.length === 2
+        && venue.coordinates.every((value) => Number.isFinite(Number(value)));
+      const gallery = reportArray(venue.gallery).filter((photo) => photo?.src);
+      if (!gallery.length && venue.image) {
+        gallery.push({ src: venue.image, caption: "体验官核验场馆图片", date: venue.testedAt });
+      }
+      const normalized = {
+        ...venue,
+        coordinates: hasCoordinates ? venue.coordinates.map(Number) : [Number.NaN, Number.NaN],
+        hasCoordinates,
+        gallery,
+        highlights: reportArray(venue.highlights).filter(Boolean),
+        evidence: reportArray(venue.evidence).filter(Boolean),
+        crowd: { evening: "待补充", morning: "待补充", weekend: "待补充", flexible: "待补充", ...(venue.crowd || {}) }
+      };
+      const monthlyPlan = getVenuePricePlans(normalized).find((plan) => plan.key === "monthly");
+      normalized.monthlyPrice = monthlyPlan?.amountNumber ?? 0;
+      return normalized;
+    });
     for (const venue of published) registerPublishedVenueDetails(venue);
     venues = published;
   } catch {
@@ -1961,40 +2777,35 @@ async function loadPublishedVenues() {
 
 function registerPublishedVenueDetails(venue) {
   const score = Math.max(0, Math.min(10, Number(venue.rating) || 0));
-  pricingPlans[venue.id] = { single: Number(venue.trialPrice) || 0, weekly: Number(venue.weeklyPrice) || 0, monthly: Number(venue.monthlyPrice) || 0, annual: Number(venue.annualPrice) || 0 };
-  additionalFeePlans[venue.id] = Array.isArray(venue.additionalFees) && venue.additionalFees.length
-    ? venue.additionalFees.map(item => {
-        const parts = String(item).split(/[：:]/, 2);
-        return parts.length === 2 ? [parts[0].trim(), parts[1].trim()] : ["费用说明", String(item)];
-      })
-    : [["收费说明", "未发现已录入的额外费用；办卡前仍需查看合同"]];
+  const plans = getVenuePricePlans(venue);
+  pricingPlans[venue.id] = Object.fromEntries(plans.map((plan) => [plan.key, plan.amountNumber]));
+  additionalFeePlans[venue.id] = getVenueAdditionalFees(venue).map((fee) => [fee.label, fee.amount]);
   venueContacts[venue.id] = venue.contact || { phone: "待核实", address: "待核实", nearestStation: "待核实", booking: "到店前请先联系场馆确认。" };
+  const observations = getCrowdObservations(venue);
+  const observationHours = observations.map((item) => item.time).filter(Boolean);
   crowdProfiles[venue.id] = {
-    levels: Array.from({ length: 24 }, (_, hour) => hour >= 18 && hour <= 21 ? (venue.crowd.evening === "拥挤" ? 88 : venue.crowd.evening === "宽松" ? 38 : 64) : 28),
-    busiest: "18:00–21:00",
-    quietest: "以报告实测记录为准"
+    levels: [],
+    busiest: observationHours[0] || "待补充",
+    quietest: "待补充"
   };
-  ratingProfiles[venue.id] = Array.isArray(venue.scoreModules) && venue.scoreModules.length
-    ? venue.scoreModules.map(module => ({
-        label: module.label,
-        score: Number(module.score10) || 0,
-        weight: Number(module.weight) || Number(module.max) || 0,
-        note: module.note || "按评分机制 V1.2 固定计算"
-      }))
-    : [
-        { label: "价格与费用透明", score, weight: 15, note: "旧数据待按V1.2重新核验" },
-        { label: "器械情况", score, weight: 30, note: "旧数据待按V1.2重新核验" },
-        { label: "拥挤情况", score, weight: 15, note: "旧数据待按V1.2重新核验" },
-        { label: "环境与卫生", score, weight: 15, note: "旧数据待按V1.2重新核验" },
-        { label: "销售与办卡", score, weight: 15, note: "旧数据待按V1.2重新核验" },
-        { label: "新手友好", score, weight: 10, note: "旧数据待按V1.2重新核验" }
-      ];
-  venueReviews[venue.id] = venue.verificationStatus === "base_only" ? [] : [{ name: "平台体验官", profile: "7天实测", time: "含工作日晚高峰", rating: score, date: venue.testedAt, photos: venue.gallery.length, text: venue.fit }];
-  venueEquipment[venue.id] = {
-    cardio: [["treadmill", "见报告"]],
-    chest: [["chestPress", "见报告"]],
-    back: [["latPulldown", "见报告"]]
-  };
+  ratingProfiles[venue.id] = getScoreModules(venue).map((module) => ({
+    label: module.label,
+    score: module.score ?? 0,
+    weight: module.weight ?? 0,
+    note: module.note
+  }));
+  venueReviews[venue.id] = reportArray(firstReportValue(venue.consumerReviews, venue.reviews))
+    .filter((review) => review && typeof review === "object")
+    .map((review) => ({
+      name: firstReportValue(review.name, review.author, "匿名用户"),
+      profile: firstReportValue(review.profile, "用户反馈"),
+      time: firstReportValue(review.time, review.trainingTime, "时段待补充"),
+      rating: reportNumber(review.rating) ?? 0,
+      date: firstReportValue(review.date, review.createdAt, venue.testedAt, "日期待补充"),
+      photos: reportArray(review.photos).length,
+      text: firstReportValue(review.text, review.content, "内容待补充")
+    }));
+  venueEquipment[venue.id] = {};
 }
 
 loadPublishedVenues();

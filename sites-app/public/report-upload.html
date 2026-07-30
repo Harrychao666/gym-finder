@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>有间好馆｜体验官报告上传</title>
-    <link rel="stylesheet" href="./report-upload.css?v=8" />
+    <link rel="stylesheet" href="./report-upload.css?v=9" />
   </head>
   <body>
     <main class="upload-shell">
@@ -13,17 +13,32 @@
         <div><p>有间好馆体验官</p><h1>提交测评报告</h1></div>
       </header>
       <section class="upload-card">
-        <p class="notice">请上传《体验官 7 天测评表 V1.1》：提交后系统会自动建立场馆草稿档案、提取事实并计算六模块评分。平台管理员随后会为该档案分配审核员；审核通过前不会公开。</p>
+        <div class="notice">
+          <strong>请上传最新版《体验官 7 天测评表》</strong>
+          <p>提交后会自动建立场馆草稿档案并进入待审核状态；审核通过前不会出现在用户端。</p>
+        </div>
+        <section class="extract-preview" aria-labelledby="extractTitle">
+          <div class="section-heading">
+            <div><small>STRUCTURED REPORT</small><h2 id="extractTitle">这份报告会生成新版场馆卡片</h2></div>
+            <span>上传 → AI 提取 → 人工审核 → 发布</span>
+          </div>
+          <div class="extract-grid">
+            <article><b>01</b><strong>五种卡型与费用</strong><p>单次、周卡、月卡、季卡、年卡，以及押金、储物柜等额外收费。</p></article>
+            <article><b>02</b><strong>5 次客流实测</strong><p>记录有氧、龙门架等待时间、现场人数、拥挤判断和具体描述。</p></article>
+            <article><b>03</b><strong>03A–03I 器械清单</strong><p>按九类器械提取数量、可用数、最长等待、故障说明与问题照片。</p></article>
+            <article><b>04</b><strong>完整报告与评分</strong><p>保留结论、推荐、注意事项，并由系统计算六模块评分。</p></article>
+          </div>
+        </section>
         <form id="reportForm">
           <label>体验官姓名或编号<input id="evaluatorName" required autocomplete="name" placeholder="例如：TYG-001" /></label>
           <label>体验场馆名称<input id="venueName" required placeholder="请填写门店完整名称，例如：星湾健身天河店" /><span class="field-help">请包含分店名称，系统将以此自动建立新的场馆草稿档案。</span></label>
           <label>所在区域<input id="venueDistrict" placeholder="例如：天河区（可稍后由审核员补充）" /></label>
-          <label class="file-field">最新版体验官报告（DOCX 或 TXT）<input id="reportFile" type="file" accept=".docx,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" required /><span id="fileHint">选择填写完成的 V1.1 报告</span></label>
+          <label class="file-field">最新版体验官报告（DOCX 或 TXT）<input id="reportFile" type="file" accept=".docx,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" required /><span id="fileHint">选择填写完成的最新版报告</span></label>
           <button id="submitButton" type="submit">上传并自动建档</button>
         </form>
         <div id="result" class="result" hidden aria-live="polite"></div>
       </section>
     </main>
-    <script src="./report-upload.js?v=8" defer></script>
+    <script src="./report-upload.js?v=9" defer></script>
   </body>
 </html>

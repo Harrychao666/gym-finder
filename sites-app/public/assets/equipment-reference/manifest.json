@@ -1,0 +1,131 @@
+[
+  {
+    "number": "03A",
+    "title": "有氧器械",
+    "items": [
+      {"code": "03A-01", "label": "跑步机", "file": "03A-01-treadmill.png", "query": "commercial treadmill product photo white background"},
+      {"code": "03A-02", "label": "楼梯机", "file": "03A-02-stair-climber.png", "query": "commercial revolving stair climber machine product photo white background"},
+      {"code": "03A-03", "label": "椭圆机", "file": "03A-03-elliptical.png", "query": "commercial elliptical cross trainer product photo white background"},
+      {"code": "03A-04", "label": "直立式健身车", "file": "03A-04-upright-bike.png", "query": "commercial upright exercise bike product photo white background"},
+      {"code": "03A-05", "label": "卧式健身车", "file": "03A-05-recumbent-bike.png", "query": "commercial recumbent exercise bike product photo white background"},
+      {"code": "03A-06", "label": "可自由使用的动感单车", "file": "03A-06-spin-bike.png", "query": "commercial indoor cycling spin bike product photo white background"},
+      {"code": "03A-07", "label": "划船机", "file": "03A-07-rower.png", "query": "commercial indoor rowing ergometer product photo white background"},
+      {"code": "03A-08", "label": "风阻自行车／空中单车", "file": "03A-08-air-bike.png", "query": "commercial air bike fan bike product photo white background"},
+      {"code": "03A-09", "label": "滑雪机（SkiErg）", "file": "03A-09-skierg.png", "query": "SkiErg machine product photo white background"},
+      {"code": "03A-10", "label": "弧步训练机／登山机", "file": "03A-10-arc-trainer.png", "query": "commercial arc trainer incline cross trainer product photo white background"}
+    ]
+  },
+  {
+    "number": "03B",
+    "title": "背部器械",
+    "items": [
+      {"code": "03B-01", "label": "高位下拉机", "file": "03B-01-lat-pulldown.png", "query": "commercial selectorized lat pulldown machine product photo white background"},
+      {"code": "03B-02", "label": "坐姿划船机", "file": "03B-02-seated-row-v2.png", "query": "commercial selectorized seated cable row machine product photo white background"},
+      {"code": "03B-03", "label": "低位划船机", "file": "03B-03-low-row-v2.png", "query": "commercial plate loaded low row machine product photo white background"},
+      {"code": "03B-04", "label": "高位划船机", "file": "03B-04-high-row-v2.png", "query": "commercial plate loaded high row machine correct seat orientation product photo white background"},
+      {"code": "03B-07", "label": "T 杆划船机", "file": "03B-07-tbar-row-v2.png", "query": "commercial T bar row machine thick central beam chest support product photo white background"},
+      {"code": "03B-09", "label": "上拉机／背部伸展机（Pullover）", "file": "03B-09-pullover.png", "query": "commercial pullover back machine product photo white background"},
+      {"code": "03B-10", "label": "反向蝴蝶机／后束飞鸟机", "file": "03B-10-rear-delt-v2.png", "query": "high clarity commercial reverse pec deck rear delt fly machine full product photo white background"},
+      {"code": "03B-11", "label": "辅助引体向上机", "file": "03B-11-assisted-pullup.png", "query": "commercial assisted pull up machine product photo white background"},
+      {"code": "03B-12", "label": "山羊挺身凳／背部伸展凳", "file": "03B-12-hyperextension-bench.png", "query": "commercial 45 degree hyperextension back extension bench product photo white background"}
+    ]
+  },
+  {
+    "number": "03C",
+    "title": "胸部器械",
+    "items": [
+      {"code": "03C-01", "label": "坐姿推胸机", "file": "03C-01-seated-chest-press.png", "query": "commercial selectorized seated chest press machine product photo white background"},
+      {"code": "03C-02", "label": "上斜推胸机", "file": "03C-02-incline-chest-press.png", "query": "commercial incline chest press machine product photo white background"},
+      {"code": "03C-03", "label": "下斜推胸机", "file": "03C-03-decline-chest-press.png", "query": "commercial decline chest press machine product photo white background"},
+      {"code": "03C-04", "label": "片装式水平推胸机", "file": "03C-04-plate-horizontal-press.png", "query": "commercial plate loaded horizontal chest press machine product photo white background"},
+      {"code": "03C-05", "label": "片装式上斜推胸机", "file": "03C-05-plate-incline-press-v2.png", "query": "commercial plate loaded incline chest press machine without extra upper rods product photo white background"},
+      {"code": "03C-06", "label": "双臂独立推胸机", "file": "03C-06-iso-chest-press.png", "query": "commercial iso lateral independent arm chest press machine product photo white background"},
+      {"code": "03C-07", "label": "蝴蝶机夹胸／飞鸟机", "file": "03C-07-pec-fly-v2.png", "query": "commercial pec fly butterfly machine clear front product photo white background"},
+      {"code": "03C-08", "label": "龙门架夹胸训练位", "file": "03C-08-cable-crossover.png", "query": "commercial cable crossover functional trainer machine product photo white background"},
+      {"code": "03C-09", "label": "史密斯机", "file": "03C-09-smith-machine.png", "query": "commercial smith machine product photo white background"},
+      {"code": "03C-10", "label": "杠铃卧推架", "file": "03C-10-bench-press-rack.png", "query": "commercial olympic barbell bench press rack product photo white background"},
+      {"code": "03C-11", "label": "双杠臂屈伸／辅助双杠", "file": "03C-11-assisted-dip.png", "query": "commercial assisted dip machine product photo white background"}
+    ]
+  },
+  {
+    "number": "03D",
+    "title": "腿部器械",
+    "items": [
+      {"code": "03D-01", "label": "45°倒蹬机／腿举机", "file": "03D-01-45-leg-press.png", "query": "commercial 45 degree sled leg press machine product photo white background"},
+      {"code": "03D-02", "label": "坐式水平腿举机", "file": "03D-02-horizontal-leg-press.png", "query": "commercial seated horizontal leg press machine product photo white background"},
+      {"code": "03D-03", "label": "哈克深蹲机", "file": "03D-03-hack-squat.png", "query": "commercial hack squat machine product photo white background"},
+      {"code": "03D-04", "label": "钟摆深蹲机", "file": "03D-04-pendulum-squat-v2.png", "query": "commercial full height pendulum squat machine upper pivot counterweight product photo white background"},
+      {"code": "03D-05", "label": "腰带深蹲机", "file": "03D-05-belt-squat.png", "query": "commercial belt squat machine product photo white background"},
+      {"code": "03D-06", "label": "腿屈伸机", "file": "03D-06-leg-extension.png", "query": "commercial selectorized leg extension machine product photo white background"},
+      {"code": "03D-07", "label": "坐姿腿弯举机", "file": "03D-07-seated-leg-curl.png", "query": "commercial selectorized seated leg curl machine product photo white background"},
+      {"code": "03D-08", "label": "俯卧腿弯举机", "file": "03D-08-prone-leg-curl.png", "query": "commercial selectorized prone lying leg curl machine product photo white background"},
+      {"code": "03D-09", "label": "站姿单腿弯举机", "file": "03D-09-standing-leg-curl.png", "query": "commercial standing single leg curl machine product photo white background"},
+      {"code": "03D-10", "label": "髋外展机", "file": "03D-10-hip-abduction.png", "query": "commercial seated hip abduction machine product photo white background"},
+      {"code": "03D-11", "label": "髋内收机", "file": "03D-11-hip-adduction.png", "query": "commercial seated hip adduction machine product photo white background"},
+      {"code": "03D-12", "label": "臀推机／臀桥机", "file": "03D-12-hip-thrust.png", "query": "commercial hip thrust glute bridge machine product photo white background"},
+      {"code": "03D-13", "label": "站姿提踵机", "file": "03D-13-standing-calf.png", "query": "commercial standing calf raise machine product photo white background"},
+      {"code": "03D-14", "label": "坐姿提踵机", "file": "03D-14-seated-calf.png", "query": "commercial seated calf raise machine product photo white background"},
+      {"code": "03D-15", "label": "深蹲架／力量架", "file": "03D-15-power-rack.png", "query": "commercial power rack squat rack product photo white background"},
+      {"code": "03D-16", "label": "史密斯机", "file": "03C-09-smith-machine.png", "reuse": true}
+    ]
+  },
+  {
+    "number": "03E",
+    "title": "哑铃区",
+    "items": [
+      {"code": "03E-01", "label": "固定重量哑铃", "file": "03E-01-fixed-dumbbells.png", "query": "commercial fixed dumbbell set product photo white background"},
+      {"code": "03E-03", "label": "缺失或不成对的重量", "file": "03E-03-missing-dumbbells.png", "query": "gym dumbbell rack with one missing dumbbell photo"},
+      {"code": "03E-04", "label": "平板训练凳", "file": "03E-04-flat-bench.png", "query": "commercial flat weight bench product photo white background"},
+      {"code": "03E-05", "label": "可调节训练凳", "file": "03E-05-adjustable-bench.png", "query": "commercial adjustable weight bench product photo white background"},
+      {"code": "03E-06", "label": "哑铃架／摆放状态", "file": "03E-06-dumbbell-rack.png", "query": "commercial multi tier dumbbell rack product photo white background"},
+      {"code": "03E-07", "label": "可正常训练的空位", "file": "03E-07-dumbbell-space.png", "query": "clean open dumbbell training area gym mirror bench photo"}
+    ]
+  },
+  {
+    "number": "03F",
+    "title": "手臂器械",
+    "items": [
+      {"code": "03F-01", "label": "二头弯举机", "file": "03F-01-biceps-curl.png", "query": "commercial selectorized seated biceps curl machine product photo white background"},
+      {"code": "03F-02", "label": "坐姿臂屈伸机／三头训练机", "file": "03F-02-triceps-extension-v2.png", "query": "high clarity commercial selectorized seated dip triceps press-down machine product photo white background"},
+      {"code": "03F-03", "label": "牧师凳／二头弯举凳", "file": "03F-03-preacher-curl-bench.png", "query": "commercial preacher curl bench product photo white background"},
+      {"code": "03F-04", "label": "双杠臂屈伸／辅助双杠", "file": "03C-11-assisted-dip.png", "reuse": true}
+    ]
+  },
+  {
+    "number": "03G",
+    "title": "肩部器械",
+    "items": [
+      {"code": "03G-01", "label": "坐姿肩推机", "file": "03G-01-shoulder-press.png", "query": "commercial selectorized seated shoulder press machine product photo white background"},
+      {"code": "03G-02", "label": "侧平举机", "file": "03G-02-lateral-raise.png", "query": "commercial selectorized seated lateral raise machine product photo white background"},
+      {"code": "03G-03", "label": "反向蝴蝶机／后束飞鸟机", "file": "03B-10-rear-delt-v2.png", "reuse": true}
+    ]
+  },
+  {
+    "number": "03H",
+    "title": "核心器械",
+    "items": [
+      {"code": "03H-01", "label": "腹肌卷腹机", "file": "03H-01-ab-crunch.png", "query": "commercial selectorized abdominal crunch machine product photo white background"},
+      {"code": "03H-02", "label": "躯干旋转机", "file": "03H-02-torso-rotation.png", "query": "commercial selectorized torso rotation machine product photo white background"},
+      {"code": "03H-03", "label": "悬垂举腿／垂直举膝架", "file": "03H-03-vertical-knee-raise.png", "query": "commercial vertical knee raise captain chair station product photo white background"},
+      {"code": "03H-04", "label": "山羊挺身凳／背部伸展凳", "file": "03B-12-hyperextension-bench.png", "reuse": true}
+    ]
+  },
+  {
+    "number": "03I",
+    "title": "拉伸区",
+    "items": [
+      {"code": "03I-01", "label": "独立拉伸空间", "file": "03I-01-stretching-area.png", "query": "clean dedicated gym stretching area photo"},
+      {"code": "03I-02", "label": "瑜伽垫／拉伸垫", "file": "03I-02-yoga-mat.png", "query": "exercise yoga mat product photo white background"},
+      {"code": "03I-03", "label": "泡沫轴", "file": "03I-03-foam-roller.png", "query": "foam roller product photo white background"},
+      {"code": "03I-04", "label": "按摩球／筋膜球", "file": "03I-04-massage-ball.png", "query": "massage lacrosse mobility ball product photo white background"},
+      {"code": "03I-05", "label": "弹力带／迷你圈", "file": "03I-05-resistance-band.png", "query": "resistance mini loop bands product photo white background"},
+      {"code": "03I-06", "label": "拉伸带／瑜伽带", "file": "03I-06-yoga-strap.png", "query": "yoga stretching strap product photo white background"},
+      {"code": "03I-07", "label": "瑜伽砖", "file": "03I-07-yoga-block.png", "query": "yoga block product photo white background"},
+      {"code": "03I-08", "label": "平衡垫", "file": "03I-08-balance-pad.png", "query": "foam balance pad product photo white background"},
+      {"code": "03I-09", "label": "BOSU 平衡球", "file": "03I-09-bosu.png", "query": "BOSU balance trainer product photo white background"},
+      {"code": "03I-10", "label": "肋木架／拉伸架", "file": "03I-10-stall-bars.png", "query": "gym wall stall bars stretching equipment product photo"},
+      {"code": "03I-11", "label": "拉伸笼／多功能拉伸架", "file": "03I-11-stretching-cage.png", "query": "commercial multi function stretching cage station product photo"},
+      {"code": "03I-12", "label": "镜面或动作观察区域", "file": "03I-12-mirror-area.png", "query": "gym mirror exercise observation area photo"}
+    ]
+  }
+]

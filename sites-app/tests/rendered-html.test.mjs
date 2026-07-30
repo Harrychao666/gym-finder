@@ -23,7 +23,10 @@ test("ships the public, evaluator, scoped-reviewer, and platform-admin surfaces"
   assert.doesNotMatch(admin, /手动补建档案/);
   assert.match(admin, /platformCardPreview/);
   assert.match(admin, /crowd\.morning/);
-  assert.match(admin, /additionalFees/);
+  assert.match(admin, /data-pricing-editor/);
+  assert.match(admin, /data-crowd-editor/);
+  assert.match(admin, /data-equipment-editor/);
+  assert.match(admin, /fullReport\.conclusion/);
   assert.match(admin, /venueImageInput/);
   assert.match(admin, /platformImageInput/);
   assert.match(adminJs, /platform_admin/);

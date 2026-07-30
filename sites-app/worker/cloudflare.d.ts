@@ -36,3 +36,22 @@ interface R2Bucket {
   get(key: string): Promise<R2ObjectBody | null>;
   delete(key: string): Promise<void>;
 }
+
+interface KVNamespaceGetOptions {
+  type: "stream";
+}
+
+interface KVNamespacePutOptions {
+  metadata?: Record<string, string>;
+}
+
+interface KVNamespaceGetWithMetadataResult {
+  value: ReadableStream | null;
+  metadata: Record<string, string> | null;
+}
+
+interface KVNamespace {
+  put(key: string, value: ArrayBuffer | ArrayBufferView | ReadableStream | string, options?: KVNamespacePutOptions): Promise<void>;
+  getWithMetadata(key: string, options: KVNamespaceGetOptions): Promise<KVNamespaceGetWithMetadataResult>;
+  delete(key: string): Promise<void>;
+}

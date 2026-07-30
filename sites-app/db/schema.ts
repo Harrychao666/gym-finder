@@ -15,6 +15,7 @@ export const reports = sqliteTable("reports", {
   analysisModel: text("analysis_model"),
   analysisError: text("analysis_error"),
   openaiResponseId: text("openai_response_id"),
+  reportSchemaVersion: text("report_schema_version"),
   venueDraftJson: text("venue_draft_json"),
   reviewNotes: text("review_notes"),
   createdAt: text("created_at").notNull(),

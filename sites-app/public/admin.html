@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>有间好馆｜内容管理后台</title>
-    <link rel="stylesheet" href="./admin.css?v=13" />
+    <link rel="stylesheet" href="./admin.css?v=14" />
   </head>
   <body>
     <header class="topbar">
@@ -75,9 +75,6 @@
           <div class="field-grid">
             <label>场馆名称<input name="name" required /></label><label>所在区域<input name="district" required /></label>
             <label>场馆类型<input name="type" /></label><label>分类<select name="category"><option>商业健身房</option><option>铁馆</option></select></label>
-            <label>体验价格<input name="trialPrice" type="number" min="0" /></label><label>周卡价格<input name="weeklyPrice" type="number" min="0" /></label>
-            <label>月卡价格<input name="monthlyPrice" type="number" min="0" /></label><label>年卡价格<input name="annualPrice" type="number" min="0" /></label>
-            <label class="wide">其他费用说明（每行一项）<textarea name="additionalFees" rows="3"></textarea></label>
             <label>营业时间<input name="hours" placeholder="例如 07:00–23:00" required /></label><label>信息核验日期<input name="testedAt" type="date" /></label>
             <label>体验总分（系统自动）<input name="rating" type="number" readonly /></label><label>器械模块（系统自动，0–10）<input name="equipment" type="number" readonly /></label>
             <label>早间客流<select name="crowd.morning"><option>宽松</option><option>一般</option><option>拥挤</option></select></label><label>晚高峰客流<select name="crowd.evening"><option>宽松</option><option>一般</option><option>拥挤</option></select></label>
@@ -87,22 +84,42 @@
             <div id="galleryEditor" class="gallery-editor wide"></div>
           </div>
         </fieldset>
-        <fieldset id="contentSection"><legend>2. 核对展示文案</legend><div class="field-grid">
+        <fieldset id="pricingSection" class="structured-section">
+          <legend>2. 核对五种卡型与额外收费</legend>
+          <p class="fieldset-help">五种卡型会直接进入用户端“参考价格”弹窗。金额未知时请留空，不要估算；额外收费需要标明是否由门店主动告知。</p>
+          <div data-pricing-editor></div>
+        </fieldset>
+        <fieldset id="crowdObservationSection" class="structured-section">
+          <legend>3. 核对 5 次客流实测</legend>
+          <p class="fieldset-help">逐次核对时间、有氧空位、龙门架等待、现场人数和具体描述。用户会从卡片的“晚高峰实测”展开查看。</p>
+          <div data-crowd-editor></div>
+        </fieldset>
+        <fieldset id="equipmentInventorySection" class="structured-section">
+          <legend>4. 核对 03A–03I 器械与问题照片</legend>
+          <p class="fieldset-help">按报告原始分类核对器械总数、可用数和最长等待；发现损坏时，可把现场照片挂到对应器械项目。</p>
+          <div data-equipment-editor></div>
+        </fieldset>
+        <fieldset id="contentSection"><legend>5. 核对完整报告与展示文案</legend><div class="field-grid">
           <label class="wide">三个亮点（每行一个）<textarea name="highlights" rows="3"></textarea></label>
           <label class="wide">适合人群<textarea name="fit" rows="3"></textarea></label>
           <label class="wide">注意事项<textarea name="caution" rows="3"></textarea></label>
+          <label class="wide">完整报告结论<textarea name="fullReport.conclusion" rows="3" placeholder="体验官综合结论；只保留已核实事实"></textarea></label>
+          <label class="wide">报告推荐（每行一项）<textarea name="fullReport.recommendations" rows="3"></textarea></label>
+          <label class="wide">报告注意事项（每行一项）<textarea name="fullReport.cautions" rows="3"></textarea></label>
+          <label class="wide">不适合人群<textarea name="fullReport.unfit" rows="2"></textarea></label>
+          <label class="wide">7 天体验与训练覆盖摘要<textarea name="fullReport.sessionSummary" rows="3"></textarea></label>
           <label class="wide">证据摘要（每行一个）<textarea name="evidence" rows="4"></textarea></label>
         </div></fieldset>
-        <fieldset id="labelsSection"><legend>3. 确认筛选标签</legend><div class="check-grid">
+        <fieldset id="labelsSection"><legend>6. 确认筛选标签</legend><div class="check-grid">
           <label><input type="checkbox" name="beginner" />新手友好</label><label><input type="checkbox" name="lowSales" />低推销</label><label><input type="checkbox" name="shower" />有淋浴</label>
           <label><input type="checkbox" name="cleanEnvironment" />环境干净</label><label><input type="checkbox" name="open24" />24小时</label><label><input type="checkbox" name="womenFriendly" />女性友好</label><label><input type="checkbox" name="nightSafety" />夜间安全</label>
         </div></fieldset>
-        <fieldset id="locationSection"><legend>4. 核对联系方式与位置</legend><div class="field-grid">
+        <fieldset id="locationSection"><legend>7. 核对联系方式与位置</legend><div class="field-grid">
           <label>电话<input name="contact.phone" /></label><label>最近地铁<input name="contact.nearestStation" /></label>
           <label class="wide">地址<input name="contact.address" required /></label><label class="wide">到店建议<textarea name="contact.booking" rows="2"></textarea></label>
           <label>经度<input name="longitude" type="number" step="0.000001" /></label><label>纬度<input name="latitude" type="number" step="0.000001" /></label>
         </div></fieldset>
-        <fieldset id="decisionSection"><legend>5. 填写审核结论并发布</legend><div class="field-grid">
+        <fieldset id="decisionSection"><legend>8. 填写审核结论并发布</legend><div class="field-grid">
           <label class="wide">审核备注或修改依据<textarea name="reviewNotes" rows="3" placeholder="说明核对结果；如果修改价格、客流、费用或证据，请写明依据。"></textarea></label>
           <label class="wide risk-review"><input type="checkbox" name="riskReviewed" />如报告存在安全、隐藏收费、合同或严重卫生风险，我已完成二次核验并记录结论</label>
         </div><div class="decision-actions"><button id="rejectButton" class="danger" type="button">退回补充</button><button id="saveButton" class="secondary" type="button">保存草稿</button><button id="publishButton" type="button">审核通过并发布</button></div></fieldset>
@@ -138,28 +155,38 @@
           <label class="wide">办卡前注意事项<textarea name="caution" rows="3" placeholder="例如开放限制、预约要求或仍待体验官核验的信息。"></textarea></label>
         </div></fieldset>
 
-        <fieldset><legend>2. 价格与时段</legend><div class="field-grid">
-          <label>单次/体验价格<input name="trialPrice" type="number" min="0" /></label><label>周卡价格<input name="weeklyPrice" type="number" min="0" /></label>
-          <label>月卡价格<input name="monthlyPrice" type="number" min="0" required /></label><label>年卡价格<input name="annualPrice" type="number" min="0" /></label>
-          <label class="wide">其他费用说明（每行一项）<textarea name="additionalFees" rows="3" placeholder="例如：门禁卡押金 ¥50&#10;储物柜按月收费"></textarea></label>
+        <fieldset class="structured-section"><legend>2. 五种卡型、费用与客流实测</legend><p class="fieldset-help">这里保存的是新版用户卡片的展开内容；管理员和审核员看到、修改的是同一套结构化数据。</p>
+          <div data-pricing-editor></div>
+          <div class="structured-divider"></div>
+          <div data-crowd-editor></div>
+          <div class="legacy-crowd-grid field-grid">
           <label>早间客流<select name="crowd.morning"><option>宽松</option><option>一般</option><option>拥挤</option></select></label>
           <label>晚高峰客流<select name="crowd.evening"><option>宽松</option><option selected>一般</option><option>拥挤</option></select></label>
           <label>周末客流<select name="crowd.weekend"><option>宽松</option><option selected>一般</option><option>拥挤</option></select></label>
           <label>灵活时段客流<select name="crowd.flexible"><option>宽松</option><option selected>一般</option><option>拥挤</option></select></label>
-        </div></fieldset>
+          </div>
+        </fieldset>
 
-        <fieldset><legend>3. 前端筛选标签</legend><p class="fieldset-help">只勾选已经核实的事实；这些标签会参与用户推荐排序。</p><div class="check-grid">
+        <fieldset class="structured-section"><legend>3. 03A–03I 器械清单与问题照片</legend><p class="fieldset-help">这些数据会进入器械分类弹窗；问题照片必须挂在对应器械项目下。</p><div data-equipment-editor></div></fieldset>
+
+        <fieldset><legend>4. 完整报告与前端筛选标签</legend><p class="fieldset-help">只填写已经核实的结论；标签会参与用户推荐排序。</p><div class="field-grid report-summary-grid">
+          <label class="wide">完整报告结论<textarea name="fullReport.conclusion" rows="3"></textarea></label>
+          <label class="wide">报告推荐（每行一项）<textarea name="fullReport.recommendations" rows="3"></textarea></label>
+          <label class="wide">报告注意事项（每行一项）<textarea name="fullReport.cautions" rows="3"></textarea></label>
+          <label class="wide">不适合人群<textarea name="fullReport.unfit" rows="2"></textarea></label>
+          <label class="wide">7 天体验与训练覆盖摘要<textarea name="fullReport.sessionSummary" rows="3"></textarea></label>
+        </div><div class="check-grid">
           <label><input type="checkbox" name="beginner" />新手友好</label><label><input type="checkbox" name="lowSales" />低推销</label><label><input type="checkbox" name="shower" />有淋浴</label>
           <label><input type="checkbox" name="cleanEnvironment" />环境干净</label><label><input type="checkbox" name="open24" />24小时</label><label><input type="checkbox" name="womenFriendly" />女性友好</label><label><input type="checkbox" name="nightSafety" />夜间安全</label>
         </div></fieldset>
 
-        <fieldset><legend>4. 联系方式与地图位置</legend><div class="field-grid">
+        <fieldset><legend>5. 联系方式与地图位置</legend><div class="field-grid">
           <label>联系电话<input name="contact.phone" /></label><label>最近地铁与路线<input name="contact.nearestStation" /></label>
           <label class="wide">详细地址<input name="contact.address" required /></label><label class="wide">预约与到店建议<textarea name="contact.booking" rows="2"></textarea></label>
           <label>经度<input name="longitude" type="number" step="0.000001" placeholder="例如 113.327200" required /></label><label>纬度<input name="latitude" type="number" step="0.000001" placeholder="例如 23.119700" required /></label>
         </div></fieldset>
 
-        <fieldset><legend>5. 场馆图片与信息来源</legend><div class="field-grid">
+        <fieldset><legend>6. 场馆图片与信息来源</legend><div class="field-grid">
           <label class="wide">主图网址<input name="image" type="url" placeholder="上传图片后会自动填写" /></label>
           <label class="wide upload-box">上传场馆图片<input id="platformImageInput" type="file" accept="image/jpeg,image/png,image/webp" multiple /><span>第一张图片自动设为主图；可上传最多12张并分别填写图片说明。</span></label>
           <div id="platformGalleryEditor" class="gallery-editor wide"></div>
@@ -168,6 +195,6 @@
       </form>
       <div id="platformToast" class="toast" hidden></div>
     </template>
-    <script src="./admin.js?v=12" defer></script>
+    <script src="./admin.js?v=13" defer></script>
   </body>
 </html>

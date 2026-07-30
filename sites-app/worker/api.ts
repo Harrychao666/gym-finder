@@ -1,11 +1,18 @@
 // @ts-ignore - migrated JavaScript modules are bundled by Vite.
 import { analyzeReport, analysisToVenue, createTestAnalysis } from "../lib/report-analysis.mjs";
 // @ts-ignore - migrated JavaScript modules are bundled by Vite.
+import {
+  REPORT_SCHEMA_VERSION,
+  cardTypes,
+  equipmentReferenceCatalog,
+  extraFeeTypes
+} from "../lib/form-schema.mjs";
+// @ts-ignore - migrated JavaScript modules are bundled by Vite.
 import { extractDocxText } from "../lib/docx.mjs";
 
 interface Env {
   DB: D1Database;
-  FILES: R2Bucket;
+  FILES: R2Bucket | KVNamespace;
   OPENAI_API_KEY?: string;
   OPENAI_MODEL?: string;
   ADMIN_TOKEN?: string;
@@ -20,6 +27,60 @@ interface ExecutionContext {
 }
 
 type JsonObject = Record<string, any>;
+
+type StoredFileOptions = {
+  contentType?: string;
+  cacheControl?: string;
+  metadata?: Record<string, string>;
+};
+
+type StoredFile = {
+  body: ReadableStream;
+  httpEtag?: string;
+  writeHttpMetadata(headers: Headers): void;
+};
+
+function isKvNamespace(store: R2Bucket | KVNamespace): store is KVNamespace {
+  return "getWithMetadata" in store;
+}
+
+async function putStoredFile(env: Env, key: string, value: ArrayBufferView, options: StoredFileOptions = {}) {
+  if (isKvNamespace(env.FILES)) {
+    await env.FILES.put(key, value, {
+      metadata: {
+        ...(options.metadata || {}),
+        ...(options.contentType ? { contentType: options.contentType } : {}),
+        ...(options.cacheControl ? { cacheControl: options.cacheControl } : {})
+      }
+    });
+    return;
+  }
+  await env.FILES.put(key, value, {
+    httpMetadata: {
+      contentType: options.contentType,
+      cacheControl: options.cacheControl
+    },
+    customMetadata: options.metadata
+  });
+}
+
+async function getStoredFile(env: Env, key: string): Promise<StoredFile | null> {
+  if (!isKvNamespace(env.FILES)) return env.FILES.get(key);
+  const result = await env.FILES.getWithMetadata(key, { type: "stream" });
+  if (!result.value) return null;
+  const metadata = result.metadata || {};
+  return {
+    body: result.value,
+    writeHttpMetadata(headers: Headers) {
+      if (metadata.contentType) headers.set("content-type", metadata.contentType);
+      if (metadata.cacheControl) headers.set("cache-control", metadata.cacheControl);
+    }
+  };
+}
+
+async function deleteStoredFile(env: Env, key: string) {
+  await env.FILES.delete(key);
+}
 
 type ReportRow = {
   id: string;
@@ -36,6 +97,7 @@ type ReportRow = {
   analysis_model: string | null;
   analysis_error: string | null;
   openai_response_id: string | null;
+  report_schema_version: string | null;
   venue_draft_json: string | null;
   review_notes: string | null;
   created_at: string;
@@ -63,6 +125,7 @@ function ensureSchema(env: Env): Promise<void> {
         analysis_model TEXT,
         analysis_error TEXT,
         openai_response_id TEXT,
+        report_schema_version TEXT,
         venue_draft_json TEXT,
         review_notes TEXT,
         created_at TEXT NOT NULL,
@@ -72,6 +135,9 @@ function ensureSchema(env: Env): Promise<void> {
       const columns = await env.DB.prepare("PRAGMA table_info(reports)").all<{ name: string }>();
       if (!(columns.results || []).some(column => column.name === "venue_id")) {
         await env.DB.prepare("ALTER TABLE reports ADD COLUMN venue_id TEXT").run();
+      }
+      if (!(columns.results || []).some(column => column.name === "report_schema_version")) {
+        await env.DB.prepare("ALTER TABLE reports ADD COLUMN report_schema_version TEXT").run();
       }
       await env.DB.batch([
         env.DB.prepare("CREATE INDEX IF NOT EXISTS reports_created_at_idx ON reports(created_at DESC)"),
@@ -118,6 +184,10 @@ function parseJson(value: string | null) {
   try { return JSON.parse(value); } catch { return null; }
 }
 
+function rowToSchemaVersion(venue: JsonObject | null) {
+  return String(venue?.reportSchemaVersion || "legacy-v1");
+}
+
 function rowToReport(row: ReportRow): JsonObject {
   return {
     id: row.id,
@@ -135,6 +205,7 @@ function rowToReport(row: ReportRow): JsonObject {
     analysisModel: row.analysis_model,
     analysisError: row.analysis_error,
     openaiResponseId: row.openai_response_id,
+    reportSchemaVersion: row.report_schema_version || rowToSchemaVersion(parseJson(row.venue_draft_json)),
     venueDraft: parseJson(row.venue_draft_json),
     reviewNotes: row.review_notes || "",
     createdAt: row.created_at,
@@ -153,8 +224,8 @@ async function saveReport(env: Env, report: JsonObject) {
   await env.DB.prepare(`INSERT INTO reports (
     id, venue_id, venue_name, evaluator_name, status, original_name, r2_key, file_size,
     extracted_text, analysis_json, analysis_mode, analysis_model, analysis_error,
-    openai_response_id, venue_draft_json, review_notes, created_at, updated_at, published_at
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    openai_response_id, report_schema_version, venue_draft_json, review_notes, created_at, updated_at, published_at
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   ON CONFLICT(id) DO UPDATE SET
     venue_id=excluded.venue_id,
     venue_name=excluded.venue_name,
@@ -169,6 +240,7 @@ async function saveReport(env: Env, report: JsonObject) {
     analysis_model=excluded.analysis_model,
     analysis_error=excluded.analysis_error,
     openai_response_id=excluded.openai_response_id,
+    report_schema_version=excluded.report_schema_version,
     venue_draft_json=excluded.venue_draft_json,
     review_notes=excluded.review_notes,
     updated_at=excluded.updated_at,
@@ -187,6 +259,7 @@ async function saveReport(env: Env, report: JsonObject) {
       report.analysisModel || null,
       report.analysisError || null,
       report.openaiResponseId || null,
+      report.reportSchemaVersion || report.venueDraft?.reportSchemaVersion || null,
       report.venueDraft ? JSON.stringify(report.venueDraft) : null,
       report.reviewNotes || null,
       report.createdAt,
@@ -273,33 +346,349 @@ function extension(name: string) {
   return index >= 0 ? name.slice(index).toLowerCase() : "";
 }
 
+const planAliasKeys: Record<string, string> = {
+  "单次": "single",
+  "周卡": "weekly",
+  "月卡": "monthly",
+  "季卡": "quarterly",
+  "年卡": "annual"
+};
+
+const planFlatKeys: Record<string, string> = {
+  "单次": "trialPrice",
+  "周卡": "weeklyPrice",
+  "月卡": "monthlyPrice",
+  "季卡": "quarterlyPrice",
+  "年卡": "annualPrice"
+};
+
+function hasOwn(value: unknown, key: string) {
+  return Boolean(value && typeof value === "object" && Object.prototype.hasOwnProperty.call(value, key));
+}
+
+function cleanText(value: unknown, limit = 500) {
+  return String(value || "").trim().slice(0, limit);
+}
+
+function textItems(value: unknown, limit = 12) {
+  if (Array.isArray(value)) return value.map(item => cleanText(item)).filter(Boolean).slice(0, limit);
+  const text = cleanText(value, 4000);
+  return text ? text.split(/\r?\n|[；;]/).map(item => item.replace(/^[\s•·\-\d.、]+/, "").trim()).filter(Boolean).slice(0, limit) : [];
+}
+
+function finiteNonNegative(value: unknown, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? number : fallback;
+}
+
+function unknownNumber(value: unknown, integer = false) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < -1) return -1;
+  return integer ? Math.trunc(number) : number;
+}
+
+function normalizeMedia(value: unknown, limit = 12, fallbackCaption = "场馆实拍") {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item: unknown) => item && typeof item === "object")
+    .map((item: JsonObject) => ({
+      src: cleanText(item.src, 1200),
+      caption: cleanText(item.caption || fallbackCaption, 160),
+      date: cleanText(item.date || new Date().toISOString().slice(0, 10), 32)
+    }))
+    .filter((item: JsonObject) => item.src)
+    .slice(0, limit);
+}
+
+function normalizePricing(venue: JsonObject, pricingInput: JsonObject = {}) {
+  const planRows = Array.isArray(pricingInput.plans) ? pricingInput.plans : [];
+  const plans = cardTypes.map((name: string) => {
+    const alias = planAliasKeys[name];
+    const flatKey = planFlatKeys[name];
+    const listed = planRows.find((item: JsonObject) =>
+      item?.name === name || item?.label === name || [item?.id, item?.key, item?.type].includes(alias)
+    );
+    const raw = hasOwn(pricingInput, alias) ? pricingInput[alias] : listed;
+    const rawObject = raw && typeof raw === "object" ? raw : {};
+    const amountValue = raw && typeof raw !== "object" ? raw : rawObject.amount ?? rawObject.price;
+    const flatAmount = venue[flatKey];
+    const amount = finiteNonNegative(amountValue, finiteNonNegative(flatAmount));
+    const provided = hasOwn(rawObject, "provided") ? Boolean(rawObject.provided) : amount > 0;
+    return {
+      id: alias,
+      key: alias,
+      label: name,
+      name,
+      provided,
+      amount,
+      validity: cleanText(rawObject.validity, 120),
+      source: cleanText(rawObject.source || "未填写", 40),
+      note: cleanText(rawObject.note, 300),
+      evidenceStatus: cleanText(rawObject.evidenceStatus || rawObject.status || (provided ? "reported" : "not_offered"), 40)
+    };
+  });
+
+  const feeSource = Array.isArray(pricingInput.fees)
+    ? pricingInput.fees
+    : Array.isArray(pricingInput.additionalFees)
+      ? pricingInput.additionalFees
+      : Array.isArray(venue.additionalFees)
+        ? venue.additionalFees
+        : [];
+  const fees = extraFeeTypes.map((name: string) => {
+    const item = feeSource.find((entry: unknown) => typeof entry === "object" && entry && [(entry as JsonObject).name, (entry as JsonObject).label].includes(name));
+    const stringItem = feeSource.find((entry: unknown) => typeof entry === "string" && entry.includes(name));
+    const row = item && typeof item === "object" ? item as JsonObject : {};
+    const proactivelyDisclosed = typeof row.proactivelyDisclosed === "boolean"
+      ? row.proactivelyDisclosed
+      : row.disclosed === "yes"
+        ? true
+        : row.disclosed === "no"
+          ? false
+          : null;
+    return {
+      id: cleanText(row.id || row.key || `fee-${extraFeeTypes.indexOf(name) + 1}`, 80),
+      key: cleanText(row.key || row.id || `fee-${extraFeeTypes.indexOf(name) + 1}`, 80),
+      label: name,
+      name,
+      rule: cleanText(row.rule ?? row.value ?? stringItem ?? "", 300).replace(new RegExp(`^${name}[：:]?\\s*`), ""),
+      disclosed: ["yes", "no", "na", "unknown"].includes(String(row.disclosed))
+        ? String(row.disclosed)
+        : proactivelyDisclosed === true
+          ? "yes"
+          : proactivelyDisclosed === false
+            ? "no"
+            : "unknown",
+      proactivelyDisclosed,
+      note: cleanText(row.note, 300),
+      source: cleanText(row.source, 80),
+      evidenceStatus: cleanText(row.evidenceStatus || row.status || (row.rule || stringItem ? "reported" : "unknown"), 40)
+    };
+  });
+  return {
+    plans,
+    fees,
+    feesReviewed: Boolean(pricingInput.feesReviewed || pricingInput.additionalFeesReviewed)
+  };
+}
+
+function normalizeCrowdObservations(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value.slice(0, 5).map((record: JsonObject) => {
+    const range = cleanText(record.timeRange, 80);
+    const rangeMatch = range.match(/(\d{1,2}:\d{2})\s*(?:[-–—~至])\s*(\d{1,2}:\d{2})/);
+    const date = cleanText(record.date || String(record.observedAt || "").slice(0, 10), 32);
+    const start = cleanText(record.start || rangeMatch?.[1], 16);
+    const end = cleanText(record.end || rangeMatch?.[2], 16);
+    const cardioWaitMinutes = unknownNumber(record.cardioWaitMinutes);
+    const cableWaitMinutes = unknownNumber(record.cableWaitMinutes ?? record.cableWait);
+    const statedMax = unknownNumber(record.maxWaitMinutes ?? record.maxWait);
+    const waits = [cardioWaitMinutes, cableWaitMinutes, statedMax].filter(number => number >= 0);
+    const rawState = cleanText(record.state || record.judgment, 20);
+    const state = rawState === "拥挤" ? "高峰" : ["宽松", "一般", "高峰", "未填写"].includes(rawState) ? rawState : "未填写";
+    const rawDayType = cleanText(record.dayType, 20);
+    const dayType = ["weekday", "工作日"].includes(rawDayType) ? "weekday"
+      : ["weekend", "周末"].includes(rawDayType) ? "weekend" : "unknown";
+    return {
+      observedAt: cleanText(record.observedAt || (date && start ? `${date}T${start}:00` : ""), 64),
+      date,
+      start,
+      end,
+      dayType,
+      isWeekdayPeak: Boolean(record.isWeekdayPeak),
+      cardioVacancies: unknownNumber(record.cardioVacancies, true),
+      cardioWaitMinutes,
+      cableVacancies: unknownNumber(record.cableVacancies, true),
+      cableWaitMinutes,
+      queuePeople: unknownNumber(record.queuePeople, true),
+      approxPeople: unknownNumber(record.approxPeople ?? record.peopleCount, true),
+      maxWaitMinutes: waits.length ? Math.max(...waits) : -1,
+      state,
+      description: cleanText(record.description || record.note, 1200),
+      evidence: textItems(record.evidence, 6)
+    };
+  });
+}
+
+function normalizeEquipmentInventory(value: unknown, currentValue: unknown = []) {
+  if (!Array.isArray(value) || (!value.length && !Array.isArray(currentValue))) return [];
+  const current = Array.isArray(currentValue) ? currentValue : [];
+  const source = value.length ? value : current;
+  if (!source.length) return [];
+  return equipmentReferenceCatalog.map((referenceCategory: JsonObject) => {
+    const incoming = source.find((category: JsonObject) => {
+      const rawId = cleanText(category?.id || category?.code, 20);
+      return rawId === referenceCategory.id || rawId === referenceCategory.key;
+    }) || {};
+    const previous = current.find((category: JsonObject) => category?.id === referenceCategory.id) || {};
+    const incomingItems = Array.isArray(incoming.items) ? incoming.items : [];
+    const previousItems = Array.isArray(previous.items) ? previous.items : [];
+    const items = referenceCategory.items.map((reference: JsonObject) => {
+      const item = incomingItems.find((candidate: JsonObject) => candidate?.code === reference.code || candidate?.name === reference.name) || {};
+      const oldItem = previousItems.find((candidate: JsonObject) => candidate?.code === reference.code || candidate?.name === reference.name) || {};
+      const total = Math.trunc(finiteNonNegative(item.total ?? item.totalCount, finiteNonNegative(oldItem.total)));
+      const available = Math.min(total, Math.trunc(finiteNonNegative(item.available ?? item.availableCount, finiteNonNegative(oldItem.available))));
+      const issuePhotos = hasOwn(item, "issuePhotos")
+        ? normalizeMedia(item.issuePhotos, 6, "器械问题现场反馈")
+        : normalizeMedia(oldItem.issuePhotos, 6, "器械问题现场反馈");
+      const rawStatus = cleanText(item.status || oldItem.status, 20);
+      const issueSummary = cleanText(item.issueSummary ?? oldItem.issueSummary, 600);
+      const status = ["ok", "issue", "unknown"].includes(rawStatus)
+        ? rawStatus
+        : (total > available || issueSummary || issuePhotos.length ? "issue" : total > 0 ? "ok" : "unknown");
+      return {
+        name: reference.name,
+        code: reference.code,
+        referenceImage: reference.referenceImage,
+        total,
+        available,
+        maxWaitMinutes: unknownNumber(item.maxWaitMinutes ?? item.wait ?? oldItem.maxWaitMinutes),
+        status,
+        issueSummary,
+        issuePhotos,
+        note: cleanText(item.note ?? oldItem.note, 600),
+        evidence: textItems(item.evidence ?? oldItem.evidence, 6)
+      };
+    });
+    const summedTotal = items.reduce((sum: number, item: JsonObject) => sum + item.total, 0);
+    const summedAvailable = items.reduce((sum: number, item: JsonObject) => sum + item.available, 0);
+    const total = Math.trunc(finiteNonNegative(incoming.total ?? incoming.totalCount, finiteNonNegative(previous.total, summedTotal))) || summedTotal;
+    const available = Math.min(total, Math.trunc(finiteNonNegative(incoming.available ?? incoming.availableCount, finiteNonNegative(previous.available, summedAvailable))) || summedAvailable);
+    return {
+      id: referenceCategory.id,
+      label: referenceCategory.label,
+      total,
+      available,
+      maxWaitMinutes: unknownNumber(incoming.maxWaitMinutes ?? previous.maxWaitMinutes),
+      summary: cleanText(incoming.summary ?? previous.summary, 900),
+      items
+    };
+  });
+}
+
+function normalizeFullReport(value: unknown, venue: JsonObject) {
+  const report = value && typeof value === "object" ? value as JsonObject : {};
+  const sectionsSource = Array.isArray(report.sections)
+    ? report.sections
+    : Array.isArray(venue.reportSections)
+      ? venue.reportSections
+      : [];
+  const sections = sectionsSource.slice(0, 12).map((section: JsonObject, index: number) => ({
+    id: cleanText(section.id || `section-${index + 1}`, 80),
+    title: cleanText(section.title || `报告第 ${index + 1} 部分`, 120),
+    summary: cleanText(section.summary, 1600),
+    facts: textItems(section.facts, 12),
+    evidence: textItems(section.evidence, 8)
+  }));
+  return {
+    conclusion: cleanText(report.conclusion || venue.summary, 2400),
+    recommendations: textItems(report.recommendations, 6),
+    cautions: textItems(report.cautions || venue.caution, 6),
+    fit: cleanText(report.fit || venue.fit, 900),
+    unfit: cleanText(report.unfit, 900),
+    sessionSummary: cleanText(report.sessionSummary, 1200),
+    sections
+  };
+}
+
+function upgradeVenueForRead(input: JsonObject) {
+  const venue = { ...(input || {}) };
+  venue.reportSchemaVersion = cleanText(venue.reportSchemaVersion || "legacy-v1", 80);
+  venue.pricing = normalizePricing(venue, venue.pricing || {});
+  venue.crowdObservations = normalizeCrowdObservations(venue.crowdObservations || []);
+  venue.equipmentInventory = normalizeEquipmentInventory(venue.equipmentInventory || []);
+  venue.fullReport = normalizeFullReport(venue.fullReport || {}, venue);
+  venue.reportSections = venue.fullReport.sections;
+  venue.reportSummary = {
+    conclusion: venue.fullReport.conclusion,
+    recommendations: venue.fullReport.recommendations,
+    cautions: venue.fullReport.cautions
+  };
+  return venue;
+}
+
 function normalizeVenueDraft(current: JsonObject, patch: JsonObject) {
-  const next = { ...current, ...patch };
-  next.crowd = { ...(current?.crowd || {}), ...(patch.crowd || {}) };
-  next.contact = { ...(current?.contact || {}), ...(patch.contact || {}) };
+  const base = upgradeVenueForRead(current || {});
+  const next = { ...base, ...patch };
+  next.crowd = { ...(base.crowd || {}), ...(patch.crowd || {}) };
+  next.contact = { ...(base.contact || {}), ...(patch.contact || {}) };
+  next.reportSchemaVersion = cleanText(patch.reportSchemaVersion || base.reportSchemaVersion || REPORT_SCHEMA_VERSION, 80);
   if (Array.isArray(patch.coordinates)) next.coordinates = patch.coordinates.map(Number).slice(0, 2);
-  if (Array.isArray(patch.gallery)) {
-    next.gallery = patch.gallery
-      .filter((item: unknown) => item && typeof item === "object")
-      .map((item: JsonObject) => ({ src: String(item.src || ""), caption: String(item.caption || "场馆实拍"), date: String(item.date || new Date().toISOString().slice(0, 10)) }))
-      .filter((item: JsonObject) => item.src)
-      .slice(0, 12);
-  }
-  for (const key of ["monthlyPrice", "trialPrice", "weeklyPrice", "annualPrice", "equipment", "rating", "experienceScore", "evidenceConfidence", "testerCount"]) {
+  if (Array.isArray(patch.gallery)) next.gallery = normalizeMedia(patch.gallery, 12);
+  for (const key of ["monthlyPrice", "trialPrice", "weeklyPrice", "quarterlyPrice", "annualPrice", "equipment", "rating", "experienceScore", "evidenceConfidence", "testerCount"]) {
     if (patch[key] !== undefined) next[key] = Number(patch[key]);
   }
   for (const key of ["beginner", "lowSales", "shower", "cleanEnvironment", "open24", "womenFriendly", "nightSafety", "riskReviewed"]) {
     if (patch[key] !== undefined) next[key] = Boolean(patch[key]);
   }
   for (const key of ["highlights", "evidence", "additionalFees"]) {
-    if (Array.isArray(patch[key])) next[key] = patch[key].map((item: unknown) => String(item || "").trim()).filter(Boolean).slice(0, 12);
+    if (Array.isArray(patch[key])) next[key] = textItems(patch[key], 12);
   }
+
+  const pricingPatch = patch.pricing && typeof patch.pricing === "object" ? patch.pricing : {};
+  const pricingInput = {
+    ...(base.pricing || {}),
+    ...pricingPatch,
+    plans: Array.isArray(pricingPatch.plans) ? pricingPatch.plans : base.pricing?.plans,
+    fees: Array.isArray(pricingPatch.fees)
+      ? pricingPatch.fees
+      : Array.isArray(pricingPatch.additionalFees)
+        ? pricingPatch.additionalFees
+        : Array.isArray(patch.additionalFees)
+          ? patch.additionalFees
+          : base.pricing?.fees
+  };
+  for (const name of cardTypes) {
+    const alias = planAliasKeys[name];
+    const flatKey = planFlatKeys[name];
+    if (patch[flatKey] !== undefined && !hasOwn(pricingPatch, alias)) {
+      const listed = pricingInput.plans?.find((item: JsonObject) => item?.name === name) || {};
+      pricingInput[alias] = { ...listed, amount: patch[flatKey], provided: Number(patch[flatKey]) > 0 };
+    }
+  }
+  next.pricing = normalizePricing(next, pricingInput);
+  for (const plan of next.pricing.plans) next[planFlatKeys[plan.name]] = Number(plan.amount) || 0;
+  next.additionalFees = next.pricing.fees
+    .filter((fee: JsonObject) => fee.rule || fee.note)
+    .map((fee: JsonObject) => `${fee.name}：${fee.rule || fee.note}`);
+
+  if (Array.isArray(patch.crowdObservations)) next.crowdObservations = normalizeCrowdObservations(patch.crowdObservations);
+  else next.crowdObservations = base.crowdObservations;
+
+  if (Array.isArray(patch.equipmentInventory)) {
+    next.equipmentInventory = normalizeEquipmentInventory(patch.equipmentInventory, base.equipmentInventory);
+  } else {
+    next.equipmentInventory = base.equipmentInventory;
+  }
+
+  let fullReportInput = patch.fullReport && typeof patch.fullReport === "object"
+    ? patch.fullReport
+    : Array.isArray(patch.reportSections)
+      ? { ...(base.fullReport || {}), sections: patch.reportSections }
+      : base.fullReport;
+  if (patch.reportSummary && typeof patch.reportSummary === "object") {
+    fullReportInput = {
+      ...(fullReportInput || {}),
+      conclusion: patch.reportSummary.conclusion ?? fullReportInput?.conclusion,
+      recommendations: patch.reportSummary.recommendations ?? fullReportInput?.recommendations,
+      cautions: patch.reportSummary.cautions ?? patch.reportSummary.mustKnow ?? fullReportInput?.cautions,
+      fit: patch.fit ?? fullReportInput?.fit
+    };
+  }
+  next.fullReport = normalizeFullReport(fullReportInput, next);
+  next.reportSections = next.fullReport.sections;
+  next.reportSummary = {
+    conclusion: next.fullReport.conclusion,
+    recommendations: next.fullReport.recommendations,
+    cautions: next.fullReport.cautions
+  };
   return next;
 }
 
 const scoreManagedKeys = new Set([
   "id", "reportId", "rating", "experienceScore", "equipment", "scoreModules", "evidenceConfidence",
-  "confidenceGrade", "scoringVersion", "publicationGates", "verificationStatus", "source", "testerCount", "testMode"
+  "confidenceGrade", "scoringVersion", "publicationGates", "verificationStatus", "source", "testerCount", "testMode",
+  "reportSchemaVersion"
 ]);
 
 function auditSnapshot(venue: JsonObject) {
@@ -312,10 +701,35 @@ function auditSnapshot(venue: JsonObject) {
       trialPrice: Number(venue?.trialPrice) || 0,
       weeklyPrice: Number(venue?.weeklyPrice) || 0,
       monthlyPrice: Number(venue?.monthlyPrice) || 0,
+      quarterlyPrice: Number(venue?.quarterlyPrice) || 0,
       annualPrice: Number(venue?.annualPrice) || 0,
-      additionalFees: Array.isArray(venue?.additionalFees) ? venue.additionalFees : []
+      additionalFees: Array.isArray(venue?.additionalFees) ? venue.additionalFees : [],
+      plans: Array.isArray(venue?.pricing?.plans) ? venue.pricing.plans : [],
+      fees: Array.isArray(venue?.pricing?.fees) ? venue.pricing.fees : []
     },
     crowd: venue?.crowd || {},
+    crowdObservations: Array.isArray(venue?.crowdObservations) ? venue.crowdObservations : [],
+    equipmentInventory: Array.isArray(venue?.equipmentInventory)
+      ? venue.equipmentInventory.map((category: JsonObject) => ({
+        id: category.id,
+        label: category.label,
+        total: category.total,
+        available: category.available,
+        maxWaitMinutes: category.maxWaitMinutes,
+        summary: category.summary,
+        items: Array.isArray(category.items) ? category.items.map((item: JsonObject) => ({
+          code: item.code,
+          name: item.name,
+          total: item.total,
+          available: item.available,
+          maxWaitMinutes: item.maxWaitMinutes,
+          status: item.status,
+          issueSummary: item.issueSummary,
+          issuePhotos: item.issuePhotos,
+          note: item.note
+        })) : []
+      }))
+      : [],
     tags: ["beginner", "lowSales", "shower", "cleanEnvironment", "open24", "womenFriendly", "nightSafety"]
       .reduce((result: JsonObject, key) => ({ ...result, [key]: Boolean(venue?.[key]) }), {}),
     hours: String(venue?.hours || ""),
@@ -328,6 +742,7 @@ function auditSnapshot(venue: JsonObject) {
     highlights: Array.isArray(venue?.highlights) ? venue.highlights : [],
     fit: String(venue?.fit || ""),
     caution: String(venue?.caution || ""),
+    fullReport: venue?.fullReport || {},
     evidence: Array.isArray(venue?.evidence) ? venue.evidence : [],
     gallery: Array.isArray(venue?.gallery) ? venue.gallery.map((item: JsonObject) => ({ src: item?.src || "", caption: item?.caption || "" })) : []
   };
@@ -415,6 +830,7 @@ async function analyzeAndSave(env: Env, report: JsonObject) {
     report.analysisModel = result.model;
     report.analysisError = null;
     report.openaiResponseId = result.responseId || null;
+    report.reportSchemaVersion = result.analysis?.reportSchemaVersion || REPORT_SCHEMA_VERSION;
     const analyzedDraft = analysisToVenue(report, result.analysis);
     const venueRow = report.venueId
       ? await env.DB.prepare("SELECT venue_json FROM published_venues WHERE id = ?").bind(report.venueId).first<{ venue_json: string }>()
@@ -459,6 +875,7 @@ async function createTestDraftAndSave(env: Env, report: JsonObject) {
   report.analysisModel = null;
   report.analysisError = null;
   report.openaiResponseId = null;
+  report.reportSchemaVersion = REPORT_SCHEMA_VERSION;
   report.venueDraft = draft;
   await saveReport(env, report);
   return report;
@@ -470,24 +887,44 @@ function confirmedText(value: unknown, fallback: unknown, placeholders: RegExp) 
 }
 
 function mergeReportWithVenue(base: JsonObject, analyzed: JsonObject) {
+  const normalizedBase = upgradeVenueForRead(base);
+  const basePlans = new Map((normalizedBase.pricing?.plans || []).map((plan: JsonObject) => [plan.name, plan]));
+  const analyzedPlans = Array.isArray(analyzed.pricing?.plans) ? analyzed.pricing.plans : [];
+  const mergedPricing = {
+    plans: cardTypes.map((name: string) => {
+      const incoming = analyzedPlans.find((plan: JsonObject) => plan?.name === name) || {};
+      const existing = basePlans.get(name) as JsonObject | undefined;
+      return Number(incoming.amount) > 0 || incoming.provided
+        ? incoming
+        : existing || incoming;
+    }),
+    fees: Array.isArray(analyzed.pricing?.fees)
+      ? analyzed.pricing.fees.map((fee: JsonObject) => {
+        const existing = normalizedBase.pricing?.fees?.find((item: JsonObject) => item?.name === fee?.name);
+        return fee?.rule || fee?.note ? fee : existing || fee;
+      })
+      : normalizedBase.pricing?.fees || []
+  };
+  const merged = normalizeVenueDraft(normalizedBase, { ...analyzed, pricing: mergedPricing });
   return {
-    ...base,
-    ...analyzed,
-    id: base.id,
-    name: confirmedText(analyzed.name, base.name, /待命名|待确认/),
-    district: confirmedText(analyzed.district, base.district, /待补充|待确认/),
-    type: confirmedText(analyzed.type, base.type, /待确认/),
-    hours: confirmedText(analyzed.hours, base.hours, /待确认/),
-    monthlyPrice: Number(analyzed.monthlyPrice) > 0 ? Number(analyzed.monthlyPrice) : Number(base.monthlyPrice) || 0,
-    trialPrice: Number(analyzed.trialPrice) > 0 ? Number(analyzed.trialPrice) : Number(base.trialPrice) || 0,
-    weeklyPrice: Number(base.weeklyPrice) || 0,
-    annualPrice: Number(base.annualPrice) || 0,
-    additionalFees: Array.isArray(base.additionalFees) ? base.additionalFees : [],
-    coordinates: Array.isArray(base.coordinates) ? base.coordinates : [],
-    image: String(base.image || ""),
-    gallery: Array.isArray(base.gallery) ? base.gallery : [],
-    contact: { ...(base.contact || {}), ...(analyzed.contact || {}), address: base.contact?.address || "", phone: base.contact?.phone || "", nearestStation: base.contact?.nearestStation || "", booking: base.contact?.booking || analyzed.contact?.booking || "" },
-    source: base.source || "platform_admin",
+    ...merged,
+    id: normalizedBase.id,
+    name: confirmedText(analyzed.name, normalizedBase.name, /待命名|待确认/),
+    district: confirmedText(analyzed.district, normalizedBase.district, /待补充|待确认/),
+    type: confirmedText(analyzed.type, normalizedBase.type, /待确认/),
+    hours: confirmedText(analyzed.hours, normalizedBase.hours, /待确认/),
+    coordinates: Array.isArray(normalizedBase.coordinates) ? normalizedBase.coordinates : [],
+    image: String(normalizedBase.image || analyzed.image || ""),
+    gallery: Array.isArray(normalizedBase.gallery) ? normalizedBase.gallery : [],
+    contact: {
+      ...(normalizedBase.contact || {}),
+      ...(analyzed.contact || {}),
+      address: normalizedBase.contact?.address || "",
+      phone: normalizedBase.contact?.phone || "",
+      nearestStation: normalizedBase.contact?.nearestStation || "",
+      booking: normalizedBase.contact?.booking || analyzed.contact?.booking || ""
+    },
+    source: normalizedBase.source || "platform_admin",
     verificationStatus: "experience_verified"
   };
 }
@@ -515,9 +952,9 @@ async function uploadReport(request: Request, env: Env) {
 
   const reportId = `report-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
   const r2Key = `reports/${reportId}/${originalName}`;
-  await env.FILES.put(r2Key, bytes, {
-    httpMetadata: { contentType: request.headers.get("content-type") || "application/octet-stream" },
-    customMetadata: { reportId, originalName }
+  await putStoredFile(env, r2Key, bytes, {
+    contentType: request.headers.get("content-type") || "application/octet-stream",
+    metadata: { reportId, originalName }
   });
 
   let extractedText = "";
@@ -526,11 +963,11 @@ async function uploadReport(request: Request, env: Env) {
       ? extractDocxText(Buffer.from(bytes))
       : new TextDecoder().decode(bytes).trim();
   } catch (error) {
-    await env.FILES.delete(r2Key);
+    await deleteStoredFile(env, r2Key);
     return json(request, env, 422, { error: error instanceof Error ? error.message : "无法读取报告" });
   }
   if (extractedText.length < 30) {
-    await env.FILES.delete(r2Key);
+    await deleteStoredFile(env, r2Key);
     return json(request, env, 422, { error: "报告中没有提取到足够文字，请确认文件已经填写" });
   }
 
@@ -564,6 +1001,7 @@ async function uploadReport(request: Request, env: Env) {
     analysisModel: null,
     analysisError: null,
     openaiResponseId: null,
+    reportSchemaVersion: REPORT_SCHEMA_VERSION,
     venueDraft: null,
     reviewNotes: "",
     createdAt: now,
@@ -577,7 +1015,10 @@ async function uploadReport(request: Request, env: Env) {
 
 async function listPublished(request: Request, env: Env) {
   const result = await env.DB.prepare("SELECT venue_json FROM published_venues WHERE visible = 1 ORDER BY published_at DESC").all<{ venue_json: string }>();
-  const venues = (result.results || []).map((row: { venue_json: string }) => parseJson(row.venue_json)).filter(Boolean);
+  const venues = (result.results || [])
+    .map((row: { venue_json: string }) => parseJson(row.venue_json))
+    .filter(Boolean)
+    .map((venue: JsonObject) => upgradeVenueForRead(venue));
   return json(request, env, 200, { venues, updatedAt: new Date().toISOString() });
 }
 
@@ -688,6 +1129,32 @@ async function comparisonForReport(env: Env, report: JsonObject) {
   return compareDrafts(report.venueDraft || {}, (result.results || []).map((row: ReportRow) => rowToReport(row)));
 }
 
+function detailedCardMissing(draft: JsonObject) {
+  if (draft?.reportSchemaVersion !== REPORT_SCHEMA_VERSION) return [];
+  const missing: string[] = [];
+  const plans = Array.isArray(draft?.pricing?.plans) ? draft.pricing.plans : [];
+  if (!plans.some((plan: JsonObject) => plan.provided && Number(plan.amount) > 0 && cleanText(plan.validity))) {
+    missing.push("至少一项可核验的卡项价格、有效期和来源");
+  }
+  const observations = Array.isArray(draft?.crowdObservations) ? draft.crowdObservations : [];
+  if (observations.length < 5 || observations.some((record: JsonObject) => !record.date || !record.start || !record.end || record.state === "未填写" || Number(record.maxWaitMinutes) < 0)) {
+    missing.push("5次客流观察的时间、等待、人数判断和现场描述");
+  }
+  const inventory = Array.isArray(draft?.equipmentInventory) ? draft.equipmentInventory : [];
+  const categoryIds = new Set(inventory.map((category: JsonObject) => category.id));
+  if (equipmentReferenceCatalog.some((category: JsonObject) => !categoryIds.has(category.id)) || inventory.some((category: JsonObject) => !Array.isArray(category.items))) {
+    missing.push("03A至03I九类器械清单和可用情况");
+  }
+  const fullReport = draft?.fullReport || {};
+  if (!cleanText(fullReport.conclusion)) missing.push("完整实测报告的综合结论");
+  if (!Array.isArray(fullReport.recommendations) || !fullReport.recommendations.length) missing.push("完整实测报告的推荐要点");
+  if (!Array.isArray(fullReport.cautions) || !fullReport.cautions.length) missing.push("完整实测报告的办卡注意事项");
+  if (!cleanText(fullReport.fit) || !cleanText(fullReport.unfit) || !cleanText(fullReport.sessionSummary)) {
+    missing.push("完整实测报告的适合/不适合人群和训练覆盖摘要");
+  }
+  return missing;
+}
+
 async function adminReports(request: Request, env: Env, url: URL) {
   const auth = await adminAuth(request, env);
   if (!auth) return json(request, env, 401, { error: "管理口令无效或审核员尚未分配场馆" });
@@ -718,7 +1185,7 @@ async function adminReports(request: Request, env: Env, url: URL) {
     });
   }
   if (action === "file" && request.method === "GET") {
-    const object = await env.FILES.get(report.r2Key);
+    const object = await getStoredFile(env, report.r2Key);
     if (!object) return json(request, env, 404, { error: "原始报告文件不存在" });
     const headers = new Headers();
     object.writeHttpMetadata(headers);
@@ -743,7 +1210,7 @@ async function adminReports(request: Request, env: Env, url: URL) {
     } else {
       await env.DB.prepare("DELETE FROM reports WHERE id = ?").bind(reportId).run();
     }
-    await env.FILES.delete(report.r2Key);
+    await deleteStoredFile(env, report.r2Key);
     return json(request, env, 200, { ok: true });
   }
   if (action === "read" && request.method === "PATCH") {
@@ -817,6 +1284,7 @@ async function adminReports(request: Request, env: Env, url: URL) {
     if (!draft?.image?.trim()) missing.push("场馆主图");
     if (!draft?.fit?.trim()) missing.push("适合人群");
     if (!draft?.caution?.trim()) missing.push("注意事项");
+    missing.push(...detailedCardMissing(draft || {}));
     if (missing.length) return json(request, env, 422, { error: "发布前仍需完成审核", missing });
     const comparison = await comparisonForReport(env, report);
     const body = (await request.json().catch(() => ({}))) as JsonObject;
@@ -886,9 +1354,10 @@ async function adminMedia(request: Request, env: Env, url: URL) {
     if (!scopedReport || scopedReport.venueId !== auth.venueId) return json(request, env, 403, { error: "你只能为被分配的场馆上传图片" });
   }
   const key = `venue-images/${scope}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}-${originalName}`;
-  await env.FILES.put(key, bytes, {
-    httpMetadata: { contentType, cacheControl: "public, max-age=31536000, immutable" },
-    customMetadata: { uploadedBy: auth.role, originalName }
+  await putStoredFile(env, key, bytes, {
+    contentType,
+    cacheControl: "public, max-age=31536000, immutable",
+    metadata: { uploadedBy: auth.role, originalName }
   });
   return json(request, env, 201, { ok: true, image: { src: new URL(`/api/media/${key}`, request.url).href, caption: "场馆实拍", date: new Date().toISOString().slice(0, 10) } });
 }
@@ -897,11 +1366,11 @@ async function publicMedia(request: Request, env: Env, url: URL) {
   if (request.method !== "GET") return json(request, env, 405, { error: "不支持的操作" });
   const key = decodeURIComponent(url.pathname.slice("/api/media/".length));
   if (!key.startsWith("venue-images/")) return json(request, env, 404, { error: "图片不存在" });
-  const object = await env.FILES.get(key);
+  const object = await getStoredFile(env, key);
   if (!object) return json(request, env, 404, { error: "图片不存在" });
   const headers = new Headers();
   object.writeHttpMetadata(headers);
-  headers.set("etag", object.httpEtag);
+  if (object.httpEtag) headers.set("etag", object.httpEtag);
   headers.set("cache-control", headers.get("cache-control") || "public, max-age=31536000, immutable");
   return new Response(object.body, { headers });
 }
@@ -912,6 +1381,7 @@ function manualVenueDraft(input: JsonObject, id?: string) {
   const slug = name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "").slice(0, 42) || "venue";
   const base: JsonObject = {
     id: id || `${slug}-${crypto.randomUUID().slice(0, 6)}`,
+    reportSchemaVersion: REPORT_SCHEMA_VERSION,
     name,
     district: "",
     type: "健身房",
@@ -924,9 +1394,11 @@ function manualVenueDraft(input: JsonObject, id?: string) {
     coordinates: [],
     hours: "",
     crowd: { evening: "一般", morning: "一般", weekend: "一般", flexible: "一般" },
+    crowdObservations: [],
     beginner: false,
     lowSales: false,
     equipment: 0,
+    equipmentInventory: [],
     shower: false,
     cleanEnvironment: false,
     open24: false,
@@ -938,6 +1410,15 @@ function manualVenueDraft(input: JsonObject, id?: string) {
     gallery: [],
     fit: "待体验官报告补充",
     caution: "基础资料已录入，体验结论待审核。",
+    fullReport: {
+      conclusion: "",
+      recommendations: [],
+      cautions: [],
+      fit: "待体验官报告补充",
+      unfit: "",
+      sessionSummary: "",
+      sections: []
+    },
     evidence: ["平台基础资料录入"],
     testerCount: 0,
     testedAt: now,
@@ -984,7 +1465,18 @@ async function platformVenues(request: Request, env: Env, url: URL) {
       ? await env.DB.prepare("SELECT venue_id, reviewer_name, updated_at FROM venue_reviewers").all<{ venue_id: string; reviewer_name: string; updated_at: string }>()
       : { results: [{ venue_id: auth.venueId || "", reviewer_name: auth.reviewerName, updated_at: "" }] };
     const reviewerByVenue = new Map((assignments.results || []).map(item => [item.venue_id, { name: item.reviewer_name, updatedAt: item.updated_at }]));
-    return json(request, env, 200, { role: auth.role, venueId: auth.venueId, venues: (result.results || []).map((row: JsonObject) => ({ ...parseJson(row.venue_json), visible: Boolean(row.visible), version: row.version, reportId: row.report_id, publishedAt: row.published_at, reviewer: reviewerByVenue.get(row.id) || null })) });
+    return json(request, env, 200, {
+      role: auth.role,
+      venueId: auth.venueId,
+      venues: (result.results || []).map((row: JsonObject) => ({
+        ...upgradeVenueForRead(parseJson(row.venue_json) || {}),
+        visible: Boolean(row.visible),
+        version: row.version,
+        reportId: row.report_id,
+        publishedAt: row.published_at,
+        reviewer: reviewerByVenue.get(row.id) || null
+      }))
+    });
   }
   if (!canAccessVenue(auth, venueId)) return json(request, env, 403, { error: "你只能修改被分配的健身房" });
 

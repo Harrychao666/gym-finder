@@ -4,9 +4,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>有间好馆｜广州健身房选馆助手</title>
+    <meta name="description" content="体验官到店实测，查看健身房价格、通勤、晚高峰等待、器械清单与评分依据。" />
+    <meta property="og:title" content="有间好馆｜广州健身房选馆助手" />
+    <meta property="og:description" content="体验官到店实测，查看健身房价格、通勤、晚高峰等待、器械清单与评分依据。" />
+    <meta property="og:image" content="/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="./assets/gym-map.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./styles.css?v=20260717-1" />
     <link rel="stylesheet" href="./enhancements.css" />
+    <link rel="stylesheet" href="./report-card-v2.css?v=20260730-1" />
   </head>
   <body class="is-intro-active">
     <section class="intro-screen" id="introScreen" aria-label="有间好馆真实评分机制介绍">
@@ -254,6 +260,19 @@
       </article>
     </dialog>
 
+    <dialog id="equipmentDialog" class="app-dialog equipment-dialog-v2" aria-labelledby="equipmentTitle">
+      <article>
+        <header class="dialog-header">
+          <div>
+            <p class="eyebrow">按报告 03A–03I 分类</p>
+            <h2 id="equipmentTitle"></h2>
+          </div>
+          <button class="icon-button" data-close="equipmentDialog" type="button" aria-label="关闭器械清单">×</button>
+        </header>
+        <div id="equipmentContent" class="equipment-dialog-content"></div>
+      </article>
+    </dialog>
+
     <dialog id="ratingDialog" class="app-dialog rating-dialog" aria-labelledby="ratingTitle">
       <article>
         <header class="dialog-header">
@@ -332,7 +351,7 @@
     </dialog>
 
     <script src="./config.js"></script>
-    <script src="./app.js?v=20260723-2"></script>
+    <script src="./app.js?v=20260730-1"></script>
     <script src="./enhancements-data.js"></script>
     <script src="./enhancements-ui.js"></script>
   </body>
